@@ -2,7 +2,7 @@
 // DESIGN: "Digital Sanctum" — all data for the studio workflow
 // ============================================================
 
-export type DeityKey = "venkateswara" | "ganesha" | "lakshmi" | "shiva";
+export type DeityKey = "venkateswara" | "ganesha" | "lakshmi" | "shiva" | (string & {});
 
 export interface Deity {
   key: DeityKey;

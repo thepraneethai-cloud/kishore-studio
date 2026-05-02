@@ -1,38 +1,73 @@
 // ============================================================
 // DESIGN: "Digital Sanctum" — Step 1: Deity / Theme Selector
+// Text input with AI suggestions
 // ============================================================
 import { useProject } from "@/contexts/ProjectContext";
-import { DEITIES, Deity } from "@/lib/studioData";
+import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, ChevronRight } from "lucide-react";
-
-const DEITY_IMAGES: Record<string, string> = {
-  venkateswara: "https://d2xsxph8kpxj0f.cloudfront.net/310519663619352162/mbLFL8pGLWGQKSC3y2Mcrs/deity-collage-UDb27ueXCqyauKtA4gaDVu.webp",
-  ganesha: "https://d2xsxph8kpxj0f.cloudfront.net/310519663619352162/mbLFL8pGLWGQKSC3y2Mcrs/deity-collage-UDb27ueXCqyauKtA4gaDVu.webp",
-  lakshmi: "https://d2xsxph8kpxj0f.cloudfront.net/310519663619352162/mbLFL8pGLWGQKSC3y2Mcrs/deity-collage-UDb27ueXCqyauKtA4gaDVu.webp",
-  shiva: "https://d2xsxph8kpxj0f.cloudfront.net/310519663619352162/mbLFL8pGLWGQKSC3y2Mcrs/deity-collage-UDb27ueXCqyauKtA4gaDVu.webp",
-};
-
-// Quadrant positions in the 2x2 deity collage image (as CSS object-position)
-const DEITY_POSITIONS: Record<string, string> = {
-  venkateswara: "0% 0%",
-  ganesha: "100% 0%",
-  lakshmi: "0% 100%",
-  shiva: "100% 100%",
-};
+import { CheckCircle2, ChevronRight, Sparkles, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function Step1Deity() {
   const { project, setDeity, setTitle, setActiveStep, markStepComplete } = useProject();
+  const [deityInput, setDeityInput] = useState(project.deity || "");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const handleSelect = (deity: Deity) => {
-    setDeity(deity.key);
+  // Simulate AI suggestions based on input
+  const generateSuggestions = async (input: string) => {
+    if (input.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    setIsLoadingSuggestions(true);
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Generate suggestions based on input
+    const allSuggestions = [
+      // Hindu deities
+      "Venkateswara", "Ganesha", "Lakshmi", "Shiva", "Brahma",
+      "Durga", "Kali", "Saraswati", "Hanuman", "Krishna",
+      "Radha", "Vishnu", "Indra", "Agni", "Vayu",
+      // Themes
+      "Divine Love", "Protection", "Prosperity", "Wisdom", "Power",
+      "Devotion", "Gratitude", "Meditation", "Celebration", "Healing",
+      // Mythology
+      "Ramayana", "Mahabharata", "Bhagavad Gita", "Vedas", "Puranas",
+    ];
+
+    const filtered = allSuggestions.filter(s =>
+      s.toLowerCase().includes(input.toLowerCase())
+    );
+
+    setSuggestions(filtered.slice(0, 6)); // Show top 6 suggestions
+    setIsLoadingSuggestions(false);
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      generateSuggestions(deityInput);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [deityInput]);
+
+  const handleSelect = (suggestion: string) => {
+    setDeityInput(suggestion);
+    setDeity(suggestion);
+    setShowSuggestions(false);
     if (!project.title) {
-      setTitle(`${deity.name} Devotional Song`);
+      setTitle(`${suggestion} Devotional Song`);
     }
   };
 
   const handleContinue = () => {
-    if (project.deity) {
+    if (deityInput) {
+      setDeity(deityInput);
       markStepComplete(1);
       setActiveStep(2);
     }
@@ -49,99 +84,75 @@ export default function Step1Deity() {
           Select Deity & Theme
         </h2>
         <p className="text-sm" style={{ color: "oklch(0.60 0.015 68)" }}>
-          Choose your deity — this defines the visuals, mood, instruments, and audience for your entire video.
+          Type any deity, theme, or mythology — AI will suggest relevant options.
         </p>
       </div>
 
-      {/* Deity Cards */}
-      <div className="grid grid-cols-2 gap-4">
-        {DEITIES.map((deity) => {
-          const isSelected = project.deity === deity.key;
-          return (
-            <button
-              key={deity.key}
-              onClick={() => handleSelect(deity)}
-              className={cn(
-                "relative rounded-lg overflow-hidden text-left transition-all duration-200 group",
-                "hover:scale-[1.02]"
-              )}
-              style={{
-                border: isSelected
-                  ? `2px solid ${deity.color}`
-                  : "2px solid oklch(0.28 0.025 58)",
-                boxShadow: isSelected
-                  ? `0 0 20px ${deity.color}40, 0 4px 24px oklch(0 0 0 / 0.5)`
-                  : "0 4px 16px oklch(0 0 0 / 0.4)",
-              }}
-            >
-              {/* Deity image quadrant */}
-              <div className="relative h-40 overflow-hidden">
-                <img
-                  src={DEITY_IMAGES[deity.key]}
-                  alt={deity.name}
-                  className="absolute object-cover"
-                  style={{
-                    width: "200%",
-                    height: "200%",
-                    top: (deity.key === "venkateswara" || deity.key === "ganesha") ? "0" : "-100%",
-                    left: (deity.key === "venkateswara" || deity.key === "lakshmi") ? "0" : "-100%",
-                  }}
-                />
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background: isSelected
-                      ? `linear-gradient(to bottom, transparent 30%, ${deity.color}80 100%)`
-                      : "linear-gradient(to bottom, transparent 30%, oklch(0.14 0.018 55 / 0.9) 100%)",
-                  }}
-                />
-                {isSelected && (
-                  <div className="absolute top-2 right-2">
-                    <CheckCircle2 size={20} style={{ color: deity.color }} />
-                  </div>
-                )}
-              </div>
+      {/* Deity/Theme Input with AI Suggestions */}
+      <div className="shrine-panel p-4 space-y-3">
+        <label className="text-sm font-semibold flex items-center gap-2" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+          <Sparkles size={16} style={{ color: "oklch(0.80 0.12 78)" }} />
+          Deity, Theme, or Mythology
+        </label>
 
-              {/* Info */}
-              <div className="p-3" style={{ background: "oklch(0.18 0.016 52)" }}>
-                <p
-                  className="font-bold text-sm mb-0.5"
-                  style={{ fontFamily: "'Cinzel', serif", color: isSelected ? deity.color : "oklch(0.85 0.018 75)" }}
+        {/* Input field */}
+        <div className="relative">
+          <input
+            type="text"
+            value={deityInput}
+            onChange={(e) => {
+              setDeityInput(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            placeholder="e.g., Venkateswara, Divine Love, Ramayana..."
+            className="sanctum-input pr-10"
+          />
+          {isLoadingSuggestions && (
+            <Loader2 size={16} className="absolute right-3 top-2.5 animate-spin" style={{ color: "oklch(0.72 0.12 75)" }} />
+          )}
+        </div>
+
+        {/* AI Suggestions */}
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="space-y-1.5 border-t border-oklch(0.22 0.022 55) pt-3">
+            <p className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>
+              Suggestions:
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {suggestions.map((suggestion) => (
+                <button
+                  key={suggestion}
+                  onClick={() => handleSelect(suggestion)}
+                  className="px-3 py-2 rounded text-xs text-left transition-all hover:scale-[1.02]"
+                  style={{
+                    background: deityInput === suggestion
+                      ? "oklch(0.72 0.12 75 / 0.2)"
+                      : "oklch(0.22 0.022 55)",
+                    color: deityInput === suggestion
+                      ? "oklch(0.80 0.12 78)"
+                      : "oklch(0.65 0.14 65)",
+                    border: deityInput === suggestion
+                      ? "1px solid oklch(0.72 0.12 75)"
+                      : "1px solid oklch(0.28 0.025 58)",
+                  }}
                 >
-                  {deity.name}
-                </p>
-                <p
-                  className="text-xs mb-2"
-                  style={{ fontFamily: "'Noto Sans Telugu', sans-serif", color: "oklch(0.65 0.14 65)" }}
-                >
-                  {deity.teluguName}
-                </p>
-                <p className="text-xs" style={{ color: "oklch(0.55 0.012 65)" }}>
-                  {deity.mood}
-                </p>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {deity.instruments.slice(0, 3).map((inst) => (
-                    <span
-                      key={inst}
-                      className="text-xs px-1.5 py-0.5 rounded"
-                      style={{
-                        background: "oklch(0.22 0.018 52)",
-                        color: "oklch(0.60 0.015 68)",
-                      }}
-                    >
-                      {inst}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </button>
-          );
-        })}
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Helper text */}
+        <p className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>
+          💡 Tip: You can enter any deity name, theme, or mythology story. The AI will help generate relevant content.
+        </p>
       </div>
 
       {/* Song Title Input */}
-      {project.deity && (
-        <div className="shrine-panel p-4 space-y-3">
+      {deityInput && (
+        <div className="shrine-panel p-4 space-y-3 fade-in">
           <label className="text-sm font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
             Song Title
           </label>
@@ -149,7 +160,7 @@ export default function Step1Deity() {
             type="text"
             value={project.title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g., Govinda Govinda — Venkateswara Bhajan"
+            placeholder={`e.g., ${deityInput} Devotional Song`}
             className="sanctum-input"
           />
           <p className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>
@@ -161,15 +172,15 @@ export default function Step1Deity() {
       {/* Continue Button */}
       <button
         onClick={handleContinue}
-        disabled={!project.deity}
+        disabled={!deityInput}
         className={cn(
-          "flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200",
-          project.deity
+          "flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 w-full justify-center",
+          deityInput
             ? "hover:opacity-90 hover:scale-[1.02]"
             : "opacity-40 cursor-not-allowed"
         )}
         style={{
-          background: project.deity
+          background: deityInput
             ? "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))"
             : "oklch(0.22 0.018 52)",
           color: "oklch(0.12 0.015 55)",
