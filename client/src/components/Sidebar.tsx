@@ -1,12 +1,11 @@
 // ============================================================
-// DESIGN: "Digital Sanctum" — fixed left sidebar workflow navigator
-// Gold/amber accents, Cinzel font for step labels
+// SIDEBAR: Glassmorphism theme with vibrant accents
+// Electric blue, neon pink, lime green
 // ============================================================
 import { useProject } from "@/contexts/ProjectContext";
-import { cn } from "@/lib/utils";
 import {
   Flame, Music, Mic2, Wand2, Film, Video, Scissors,
-  Youtube, Sparkles, CheckCircle2, Circle, RotateCcw,
+  Youtube, Sparkles, CheckCircle2, RotateCcw,
 } from "lucide-react";
 
 const STEPS = [
@@ -26,35 +25,71 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="fixed left-0 top-0 h-screen w-56 flex flex-col z-40"
       style={{
-        background: "oklch(0.11 0.016 52)",
-        borderRight: "1px solid oklch(0.22 0.022 55)",
+        position: "fixed",
+        left: 0,
+        top: 0,
+        height: "100vh",
+        width: "224px",
+        display: "flex",
+        flexDirection: "column",
+        zIndex: 40,
+        background: "rgba(10, 10, 20, 0.9)",
+        backdropFilter: "blur(10px)",
+        borderRight: "1px solid rgba(255, 255, 255, 0.1)",
       }}
     >
       {/* Logo / Brand */}
-      <div className="px-4 pt-5 pb-4" style={{ borderBottom: "1px solid oklch(0.22 0.022 55)" }}>
-        <div className="flex items-center gap-2 mb-1">
+      <div style={{
+        padding: "1.25rem 1rem",
+        borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
           <div
-            className="w-7 h-7 rounded flex items-center justify-center text-xs font-bold"
-            style={{ background: "oklch(0.72 0.12 75)", color: "oklch(0.12 0.015 55)" }}
+            style={{
+              width: "28px",
+              height: "28px",
+              borderRadius: "6px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "14px",
+              fontWeight: "700",
+              background: "linear-gradient(135deg, #00d4ff, #00f0ff)",
+              color: "#000",
+            }}
           >
             🕉
           </div>
           <span
-            className="text-sm font-semibold tracking-wide cinzel"
-            style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}
+            style={{
+              fontSize: "0.875rem",
+              fontWeight: "600",
+              letterSpacing: "0.05em",
+              color: "#00d4ff",
+              fontFamily: "'Space Grotesk', sans-serif",
+            }}
           >
             Studio
           </span>
         </div>
-        <p className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>
-          Telugu Devotional
+        <p style={{
+          fontSize: "0.75rem",
+          color: "rgba(255, 255, 255, 0.6)",
+        }}>
+          Kishore's Studio
         </p>
         {project.deity && (
           <p
-            className="text-xs mt-1 truncate"
-            style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Noto Sans Telugu', sans-serif" }}
+            style={{
+              fontSize: "0.75rem",
+              marginTop: "0.25rem",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              color: "#ff006e",
+              fontWeight: "500",
+            }}
           >
             {project.title || "New Project"}
           </p>
@@ -62,7 +97,11 @@ export default function Sidebar() {
       </div>
 
       {/* Step Navigator */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2">
+      <nav style={{
+        flex: 1,
+        overflowY: "auto",
+        padding: "0.75rem 0.5rem",
+      }}>
         {STEPS.map((step) => {
           const Icon = step.icon;
           const isActive = activeStep === step.id;
@@ -72,34 +111,62 @@ export default function Sidebar() {
             <button
               key={step.id}
               onClick={() => setActiveStep(step.id)}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-md mb-1 text-left transition-all duration-200 group",
-                isActive
-                  ? "text-[oklch(0.12_0.015_55)]"
-                  : "hover:bg-[oklch(0.20_0.016_52)]"
-              )}
-              style={
-                isActive
-                  ? {
-                      background: "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
-                      boxShadow: "0 2px 12px oklch(0.72 0.12 75 / 0.3)",
-                    }
-                  : {}
-              }
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                padding: "0.625rem 0.75rem",
+                borderRadius: "8px",
+                marginBottom: "0.25rem",
+                textAlign: "left",
+                transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+                border: "none",
+                cursor: "pointer",
+                background: isActive
+                  ? "linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(255, 0, 110, 0.2))"
+                  : "rgba(255, 255, 255, 0.05)",
+                backdropFilter: "blur(10px)",
+                boxShadow: isActive ? "0 0 20px rgba(0, 212, 255, 0.3)" : "none",
+                borderLeft: isActive ? "3px solid #00d4ff" : "3px solid transparent",
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+                  e.currentTarget.style.borderLeftColor = "#00d4ff";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                  e.currentTarget.style.borderLeftColor = "transparent";
+                }
+              }}
             >
               {/* Step number / check */}
-              <div className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+              <div style={{
+                flexShrink: 0,
+                width: "20px",
+                height: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "12px",
+                fontWeight: "700",
+              }}>
                 {isDone && !isActive ? (
                   <CheckCircle2
                     size={16}
-                    style={{ color: "oklch(0.72 0.12 75)" }}
+                    style={{ color: "#39ff14" }}
                   />
                 ) : isActive ? (
-                  <Icon size={15} />
+                  <Icon size={15} style={{ color: "#00d4ff" }} />
                 ) : (
                   <span
-                    className="text-xs font-semibold"
-                    style={{ color: "oklch(0.50 0.012 65)", fontFamily: "'Cinzel', serif" }}
+                    style={{
+                      color: "rgba(255, 255, 255, 0.6)",
+                      fontFamily: "'Space Grotesk', sans-serif",
+                    }}
                   >
                     {step.id}
                   </span>
@@ -108,14 +175,18 @@ export default function Sidebar() {
 
               {/* Label */}
               <span
-                className="text-sm font-medium truncate"
                 style={{
-                  fontFamily: "'Source Sans 3', sans-serif",
+                  fontSize: "0.875rem",
+                  fontWeight: isActive ? "600" : "500",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
                   color: isActive
-                    ? "oklch(0.12 0.015 55)"
+                    ? "#00d4ff"
                     : isDone
-                    ? "oklch(0.75 0.015 70)"
-                    : "oklch(0.65 0.015 68)",
+                    ? "#39ff14"
+                    : "rgba(255, 255, 255, 0.8)",
+                  fontFamily: "'Inter', sans-serif",
                 }}
               >
                 {step.label}
@@ -126,34 +197,86 @@ export default function Sidebar() {
       </nav>
 
       {/* Progress indicator */}
-      <div className="px-4 py-3" style={{ borderTop: "1px solid oklch(0.22 0.022 55)" }}>
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>
+      <div style={{
+        padding: "1rem",
+        borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+      }}>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "0.75rem",
+        }}>
+          <span style={{
+            fontSize: "0.75rem",
+            color: "rgba(255, 255, 255, 0.6)",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            fontWeight: "600",
+          }}>
             Progress
           </span>
-          <span className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
+          <span style={{
+            fontSize: "0.75rem",
+            fontWeight: "700",
+            color: "#00d4ff",
+          }}>
             {completedSteps.size}/{STEPS.length}
           </span>
         </div>
         <div
-          className="h-1.5 rounded-full overflow-hidden"
-          style={{ background: "oklch(0.22 0.018 52)" }}
+          style={{
+            height: "6px",
+            borderRadius: "3px",
+            overflow: "hidden",
+            background: "rgba(255, 255, 255, 0.1)",
+          }}
         >
           <div
-            className="h-full rounded-full transition-all duration-500"
             style={{
+              height: "100%",
+              borderRadius: "3px",
+              transition: "width 500ms cubic-bezier(0.4, 0, 0.2, 1)",
               width: `${(completedSteps.size / STEPS.length) * 100}%`,
-              background: "linear-gradient(90deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
+              background: "linear-gradient(90deg, #00d4ff, #ff006e, #39ff14)",
             }}
           />
         </div>
 
         <button
           onClick={resetProject}
-          className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs py-1.5 rounded transition-colors hover:bg-[oklch(0.20_0.016_52)]"
-          style={{ color: "oklch(0.45 0.010 60)" }}
+          style={{
+            marginTop: "0.75rem",
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+            fontSize: "0.75rem",
+            padding: "0.625rem",
+            borderRadius: "8px",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            background: "rgba(255, 255, 255, 0.05)",
+            color: "rgba(255, 255, 255, 0.6)",
+            cursor: "pointer",
+            transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+            fontFamily: "'Inter', sans-serif",
+            fontWeight: "500",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(0, 212, 255, 0.1)";
+            e.currentTarget.style.color = "#00d4ff";
+            e.currentTarget.style.borderColor = "#00d4ff";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+            e.currentTarget.style.color = "rgba(255, 255, 255, 0.6)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+          }}
         >
-          <RotateCcw size={11} />
+          <RotateCcw size={12} />
           New Project
         </button>
       </div>
