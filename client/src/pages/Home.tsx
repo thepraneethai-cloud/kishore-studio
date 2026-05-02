@@ -67,6 +67,7 @@ export default function Home() {
             overflowY: "auto",
             transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
           }}
+          onClick={() => setSidebarOpen(false)}
         >
           <div
             style={{
@@ -76,6 +77,7 @@ export default function Home() {
               margin: "0 auto",
               width: "100%",
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             <StepComponent />
           </div>
