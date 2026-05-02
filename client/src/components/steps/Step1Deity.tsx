@@ -1,6 +1,6 @@
 // ============================================================
 // STEP 1: Deity / Theme Selector
-// Neumorphic Modern design with text input and AI suggestions
+// Glassmorphism design with vibrant accents and frosted glass
 // ============================================================
 import { useProject } from "@/contexts/ProjectContext";
 import { CheckCircle2, ChevronRight, Sparkles, Loader2 } from "lucide-react";
@@ -72,54 +72,56 @@ export default function Step1Deity() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
       {/* Header */}
       <div>
         <p style={{
           fontSize: "0.75rem",
           textTransform: "uppercase",
           letterSpacing: "0.1em",
-          marginBottom: "0.25rem",
+          marginBottom: "0.5rem",
           color: "var(--text-tertiary)",
-          fontWeight: "600",
+          fontWeight: "700",
         }}>
           Step 1 of 9
         </p>
         <h2 style={{
-          fontSize: "2rem",
+          fontSize: "2.5rem",
           fontWeight: "700",
-          marginBottom: "0.5rem",
+          marginBottom: "1rem",
           color: "var(--text-primary)",
+          background: "linear-gradient(135deg, #00d4ff, #ff006e)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
         }}>
           Select Deity & Theme
         </h2>
         <p style={{
-          fontSize: "0.875rem",
+          fontSize: "1rem",
           color: "var(--text-secondary)",
         }}>
           Type any deity, theme, or mythology — AI will suggest relevant options.
         </p>
       </div>
 
-      {/* Input Card */}
-      <div style={{
-        backgroundColor: "var(--bg-tertiary)",
-        borderRadius: "var(--radius-lg)",
-        padding: "1.5rem",
-        boxShadow: "var(--shadow-md)",
+      {/* Input Card - Glass Effect */}
+      <div className="glass-card accent-blue" style={{
         display: "flex",
         flexDirection: "column",
-        gap: "1rem",
+        gap: "1.5rem",
       }}>
         <label style={{
           fontSize: "0.875rem",
-          fontWeight: "600",
-          color: "var(--text-primary)",
+          fontWeight: "700",
+          color: "var(--accent-blue)",
           display: "flex",
           alignItems: "center",
-          gap: "0.5rem",
+          gap: "0.75rem",
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
         }}>
-          <Sparkles size={16} style={{ color: "var(--accent-primary)" }} />
+          <Sparkles size={18} style={{ color: "var(--accent-blue)" }} />
           Deity, Theme, or Mythology
         </label>
 
@@ -137,30 +139,35 @@ export default function Step1Deity() {
               width: "100%",
               padding: "1rem",
               fontSize: "1rem",
-              border: "none",
+              border: "1px solid rgba(0, 212, 255, 0.3)",
               borderRadius: "var(--radius-md)",
-              backgroundColor: "var(--bg-primary)",
+              background: "rgba(0, 212, 255, 0.05)",
               color: "var(--text-primary)",
-              boxShadow: "var(--shadow-inset)",
               transition: "all var(--transition-base)",
-              fontFamily: "inherit",
+              fontFamily: "'Inter', sans-serif",
+              backdropFilter: "blur(10px)",
             }}
             onFocus={(e) => {
-              e.currentTarget.style.boxShadow = "var(--shadow-inset), 0 0 0 3px var(--accent-primary)";
+              e.currentTarget.style.borderColor = "var(--accent-blue)";
+              e.currentTarget.style.background = "rgba(0, 212, 255, 0.1)";
+              e.currentTarget.style.boxShadow = "0 0 20px rgba(0, 212, 255, 0.3)";
               setShowSuggestions(true);
             }}
             onBlur={(e) => {
-              e.currentTarget.style.boxShadow = "var(--shadow-inset)";
+              e.currentTarget.style.borderColor = "rgba(0, 212, 255, 0.3)";
+              e.currentTarget.style.background = "rgba(0, 212, 255, 0.05)";
+              e.currentTarget.style.boxShadow = "none";
             }}
           />
           {isLoadingSuggestions && (
             <Loader2 
-              size={16} 
+              size={18} 
               style={{
                 position: "absolute",
-                right: "0.75rem",
-                top: "0.75rem",
-                color: "var(--accent-primary)",
+                right: "1rem",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--accent-blue)",
                 animation: "spin 1s linear infinite",
               }}
             />
@@ -172,55 +179,63 @@ export default function Step1Deity() {
           <div style={{
             display: "flex",
             flexDirection: "column",
-            gap: "0.5rem",
-            borderTop: "1px solid var(--bg-secondary)",
+            gap: "1rem",
+            borderTop: "1px solid rgba(0, 212, 255, 0.2)",
             paddingTop: "1rem",
           }}>
             <p style={{
               fontSize: "0.75rem",
               color: "var(--text-tertiary)",
-              fontWeight: "600",
+              fontWeight: "700",
               textTransform: "uppercase",
+              letterSpacing: "0.5px",
             }}>
-              Suggestions
+              ✨ AI Suggestions
             </p>
             <div style={{
               display: "grid",
               gridTemplateColumns: "repeat(2, 1fr)",
-              gap: "0.5rem",
+              gap: "0.75rem",
             }}>
               {suggestions.map((suggestion) => (
                 <button
                   key={suggestion}
                   onClick={() => handleSelect(suggestion)}
                   style={{
-                    padding: "0.75rem",
+                    padding: "0.75rem 1rem",
                     borderRadius: "var(--radius-md)",
                     fontSize: "0.875rem",
                     textAlign: "left",
                     transition: "all var(--transition-base)",
-                    border: "none",
+                    border: deityInput === suggestion
+                      ? "1.5px solid var(--accent-blue)"
+                      : "1px solid rgba(255, 255, 255, 0.1)",
                     cursor: "pointer",
                     backgroundColor: deityInput === suggestion
-                      ? "var(--accent-primary)"
-                      : "var(--bg-secondary)",
+                      ? "rgba(0, 212, 255, 0.15)"
+                      : "rgba(255, 255, 255, 0.05)",
                     color: deityInput === suggestion
-                      ? "white"
+                      ? "var(--accent-blue)"
                       : "var(--text-secondary)",
+                    backdropFilter: "blur(10px)",
+                    fontWeight: deityInput === suggestion ? "700" : "500",
                     boxShadow: deityInput === suggestion
-                      ? "var(--shadow-md)"
-                      : "var(--shadow-sm)",
-                    fontWeight: deityInput === suggestion ? "600" : "500",
+                      ? "0 0 15px rgba(0, 212, 255, 0.3)"
+                      : "none",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "var(--shadow-md)";
+                    e.currentTarget.style.backgroundColor = "rgba(0, 212, 255, 0.2)";
+                    e.currentTarget.style.boxShadow = "0 0 20px rgba(0, 212, 255, 0.4)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.backgroundColor = deityInput === suggestion
+                      ? "rgba(0, 212, 255, 0.15)"
+                      : "rgba(255, 255, 255, 0.05)";
                     e.currentTarget.style.boxShadow = deityInput === suggestion
-                      ? "var(--shadow-md)"
-                      : "var(--shadow-sm)";
+                      ? "0 0 15px rgba(0, 212, 255, 0.3)"
+                      : "none";
                   }}
                 >
                   {suggestion}
@@ -234,6 +249,7 @@ export default function Step1Deity() {
         <p style={{
           fontSize: "0.75rem",
           color: "var(--text-tertiary)",
+          fontStyle: "italic",
         }}>
           💡 Tip: You can enter any deity name, theme, or mythology story. The AI will help generate relevant content.
         </p>
@@ -241,11 +257,7 @@ export default function Step1Deity() {
 
       {/* Song Title Input */}
       {deityInput && (
-        <div style={{
-          backgroundColor: "var(--bg-tertiary)",
-          borderRadius: "var(--radius-lg)",
-          padding: "1.5rem",
-          boxShadow: "var(--shadow-md)",
+        <div className="glass-card accent-pink" style={{
           display: "flex",
           flexDirection: "column",
           gap: "1rem",
@@ -253,8 +265,10 @@ export default function Step1Deity() {
         }}>
           <label style={{
             fontSize: "0.875rem",
-            fontWeight: "600",
-            color: "var(--text-primary)",
+            fontWeight: "700",
+            color: "var(--accent-pink)",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
           }}>
             Song Title
           </label>
@@ -267,19 +281,23 @@ export default function Step1Deity() {
               width: "100%",
               padding: "1rem",
               fontSize: "1rem",
-              border: "none",
+              border: "1px solid rgba(255, 0, 110, 0.3)",
               borderRadius: "var(--radius-md)",
-              backgroundColor: "var(--bg-primary)",
+              background: "rgba(255, 0, 110, 0.05)",
               color: "var(--text-primary)",
-              boxShadow: "var(--shadow-inset)",
               transition: "all var(--transition-base)",
-              fontFamily: "inherit",
+              fontFamily: "'Inter', sans-serif",
+              backdropFilter: "blur(10px)",
             }}
             onFocus={(e) => {
-              e.currentTarget.style.boxShadow = "var(--shadow-inset), 0 0 0 3px var(--accent-primary)";
+              e.currentTarget.style.borderColor = "var(--accent-pink)";
+              e.currentTarget.style.background = "rgba(255, 0, 110, 0.1)";
+              e.currentTarget.style.boxShadow = "0 0 20px rgba(255, 0, 110, 0.3)";
             }}
             onBlur={(e) => {
-              e.currentTarget.style.boxShadow = "var(--shadow-inset)";
+              e.currentTarget.style.borderColor = "rgba(255, 0, 110, 0.3)";
+              e.currentTarget.style.background = "rgba(255, 0, 110, 0.05)";
+              e.currentTarget.style.boxShadow = "none";
             }}
           />
           <p style={{
@@ -295,41 +313,44 @@ export default function Step1Deity() {
       <button
         onClick={handleContinue}
         disabled={!deityInput}
+        className="btn-primary"
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          gap: "0.5rem",
-          padding: "1rem 1.5rem",
+          gap: "0.75rem",
+          padding: "1.25rem 2rem",
           borderRadius: "var(--radius-md)",
           fontSize: "1rem",
-          fontWeight: "600",
+          fontWeight: "700",
           border: "none",
           cursor: deityInput ? "pointer" : "not-allowed",
           transition: "all var(--transition-base)",
           background: deityInput
-            ? "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))"
-            : "var(--bg-secondary)",
-          color: deityInput ? "white" : "var(--text-tertiary)",
-          boxShadow: deityInput ? "var(--shadow-md)" : "var(--shadow-sm)",
+            ? "linear-gradient(135deg, var(--accent-blue), var(--accent-cyan))"
+            : "rgba(255, 255, 255, 0.1)",
+          color: deityInput ? "#000" : "var(--text-muted)",
+          boxShadow: deityInput ? "0 0 30px rgba(0, 212, 255, 0.4)" : "none",
           opacity: deityInput ? 1 : 0.5,
           width: "100%",
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
         }}
         onMouseEnter={(e) => {
           if (deityInput) {
-            e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow = "var(--shadow-lg)";
+            e.currentTarget.style.transform = "translateY(-3px)";
+            e.currentTarget.style.boxShadow = "0 0 50px rgba(0, 212, 255, 0.6)";
           }
         }}
         onMouseLeave={(e) => {
           if (deityInput) {
             e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "var(--shadow-md)";
+            e.currentTarget.style.boxShadow = "0 0 30px rgba(0, 212, 255, 0.4)";
           }
         }}
       >
         Continue to Lyrics
-        <ChevronRight size={16} />
+        <ChevronRight size={20} />
       </button>
     </div>
   );
