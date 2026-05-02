@@ -67,7 +67,7 @@ export default function Step2Lyrics() {
   };
 
   const handleAIGenerate = async () => {
-    if (!deity) {
+    if (!project.deity || project.deity.trim().length === 0) {
       toast.error("Please select a deity first");
       return;
     }
@@ -75,7 +75,7 @@ export default function Step2Lyrics() {
     setIsGenerating(true);
     try {
       const result = await generateLyricsMutation.mutateAsync({
-        deity: project.deity as any,
+        deity: project.deity,
         customPrompt: customPrompt || undefined,
         theme: theme || undefined,
         duration: 4,

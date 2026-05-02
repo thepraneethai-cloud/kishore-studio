@@ -5,7 +5,7 @@
 import { invokeLLM } from "./llm";
 
 export interface LyricsGenerationInput {
-  deity: "venkateswara" | "ganesha" | "lakshmi" | "shiva";
+  deity: string; // Accept any deity name (Hanuman, Shiva, custom mythology, etc.)
   customPrompt?: string; // User can provide their own direction
   theme?: string; // e.g., "devotion", "gratitude", "protection"
   duration?: number; // Estimated duration in minutes (3-6)

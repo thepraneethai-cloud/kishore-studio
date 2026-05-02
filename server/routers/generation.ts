@@ -18,7 +18,7 @@ export const generationRouter = router({
   generateLyrics: publicProcedure
     .input(
       z.object({
-        deity: z.enum(["venkateswara", "ganesha", "lakshmi", "shiva"]),
+        deity: z.string(), // Accept any custom deity name (Hanuman, Shiva, custom mythology, etc.)
         customPrompt: z.string().optional(),
         theme: z.string().optional(),
         duration: z.number().min(3).max(10).optional(),
