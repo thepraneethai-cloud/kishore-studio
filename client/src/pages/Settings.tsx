@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Eye, EyeOff, Save, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Save, AlertCircle, ArrowLeft } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function Settings() {
+  const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<"api-keys" | "providers" | "budget">("api-keys");
   const [apiKeys, setApiKeys] = useState({
     openai: "",
@@ -31,8 +33,34 @@ export default function Settings() {
 
   return (
     <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-      {/* Header */}
+      {/* Header with Back Button */}
       <div style={{ marginBottom: "2rem" }}>
+        <button
+          onClick={() => navigate("/")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            background: "none",
+            border: "none",
+            color: "#00d4ff",
+            cursor: "pointer",
+            fontSize: "0.875rem",
+            marginBottom: "1rem",
+            padding: "0.5rem",
+            borderRadius: "0.5rem",
+            transition: "all 200ms",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(0, 212, 255, 0.1)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "none";
+          }}
+        >
+          <ArrowLeft size={18} />
+          Back
+        </button>
         <h1
           style={{
             fontSize: "2rem",
