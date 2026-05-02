@@ -1,20 +1,23 @@
 // ============================================================
-// DESIGN: "Digital Sanctum" — App root with ProjectProvider
+// DESIGN: App root with ProjectProvider and routing
 // ============================================================
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
+import Settings from "@/pages/Settings";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ProjectProvider } from "./contexts/ProjectContext";
 import Home from "./pages/Home";
+
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path={"/settings"} component={Settings} />
       <Route path={"/404"} component={NotFound} />
+      {/* Final fallback route */}
       <Route component={NotFound} />
     </Switch>
   );

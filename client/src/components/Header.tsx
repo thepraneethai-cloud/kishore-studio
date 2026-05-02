@@ -177,7 +177,7 @@ export default function Header({ sidebarOpen, onToggleSidebar, activeStep }: Hea
             <button
               onClick={() => {
                 setShowMenu(false);
-                // TODO: Navigate to settings
+                window.location.href = '/settings';
               }}
               style={{
                 width: "100%",
