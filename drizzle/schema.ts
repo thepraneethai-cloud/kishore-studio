@@ -1,4 +1,13 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import {
+  int,
+  mysqlEnum,
+  mysqlTable,
+  text,
+  timestamp,
+  varchar,
+  decimal,
+  json,
+} from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -25,4 +34,109 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+/**
+ * Projects table for storing video projects
+ */
+export const projects = mysqlTable("projects", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: mysqlEnum("type", ["devotional", "story", "mythology", "custom"]).notNull(),
+  status: mysqlEnum("status", ["draft", "in_progress", "completed", "archived"]).default("draft").notNull(),
+  deity: varchar("deity", { length: 64 }),
+  storyTitle: varchar("storyTitle", { length: 255 }),
+  storyDescription: text("storyDescription"),
+  lyrics: text("lyrics"),
+  metadata: json("metadata"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Project = typeof projects.$inferSelect;
+export type InsertProject = typeof projects.$inferInsert;
+
+/**
+ * Background jobs table for tracking generation tasks
+ */
+export const jobs = mysqlTable("jobs", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  projectId: int("projectId").notNull(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("type", ["lyrics", "image", "video", "scene_generation"]).notNull(),
+  provider: varchar("provider", { length: 64 }).notNull(),
+  status: mysqlEnum("status", ["queued", "processing", "succeeded", "failed", "cancelled"]).default("queued").notNull(),
+  input: json("input").notNull(),
+  output: json("output"),
+  cost: decimal("cost", { precision: 10, scale: 4 }),
+  errorMessage: text("errorMessage"),
+  retryCount: int("retryCount").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Job = typeof jobs.$inferSelect;
+export type InsertJob = typeof jobs.$inferInsert;
+
+/**
+ * User settings for AI provider preferences and API keys
+ */
+export const userSettings = mysqlTable("userSettings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  lyricsProvider: mysqlEnum("lyricsProvider", ["chatgpt", "claude", "gemini"]).default("chatgpt"),
+  imageProvider: mysqlEnum("imageProvider", ["flux", "dalle", "midjourney"]).default("flux"),
+  videoProvider: mysqlEnum("videoProvider", ["runway", "grok", "pika"]).default("runway"),
+  openaiApiKey: text("openaiApiKey"),
+  claudeApiKey: text("claudeApiKey"),
+  geminiApiKey: text("geminiApiKey"),
+  replicateApiKey: text("replicateApiKey"),
+  dallEApiKey: text("dallEApiKey"),
+  midjourneyApiKey: text("midjourneyApiKey"),
+  grokApiKey: text("grokApiKey"),
+  pikaApiKey: text("pikaApiKey"),
+  monthlyBudgetUSD: decimal("monthlyBudgetUSD", { precision: 10, scale: 2 }).default("50.00"),
+  budgetResetDay: int("budgetResetDay").default(1),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserSettings = typeof userSettings.$inferSelect;
+export type InsertUserSettings = typeof userSettings.$inferInsert;
+
+/**
+ * Cost tracking for usage analytics
+ */
+export const costTracking = mysqlTable("costTracking", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  provider: varchar("provider", { length: 64 }).notNull(),
+  type: mysqlEnum("type", ["lyrics", "image", "video"]).notNull(),
+  cost: decimal("cost", { precision: 10, scale: 4 }).notNull(),
+  jobId: varchar("jobId", { length: 64 }),
+  date: timestamp("date").defaultNow().notNull(),
+});
+
+export type CostTracking = typeof costTracking.$inferSelect;
+export type InsertCostTracking = typeof costTracking.$inferInsert;
+
+/**
+ * Scenes for story/mythology mode
+ */
+export const scenes = mysqlTable("scenes", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull(),
+  sceneNumber: int("sceneNumber").notNull(),
+  description: text("description").notNull(),
+  imagePrompt: text("imagePrompt"),
+  videoPrompt: text("videoPrompt"),
+  imageJobId: varchar("imageJobId", { length: 64 }),
+  videoJobId: varchar("videoJobId", { length: 64 }),
+  imageUrl: text("imageUrl"),
+  videoUrl: text("videoUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Scene = typeof scenes.$inferSelect;
+export type InsertScene = typeof scenes.$inferInsert;
