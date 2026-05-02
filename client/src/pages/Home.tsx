@@ -1,9 +1,9 @@
 // ============================================================
-// DESIGN: "Digital Sanctum" — Main workspace page
-// Fixed sidebar + scrollable main content area
+// DESIGN: Main workspace with truly collapsible sidebar
 // ============================================================
 import { useProject } from "@/contexts/ProjectContext";
 import Sidebar from "@/components/Sidebar";
+import Header from "@/components/Header";
 import Step1Deity from "@/components/steps/Step1Deity";
 import Step2Lyrics from "@/components/steps/Step2Lyrics";
 import Step3SunoStyle from "@/components/steps/Step3SunoStyle";
@@ -13,6 +13,7 @@ import Step6ImagePrompts from "@/components/steps/Step6ImagePrompts";
 import Step7VideoPrompts from "@/components/steps/Step7VideoPrompts";
 import Step8CapCut from "@/components/steps/Step8CapCut";
 import Step9YouTube from "@/components/steps/Step9YouTube";
+import { useState } from "react";
 
 const STEP_COMPONENTS: Record<number, React.ComponentType> = {
   1: Step1Deity,
@@ -28,60 +29,71 @@ const STEP_COMPONENTS: Record<number, React.ComponentType> = {
 
 export default function Home() {
   const { activeStep } = useProject();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const StepComponent = STEP_COMPONENTS[activeStep] || Step1Deity;
 
   return (
     <div
-      className="min-h-screen"
-      style={{ background: "oklch(0.14 0.018 55)" }}
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #0a0a14 0%, #1a1a2e 50%, #16213e 100%)",
+        backgroundAttachment: "fixed",
+        display: "flex",
+        flexDirection: "column",
+      }}
     >
-      {/* Fixed Sidebar */}
-      <Sidebar />
+      {/* Header with toggle, title, and user menu */}
+      <Header sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} activeStep={activeStep} />
 
-      {/* Main Content Area */}
-      <main
-        className="min-h-screen"
-        style={{ marginLeft: "224px" }} /* 56 * 4 = 224px = w-56 */
-      >
-        {/* Top header bar */}
-        <div
-          className="sticky top-0 z-30 px-6 py-3 flex items-center justify-between"
-          style={{
-            background: "oklch(0.14 0.018 55 / 0.95)",
-            backdropFilter: "blur(8px)",
-            borderBottom: "1px solid oklch(0.22 0.022 55)",
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className="h-6 w-px"
-              style={{ background: "oklch(0.72 0.12 75 / 0.4)" }}
-            />
-            <span
-              className="text-sm font-semibold"
-              style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}
-            >
-              Telugu Devotional Video Studio
-            </span>
-          </div>
+      {/* Main content area */}
+      <div style={{ display: "flex", flex: 1 }}>
+        {/* Sidebar - Conditionally rendered */}
+        {sidebarOpen && (
           <div
-            className="text-xs px-2.5 py-1 rounded"
             style={{
-              background: "oklch(0.72 0.12 75 / 0.1)",
-              color: "oklch(0.65 0.14 65)",
-              border: "1px solid oklch(0.72 0.12 75 / 0.2)",
-              fontFamily: "'Source Sans 3', sans-serif",
+              animation: "slideInLeft 250ms ease-out",
             }}
           >
-            Step {activeStep} of 9
+            <Sidebar />
           </div>
-        </div>
+        )}
 
-        {/* Step workspace */}
-        <div className="px-8 py-6 max-w-5xl">
-          <StepComponent />
-        </div>
-      </main>
+        {/* Main workspace */}
+        <main
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflowY: "auto",
+            transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+          }}
+        >
+          <div
+            style={{
+              flex: 1,
+              padding: "2rem",
+              maxWidth: "1200px",
+              margin: "0 auto",
+              width: "100%",
+            }}
+          >
+            <StepComponent />
+          </div>
+        </main>
+      </div>
+
+      <style>{`
+        @keyframes slideInLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }

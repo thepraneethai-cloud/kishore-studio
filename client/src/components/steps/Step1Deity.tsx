@@ -31,11 +31,20 @@ export default function Step1Deity() {
       "Venkateswara", "Ganesha", "Lakshmi", "Shiva", "Brahma",
       "Durga", "Kali", "Saraswati", "Hanuman", "Krishna",
       "Radha", "Vishnu", "Indra", "Agni", "Vayu",
+      "Parvati", "Nandi", "Kartikeya", "Murugan", "Govinda",
+      "Hari", "Narayana", "Balaji", "Tirupati", "Srinivasa",
+      "Jagannath", "Rameswaram", "Somnath", "Kedarnath", "Badrinath",
+      "Kashi Vishwanath", "Mahakaleshwar", "Omkareshwar", "Ujjain", "Dwarka",
+      "Annapurna", "Kamakshi", "Meenakshi", "Vaishno Devi", "Chamundeshwari",
+      "Bhagavati", "Tripura Sundari", "Devi Mahatmya", "Ayyappa", "Subrahmanya",
       // Themes
       "Divine Love", "Protection", "Prosperity", "Wisdom", "Power",
       "Devotion", "Gratitude", "Meditation", "Celebration", "Healing",
+      "Courage", "Compassion", "Strength", "Peace", "Bliss",
       // Mythology
       "Ramayana", "Mahabharata", "Bhagavad Gita", "Vedas", "Puranas",
+      "Ramayan", "Mahabharat", "Upanishads", "Rig Veda", "Yajur Veda",
+      "Atharva Veda", "Sama Veda", "Brahma Sutras", "Yoga Sutras",
     ];
 
     const filtered = allSuggestions.filter(s =>
