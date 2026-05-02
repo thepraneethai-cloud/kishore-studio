@@ -1,10 +1,8 @@
 // ============================================================
-// DESIGN: "Digital Sanctum" — Step 1: Deity / Theme Selector
-// Text input with AI suggestions
+// STEP 1: Deity / Theme Selector
+// Neumorphic Modern design with text input and AI suggestions
 // ============================================================
 import { useProject } from "@/contexts/ProjectContext";
-import { trpc } from "@/lib/trpc";
-import { cn } from "@/lib/utils";
 import { CheckCircle2, ChevronRight, Sparkles, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -74,29 +72,59 @@ export default function Step1Deity() {
   };
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
       {/* Header */}
       <div>
-        <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
-          Step 1
+        <p style={{
+          fontSize: "0.75rem",
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          marginBottom: "0.25rem",
+          color: "var(--text-tertiary)",
+          fontWeight: "600",
+        }}>
+          Step 1 of 9
         </p>
-        <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
+        <h2 style={{
+          fontSize: "2rem",
+          fontWeight: "700",
+          marginBottom: "0.5rem",
+          color: "var(--text-primary)",
+        }}>
           Select Deity & Theme
         </h2>
-        <p className="text-sm" style={{ color: "oklch(0.60 0.015 68)" }}>
+        <p style={{
+          fontSize: "0.875rem",
+          color: "var(--text-secondary)",
+        }}>
           Type any deity, theme, or mythology — AI will suggest relevant options.
         </p>
       </div>
 
-      {/* Deity/Theme Input with AI Suggestions */}
-      <div className="shrine-panel p-4 space-y-3">
-        <label className="text-sm font-semibold flex items-center gap-2" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
-          <Sparkles size={16} style={{ color: "oklch(0.80 0.12 78)" }} />
+      {/* Input Card */}
+      <div style={{
+        backgroundColor: "var(--bg-tertiary)",
+        borderRadius: "var(--radius-lg)",
+        padding: "1.5rem",
+        boxShadow: "var(--shadow-md)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+      }}>
+        <label style={{
+          fontSize: "0.875rem",
+          fontWeight: "600",
+          color: "var(--text-primary)",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem",
+        }}>
+          <Sparkles size={16} style={{ color: "var(--accent-primary)" }} />
           Deity, Theme, or Mythology
         </label>
 
         {/* Input field */}
-        <div className="relative">
+        <div style={{ position: "relative" }}>
           <input
             type="text"
             value={deityInput}
@@ -104,37 +132,95 @@ export default function Step1Deity() {
               setDeityInput(e.target.value);
               setShowSuggestions(true);
             }}
-            onFocus={() => setShowSuggestions(true)}
             placeholder="e.g., Venkateswara, Divine Love, Ramayana..."
-            className="sanctum-input pr-10"
+            style={{
+              width: "100%",
+              padding: "1rem",
+              fontSize: "1rem",
+              border: "none",
+              borderRadius: "var(--radius-md)",
+              backgroundColor: "var(--bg-primary)",
+              color: "var(--text-primary)",
+              boxShadow: "var(--shadow-inset)",
+              transition: "all var(--transition-base)",
+              fontFamily: "inherit",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.boxShadow = "var(--shadow-inset), 0 0 0 3px var(--accent-primary)";
+              setShowSuggestions(true);
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.boxShadow = "var(--shadow-inset)";
+            }}
           />
           {isLoadingSuggestions && (
-            <Loader2 size={16} className="absolute right-3 top-2.5 animate-spin" style={{ color: "oklch(0.72 0.12 75)" }} />
+            <Loader2 
+              size={16} 
+              style={{
+                position: "absolute",
+                right: "0.75rem",
+                top: "0.75rem",
+                color: "var(--accent-primary)",
+                animation: "spin 1s linear infinite",
+              }}
+            />
           )}
         </div>
 
         {/* AI Suggestions */}
         {showSuggestions && suggestions.length > 0 && (
-          <div className="space-y-1.5 border-t border-oklch(0.22 0.022 55) pt-3">
-            <p className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>
-              Suggestions:
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+            borderTop: "1px solid var(--bg-secondary)",
+            paddingTop: "1rem",
+          }}>
+            <p style={{
+              fontSize: "0.75rem",
+              color: "var(--text-tertiary)",
+              fontWeight: "600",
+              textTransform: "uppercase",
+            }}>
+              Suggestions
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: "0.5rem",
+            }}>
               {suggestions.map((suggestion) => (
                 <button
                   key={suggestion}
                   onClick={() => handleSelect(suggestion)}
-                  className="px-3 py-2 rounded text-xs text-left transition-all hover:scale-[1.02]"
                   style={{
-                    background: deityInput === suggestion
-                      ? "oklch(0.72 0.12 75 / 0.2)"
-                      : "oklch(0.22 0.022 55)",
+                    padding: "0.75rem",
+                    borderRadius: "var(--radius-md)",
+                    fontSize: "0.875rem",
+                    textAlign: "left",
+                    transition: "all var(--transition-base)",
+                    border: "none",
+                    cursor: "pointer",
+                    backgroundColor: deityInput === suggestion
+                      ? "var(--accent-primary)"
+                      : "var(--bg-secondary)",
                     color: deityInput === suggestion
-                      ? "oklch(0.80 0.12 78)"
-                      : "oklch(0.65 0.14 65)",
-                    border: deityInput === suggestion
-                      ? "1px solid oklch(0.72 0.12 75)"
-                      : "1px solid oklch(0.28 0.025 58)",
+                      ? "white"
+                      : "var(--text-secondary)",
+                    boxShadow: deityInput === suggestion
+                      ? "var(--shadow-md)"
+                      : "var(--shadow-sm)",
+                    fontWeight: deityInput === suggestion ? "600" : "500",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "var(--shadow-md)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = deityInput === suggestion
+                      ? "var(--shadow-md)"
+                      : "var(--shadow-sm)";
                   }}
                 >
                   {suggestion}
@@ -145,15 +231,31 @@ export default function Step1Deity() {
         )}
 
         {/* Helper text */}
-        <p className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>
+        <p style={{
+          fontSize: "0.75rem",
+          color: "var(--text-tertiary)",
+        }}>
           💡 Tip: You can enter any deity name, theme, or mythology story. The AI will help generate relevant content.
         </p>
       </div>
 
       {/* Song Title Input */}
       {deityInput && (
-        <div className="shrine-panel p-4 space-y-3 fade-in">
-          <label className="text-sm font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+        <div style={{
+          backgroundColor: "var(--bg-tertiary)",
+          borderRadius: "var(--radius-lg)",
+          padding: "1.5rem",
+          boxShadow: "var(--shadow-md)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+          animation: "fadeIn var(--transition-base)",
+        }}>
+          <label style={{
+            fontSize: "0.875rem",
+            fontWeight: "600",
+            color: "var(--text-primary)",
+          }}>
             Song Title
           </label>
           <input
@@ -161,9 +263,29 @@ export default function Step1Deity() {
             value={project.title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={`e.g., ${deityInput} Devotional Song`}
-            className="sanctum-input"
+            style={{
+              width: "100%",
+              padding: "1rem",
+              fontSize: "1rem",
+              border: "none",
+              borderRadius: "var(--radius-md)",
+              backgroundColor: "var(--bg-primary)",
+              color: "var(--text-primary)",
+              boxShadow: "var(--shadow-inset)",
+              transition: "all var(--transition-base)",
+              fontFamily: "inherit",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.boxShadow = "var(--shadow-inset), 0 0 0 3px var(--accent-primary)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.boxShadow = "var(--shadow-inset)";
+            }}
           />
-          <p className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>
+          <p style={{
+            fontSize: "0.75rem",
+            color: "var(--text-tertiary)",
+          }}>
             This will be used for YouTube title, thumbnail, and metadata.
           </p>
         </div>
@@ -173,18 +295,37 @@ export default function Step1Deity() {
       <button
         onClick={handleContinue}
         disabled={!deityInput}
-        className={cn(
-          "flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 w-full justify-center",
-          deityInput
-            ? "hover:opacity-90 hover:scale-[1.02]"
-            : "opacity-40 cursor-not-allowed"
-        )}
         style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "0.5rem",
+          padding: "1rem 1.5rem",
+          borderRadius: "var(--radius-md)",
+          fontSize: "1rem",
+          fontWeight: "600",
+          border: "none",
+          cursor: deityInput ? "pointer" : "not-allowed",
+          transition: "all var(--transition-base)",
           background: deityInput
-            ? "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))"
-            : "oklch(0.22 0.018 52)",
-          color: "oklch(0.12 0.015 55)",
-          fontFamily: "'Cinzel', serif",
+            ? "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))"
+            : "var(--bg-secondary)",
+          color: deityInput ? "white" : "var(--text-tertiary)",
+          boxShadow: deityInput ? "var(--shadow-md)" : "var(--shadow-sm)",
+          opacity: deityInput ? 1 : 0.5,
+          width: "100%",
+        }}
+        onMouseEnter={(e) => {
+          if (deityInput) {
+            e.currentTarget.style.transform = "translateY(-2px)";
+            e.currentTarget.style.boxShadow = "var(--shadow-lg)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (deityInput) {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "var(--shadow-md)";
+          }
         }}
       >
         Continue to Lyrics
