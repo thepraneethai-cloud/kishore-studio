@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1777725718205,
+      "tag": "0000_curvy_tarot",
+      "breakpoints": true
+    }
+  ]
+}
