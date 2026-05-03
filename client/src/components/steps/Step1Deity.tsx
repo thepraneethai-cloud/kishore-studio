@@ -63,9 +63,20 @@ export default function Step1Deity() {
     return () => clearTimeout(timer);
   }, [deityInput]);
 
+  const normalizeDeityKey = (name: string): string => {
+    const nameMap: Record<string, string> = {
+      "venkateswara": "venkateswara",
+      "ganesha": "ganesha",
+      "lakshmi": "lakshmi",
+      "shiva": "shiva",
+    };
+    const normalized = name.toLowerCase();
+    return nameMap[normalized] || name;
+  };
+
   const handleSelect = (suggestion: string) => {
     setDeityInput(suggestion);
-    setDeity(suggestion);
+    setDeity(normalizeDeityKey(suggestion));
     setShowSuggestions(false);
     if (!project.title) {
       setTitle(`${suggestion} Devotional Song`);
@@ -74,7 +85,7 @@ export default function Step1Deity() {
 
   const handleContinue = () => {
     if (deityInput) {
-      setDeity(deityInput);
+      setDeity(normalizeDeityKey(deityInput));
       markStepComplete(1);
       setActiveStep(2);
     }
