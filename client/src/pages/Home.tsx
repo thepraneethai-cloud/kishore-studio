@@ -46,7 +46,7 @@ export default function Home() {
       <Header sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} activeStep={activeStep} />
 
       {/* Main content area */}
-      <div style={{ display: "flex", flex: 1 }}>
+      <div style={{ display: "grid", gridTemplateColumns: sidebarOpen ? "280px 1fr" : "1fr", flex: 1, transition: "grid-template-columns 250ms ease-out" }}>
         {/* Sidebar - Conditionally rendered */}
         {sidebarOpen && (
           <div
