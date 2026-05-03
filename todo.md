@@ -51,16 +51,16 @@
 - [ ] Implement cost estimation before generation
 - [ ] Add cost breakdown reports
 
-## Phase 8: Devotional Mode
+## Phase 8: Devotional Mode ✅
 - [x] Rebuild Step 1: Deity Selector (mobile-optimized, fixed deity key normalization)
 - [x] Rebuild Step 2: Lyrics Generator with ChatGPT (AI Generate button now working)
-- [ ] Rebuild Step 3: SUNO Style Builder
-- [ ] Rebuild Step 4: Music Prompt Guide
-- [ ] Rebuild Step 5: Scene Breakdown
-- [ ] Rebuild Step 6: Image Prompts (with cost estimation)
-- [ ] Rebuild Step 7: Video Prompts (with cost estimation)
-- [ ] Rebuild Step 8: CapCut Assembly Guide
-- [ ] Rebuild Step 9: YouTube Export
+- [x] Rebuild Step 3: SUNO Style Builder (Glassmorphism theme applied)
+- [x] Rebuild Step 4: Music Prompt Guide (Glassmorphism theme applied)
+- [x] Rebuild Step 5: Scene Breakdown (Glassmorphism theme applied)
+- [x] Rebuild Step 6: Image Prompts (Glassmorphism theme applied)
+- [x] Rebuild Step 7: Video Prompts (Glassmorphism theme applied)
+- [x] Rebuild Step 8: CapCut Assembly Guide (Glassmorphism theme applied)
+- [x] Rebuild Step 9: YouTube Export (Glassmorphism theme applied)
 
 ## Phase 9: Story/Mythology Mode
 - [ ] Create Story Selector (Ramayana, Mahabharata, Mythology, Custom)
