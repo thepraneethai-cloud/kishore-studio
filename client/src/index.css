@@ -420,3 +420,73 @@ input:focus, textarea:focus, select:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, var(--accent-pink), var(--accent-lime));
 }
+
+
+/* ============================================================
+   LEGACY CLASS OVERRIDES (Digital Sanctum → Glassmorphism)
+   These convert old shrine-panel and sanctum-input to new theme
+   ============================================================ */
+
+/* Override old shrine-panel class */
+.shrine-panel {
+  background: rgba(0, 212, 255, 0.08) !important;
+  border: 1px solid rgba(0, 212, 255, 0.2) !important;
+  border-radius: 0.5rem !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.1) !important;
+  transition: all var(--transition-base) !important;
+}
+
+.shrine-panel:hover {
+  background: rgba(0, 212, 255, 0.12) !important;
+  border-color: rgba(0, 212, 255, 0.3) !important;
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.2) !important;
+}
+
+/* Override old sanctum-input class */
+.sanctum-input {
+  background: rgba(0, 212, 255, 0.05) !important;
+  border: 1px solid rgba(0, 212, 255, 0.2) !important;
+  border-radius: 0.5rem !important;
+  color: #fff !important;
+  padding: 0.75rem !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.875rem !important;
+  transition: all var(--transition-base) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+.sanctum-input:focus {
+  outline: none !important;
+  border-color: #00d4ff !important;
+  background: rgba(0, 212, 255, 0.1) !important;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3) !important;
+}
+
+.sanctum-input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Override old telugu-text class */
+.telugu-text {
+  font-family: 'Noto Sans Telugu', 'Inter', sans-serif !important;
+}
+
+/* Override old Digital Sanctum color classes */
+.oklch-text-primary {
+  color: #00d4ff !important;
+}
+
+.oklch-text-secondary {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.oklch-text-accent {
+  color: #ff006e !important;
+}
+
+.oklch-text-highlight {
+  color: #39ff14 !important;
+}

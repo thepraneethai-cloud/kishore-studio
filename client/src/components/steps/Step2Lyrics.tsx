@@ -1,5 +1,5 @@
 // ============================================================
-// DESIGN: "Digital Sanctum" — Step 2: Telugu Lyrics Generator
+// DESIGN: "Glassmorphism" — Step 2: Telugu Lyrics Generator
 // ============================================================
 import { useState } from "react";
 import { useProject } from "@/contexts/ProjectContext";
@@ -111,51 +111,68 @@ export default function Step2Lyrics() {
   const lineCount = project.lyrics.trim().split("\n").filter(Boolean).length;
 
   return (
-    <div className="space-y-5">
+    <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
       {/* Header */}
       <div>
-        <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
+        <p style={{ fontSize: "0.75rem", fontWeight: "600", letterSpacing: "0.15em", marginBottom: "0.5rem", color: "#00d4ff", textTransform: "uppercase" }}>
           Step 2
         </p>
-        <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
+        <h2 style={{ fontSize: "1.875rem", fontWeight: "700", marginBottom: "0.5rem", fontFamily: "'Space Grotesk', sans-serif", color: "#00d4ff" }}>
           Write Telugu Lyrics
         </h2>
         {deity && (
-          <p className="text-sm" style={{ color: "oklch(0.60 0.015 68)" }}>
-            Composing for <span style={{ color: "oklch(0.72 0.12 75)" }}>{deity.name}</span> — {deity.mood}
+          <p style={{ fontSize: "0.875rem", color: "rgba(255, 255, 255, 0.6)" }}>
+            Composing for <span style={{ color: "#ff006e" }}>{deity.name}</span> — {deity.mood}
           </p>
         )}
       </div>
 
       {/* Two-column layout: editor + tips */}
-      <div className="grid grid-cols-5 gap-4">
-        {/* Lyrics Editor — 3 cols */}
-        <div className="col-span-3 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "1.5rem" }}>
+        {/* Lyrics Editor */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: "0.875rem", fontWeight: "600", color: "#00d4ff", fontFamily: "'Space Grotesk', sans-serif" }}>
               Lyrics Editor
             </span>
-            <div className="flex gap-2">
+            <div style={{ display: "flex", gap: "0.5rem" }}>
               <button
                 onClick={handleAIGenerate}
                 disabled={isGenerating || !deity}
-                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors disabled:opacity-60"
                 style={{
-                  background: "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
-                  color: "oklch(0.12 0.015 55)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  fontSize: "0.75rem",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "0.375rem",
+                  background: "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)",
+                  color: "#000",
                   border: "none",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  opacity: isGenerating || !deity ? 0.6 : 1,
+                  transition: "all 200ms",
                 }}
               >
-                <Wand2 size={12} className={isGenerating ? "animate-spin" : ""} />
+                <Wand2 size={12} style={{ animation: isGenerating ? "spin 1s linear infinite" : "none" }} />
                 {isGenerating ? "Generating..." : "AI Generate"}
               </button>
               <button
                 onClick={loadTemplate}
-                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors"
                 style={{
-                  background: "oklch(0.22 0.018 52)",
-                  color: "oklch(0.65 0.14 65)",
-                  border: "1px solid oklch(0.28 0.025 58)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  fontSize: "0.75rem",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "0.375rem",
+                  background: "rgba(0, 212, 255, 0.1)",
+                  color: "#00d4ff",
+                  border: "1px solid rgba(0, 212, 255, 0.3)",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "all 200ms",
                 }}
               >
                 <FileText size={12} />
@@ -163,11 +180,19 @@ export default function Step2Lyrics() {
               </button>
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors"
                 style={{
-                  background: "oklch(0.22 0.018 52)",
-                  color: copied ? "oklch(0.72 0.12 75)" : "oklch(0.60 0.015 68)",
-                  border: "1px solid oklch(0.28 0.025 58)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  fontSize: "0.75rem",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "0.375rem",
+                  background: "rgba(0, 212, 255, 0.1)",
+                  color: copied ? "#39ff14" : "#00d4ff",
+                  border: "1px solid rgba(0, 212, 255, 0.3)",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "all 200ms",
                 }}
               >
                 {copied ? <Check size={12} /> : <Copy size={12} />}
@@ -180,46 +205,66 @@ export default function Step2Lyrics() {
             value={project.lyrics}
             onChange={(e) => setLyrics(e.target.value)}
             placeholder={`Write your Telugu devotional lyrics here...\n\n[Pallavi]\nగోవింద గోవింద...\n\n[Charanam 1]\n...`}
-            className="sanctum-input telugu-text"
-            rows={18}
-            style={{ minHeight: "360px" }}
+            style={{
+              minHeight: "360px",
+              padding: "1rem",
+              background: "rgba(0, 212, 255, 0.05)",
+              border: "1px solid rgba(0, 212, 255, 0.2)",
+              borderRadius: "0.5rem",
+              color: "#fff",
+              fontSize: "0.875rem",
+              fontFamily: "'Inter', sans-serif",
+              resize: "vertical",
+            }}
           />
 
-          <div className="flex gap-4 text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>
+          <div style={{ display: "flex", gap: "1rem", fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.5)" }}>
             <span>{wordCount} words</span>
             <span>{lineCount} lines</span>
             <span>~{Math.round(wordCount / 40)} min read</span>
           </div>
         </div>
 
-        {/* Tips Panel — 2 cols */}
-        <div className="col-span-2 space-y-3">
+        {/* Tips Panel */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {/* Structure guide */}
-          <div className="shrine-panel p-3">
-            <p className="text-xs font-semibold mb-2" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+          <div style={{ padding: "1rem", background: "rgba(0, 212, 255, 0.08)", border: "1px solid rgba(0, 212, 255, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)" }}>
+            <p style={{ fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.75rem", color: "#00d4ff", fontFamily: "'Space Grotesk', sans-serif" }}>
               Song Structure
             </p>
             <pre
-              className="text-xs whitespace-pre-wrap leading-relaxed"
-              style={{ color: "oklch(0.60 0.015 68)", fontFamily: "'Source Sans 3', sans-serif" }}
+              style={{
+                fontSize: "0.75rem",
+                whiteSpace: "pre-wrap",
+                lineHeight: "1.5",
+                color: "rgba(255, 255, 255, 0.6)",
+                fontFamily: "'Inter', monospace",
+              }}
             >
               {STRUCTURE_GUIDE}
             </pre>
           </div>
 
           {/* AI Generation Options */}
-          <div className="shrine-panel p-3 space-y-2">
-            <p className="text-xs font-semibold" style={{ color: "oklch(0.80 0.12 78)", fontFamily: "'Cinzel', serif" }}>
+          <div style={{ padding: "1rem", background: "rgba(0, 212, 255, 0.08)", border: "1px solid rgba(0, 212, 255, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            <p style={{ fontSize: "0.75rem", fontWeight: "600", color: "#39ff14", fontFamily: "'Space Grotesk', sans-serif" }}>
               ✨ AI Options
             </p>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium" style={{ color: "oklch(0.60 0.015 68)" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
                 Theme
               </label>
               <select
                 value={theme}
                 onChange={(e) => setTheme(e.target.value)}
-                className="sanctum-input text-xs w-full"
+                style={{
+                  padding: "0.5rem",
+                  background: "rgba(0, 212, 255, 0.05)",
+                  border: "1px solid rgba(0, 212, 255, 0.2)",
+                  borderRadius: "0.375rem",
+                  color: "#fff",
+                  fontSize: "0.75rem",
+                }}
               >
                 <option value="">Auto-detect</option>
                 <option value="devotion">Devotion</option>
@@ -228,30 +273,38 @@ export default function Step2Lyrics() {
                 <option value="love">Divine Love</option>
               </select>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium" style={{ color: "oklch(0.60 0.015 68)" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
                 Custom Direction
               </label>
               <textarea
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
                 placeholder="E.g., 'Focus on pilgrimage'"
-                className="sanctum-input text-xs"
-                rows={2}
+                style={{
+                  padding: "0.5rem",
+                  background: "rgba(0, 212, 255, 0.05)",
+                  border: "1px solid rgba(0, 212, 255, 0.2)",
+                  borderRadius: "0.375rem",
+                  color: "#fff",
+                  fontSize: "0.75rem",
+                  minHeight: "60px",
+                  resize: "vertical",
+                }}
               />
             </div>
           </div>
 
           {/* Deity-specific tips */}
           {deity && project.deity && (
-            <div className="shrine-panel p-3">
-              <p className="text-xs font-semibold mb-2" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
+            <div style={{ padding: "1rem", background: "rgba(0, 212, 255, 0.08)", border: "1px solid rgba(0, 212, 255, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)" }}>
+              <p style={{ fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.75rem", color: "#ff006e", fontFamily: "'Space Grotesk', sans-serif" }}>
                 {deity.name} Writing Tips
               </p>
-              <ul className="space-y-2">
+              <ul style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 {WRITING_TIPS[project.deity as DeityKey].map((tip, i) => (
-                  <li key={i} className="flex gap-2 text-xs" style={{ color: "oklch(0.60 0.015 68)" }}>
-                    <span style={{ color: "oklch(0.65 0.14 65)" }}>•</span>
+                  <li key={i} style={{ display: "flex", gap: "0.5rem", fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.6)" }}>
+                    <span style={{ color: "#ff006e" }}>•</span>
                     {tip}
                   </li>
                 ))}
@@ -260,11 +313,11 @@ export default function Step2Lyrics() {
           )}
 
           {/* Telugu keyboard hint */}
-          <div className="shrine-panel p-3">
-            <p className="text-xs font-semibold mb-1.5" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+          <div style={{ padding: "1rem", background: "rgba(0, 212, 255, 0.08)", border: "1px solid rgba(0, 212, 255, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)" }}>
+            <p style={{ fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.5rem", color: "#00d4ff", fontFamily: "'Space Grotesk', sans-serif" }}>
               Telugu Input Tip
             </p>
-            <p className="text-xs" style={{ color: "oklch(0.55 0.012 65)" }}>
+            <p style={{ fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.5)" }}>
               Use Google Input Tools or Windows Telugu keyboard. You can also paste lyrics from Google Docs or Word.
             </p>
           </div>
@@ -275,16 +328,32 @@ export default function Step2Lyrics() {
       <button
         onClick={handleContinue}
         disabled={project.lyrics.trim().length < 20}
-        className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
         style={{
-          background: "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
-          color: "oklch(0.12 0.015 55)",
-          fontFamily: "'Cinzel', serif",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem",
+          padding: "0.75rem 1.5rem",
+          borderRadius: "0.5rem",
+          fontWeight: "600",
+          fontSize: "0.875rem",
+          background: "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)",
+          color: "#000",
+          border: "none",
+          cursor: "pointer",
+          opacity: project.lyrics.trim().length < 20 ? 0.4 : 1,
+          transition: "all 200ms",
         }}
       >
         Continue to SUNO Style
         <ChevronRight size={16} />
       </button>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { generationRouter } from "./routers/generation";
 import { settingsRouter } from "./routers/settings";
+import { jobsRouter } from "./routers/jobs";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -21,6 +22,7 @@ export const appRouter = router({
 
   generation: generationRouter,
   settings: settingsRouter,
+  jobs: jobsRouter,
 
   // TODO: add feature routers here, e.g.
   // todo: router({
