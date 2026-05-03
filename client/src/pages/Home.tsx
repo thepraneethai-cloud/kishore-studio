@@ -6,7 +6,7 @@ import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Step1Deity from "@/components/steps/Step1Deity";
 import Step2Lyrics from "@/components/steps/Step2Lyrics";
-import Step3SunoStyle from "@/components/steps/Step3SunoStyle";
+import Step3Audio from "@/components/steps/Step3Audio";
 import Step4MusicPrompt from "@/components/steps/Step4MusicPrompt";
 import Step5Scenes from "@/components/steps/Step5Scenes";
 import Step6ImagePrompts from "@/components/steps/Step6ImagePrompts";
@@ -18,7 +18,7 @@ import { useState } from "react";
 const STEP_COMPONENTS: Record<number, React.ComponentType> = {
   1: Step1Deity,
   2: Step2Lyrics,
-  3: Step3SunoStyle,
+  3: Step3Audio,
   4: Step4MusicPrompt,
   5: Step5Scenes,
   6: Step6ImagePrompts,

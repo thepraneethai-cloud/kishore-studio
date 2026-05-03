@@ -11,7 +11,7 @@ import {
 const STEPS = [
   { id: 1, label: "Select Deity", icon: Flame, short: "Deity" },
   { id: 2, label: "Write Lyrics", icon: Music, short: "Lyrics" },
-  { id: 3, label: "SUNO Style", icon: Mic2, short: "Style" },
+  { id: 3, label: "Audio", icon: Mic2, short: "Audio" },
   { id: 4, label: "Music Prompt", icon: Wand2, short: "Music" },
   { id: 5, label: "Scene Breakdown", icon: Film, short: "Scenes" },
   { id: 6, label: "Image Prompts", icon: Sparkles, short: "Images" },

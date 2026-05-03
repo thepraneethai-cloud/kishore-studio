@@ -12,8 +12,17 @@ export interface LyricsGenerationInput {
   language?: "telugu" | "english"; // Output language
 }
 
+export interface SunoStyle {
+  tempo: string;
+  style: string;
+  mood: string;
+  instruments: string[];
+  vocals: string;
+}
+
 export interface GeneratedLyrics {
   lyrics: string;
+  sunoStyle?: SunoStyle;
   structure: {
     pallavi: string;
     charanam1: string;
@@ -151,8 +160,12 @@ Return a JSON object with this exact structure:
       .filter(Boolean)
       .join("");
 
+    // Generate SUNO style based on deity and theme
+    const sunoStyle = generateSunoStyleForDeity(input.deity, input.theme);
+
     return {
       lyrics,
+      sunoStyle,
       structure: {
         pallavi: parsed.pallavi,
         charanam1: parsed.charanam1,
@@ -170,6 +183,52 @@ Return a JSON object with this exact structure:
     console.error("[LyricsGeneration] Error:", error);
     throw new Error(`Failed to generate lyrics: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
+}
+
+/**
+ * Generate SUNO style based on deity and theme
+ */
+function generateSunoStyleForDeity(deity: string, theme?: string): SunoStyle {
+  const deityLower = deity.toLowerCase();
+  
+  const sunoStyles: Record<string, SunoStyle> = {
+    venkateswara: {
+      tempo: "medium",
+      style: "Slow devotional bhajan",
+      mood: "Divine & Majestic",
+      instruments: ["Veena", "Mridangam", "Nadaswaram"],
+      vocals: "Male devotional tenor",
+    },
+    ganesha: {
+      tempo: "energetic",
+      style: "Energetic devotional keertana",
+      mood: "Joyful & Celebratory",
+      instruments: ["Tabla", "Dholak", "Flute"],
+      vocals: "Male baritone bhajan",
+    },
+    lakshmi: {
+      tempo: "slow",
+      style: "Serene devotional bhajan",
+      mood: "Graceful & Peaceful",
+      instruments: ["Veena", "Sitar", "Flute"],
+      vocals: "Female classical soprano",
+    },
+    shiva: {
+      tempo: "classical",
+      style: "Carnatic classical keertana",
+      mood: "Meditative & Mystical",
+      instruments: ["Veena", "Mridangam", "Violin"],
+      vocals: "Male carnatic classical",
+    },
+  };
+
+  return sunoStyles[deityLower] || {
+    tempo: "medium",
+    style: "Devotional bhajan",
+    mood: "Meditative & Peaceful",
+    instruments: ["Harmonium", "Tabla", "Flute"],
+    vocals: "Male devotional tenor",
+  };
 }
 
 /**
