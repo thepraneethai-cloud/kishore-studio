@@ -22,7 +22,7 @@ class JobProcessor {
   constructor(config: JobProcessorConfig = {}) {
     this.config = {
       maxConcurrent: config.maxConcurrent || 5,
-      pollIntervalMs: config.pollIntervalMs || 5000,
+      pollIntervalMs: config.pollIntervalMs || 30000,
       maxRetries: config.maxRetries || 3,
     };
   }
@@ -73,8 +73,13 @@ class JobProcessor {
           console.error(`[JobProcessor] Error processing job ${job.id}:`, error);
         });
       }
-    } catch (error) {
-      console.error("[JobProcessor] Error fetching queued jobs:", error);
+    } catch (error: any) {
+      // Silently handle connection resets - they're transient
+      if (error?.cause?.message?.includes('ECONNRESET') || error?.message?.includes('ECONNRESET')) {
+        // Transient DB connection error, will retry on next poll
+        return;
+      }
+      console.error("[JobProcessor] Error fetching queued jobs:", error?.message || error);
     }
   }
 

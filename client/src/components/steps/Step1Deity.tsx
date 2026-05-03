@@ -103,7 +103,7 @@ export default function Step1Deity() {
           color: "var(--text-tertiary)",
           fontWeight: "700",
         }}>
-          Step 1 of 9
+          Step 1 of 8
         </p>
         <h2 style={{
           fontSize: "2.5rem",

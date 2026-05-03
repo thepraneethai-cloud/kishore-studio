@@ -140,3 +140,41 @@ export const scenes = mysqlTable("scenes", {
 
 export type Scene = typeof scenes.$inferSelect;
 export type InsertScene = typeof scenes.$inferInsert;
+
+/**
+ * Prompt templates for lyrics generation
+ */
+export const promptTemplates = mysqlTable("promptTemplates", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  theme: varchar("theme", { length: 64 }).notNull(),
+  prompt: text("prompt").notNull(),
+  isDefault: int("isDefault").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PromptTemplate = typeof promptTemplates.$inferSelect;
+export type InsertPromptTemplate = typeof promptTemplates.$inferInsert;
+
+/**
+ * SUNO style templates for reuse
+ */
+export const sunoStyleTemplates = mysqlTable("sunoStyleTemplates", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  theme: varchar("theme", { length: 64 }).notNull(),
+  tempo: varchar("tempo", { length: 64 }).notNull(),
+  style: varchar("style", { length: 255 }).notNull(),
+  mood: varchar("mood", { length: 255 }).notNull(),
+  instruments: json("instruments").notNull(),
+  vocals: varchar("vocals", { length: 255 }).notNull(),
+  isDefault: int("isDefault").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SunoStyleTemplate = typeof sunoStyleTemplates.$inferSelect;
+export type InsertSunoStyleTemplate = typeof sunoStyleTemplates.$inferInsert;

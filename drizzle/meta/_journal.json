@@ -15,6 +15,13 @@
       "when": 1777726770383,
       "tag": "0001_thick_harry_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1777775521986,
+      "tag": "0002_lyrical_silver_samurai",
+      "breakpoints": true
     }
   ]
 }

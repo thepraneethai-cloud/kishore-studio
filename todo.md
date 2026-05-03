@@ -112,3 +112,14 @@
 - [ ] Consolidate workflow from 9 steps to 8 steps
 - [ ] Update sidebar and step navigation
 - [ ] Update step numbering in all components
+
+## Phase 15: Saveable Templates & Theme Defaults
+- [ ] Add database schema for prompt templates (lyrics prompts)
+- [ ] Add database schema for SUNO style templates
+- [ ] Create backend tRPC procedures for template CRUD (save, list, delete)
+- [ ] Build default theme-based prompts (Deity, Love, Folk, Mass, etc.)
+- [ ] Build default SUNO style presets per theme
+- [ ] Update Step 2 UI with prompt template selector
+- [ ] Add "Save as Template" button for lyrics prompts
+- [ ] Add "Save SUNO Style" button for generated styles
+- [ ] Theme selector auto-populates default prompts and SUNO settings

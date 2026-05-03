@@ -1,10 +1,14 @@
 // ============================================================
 // DESIGN: "Glassmorphism" — Step 2: Telugu Lyrics & SUNO Style Generator
+// With theme-based prompt templates, saveable prompts, and SUNO style templates
 // ============================================================
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useProject } from "@/contexts/ProjectContext";
 import { DEITIES, LYRICS_TEMPLATES, DeityKey } from "@/lib/studioData";
-import { ChevronRight, Copy, Check, FileText, Wand2, RefreshCw } from "lucide-react";
+import {
+  ChevronRight, Copy, Check, FileText, Wand2, RefreshCw,
+  Save, BookOpen, Music, ChevronDown, X, Trash2
+} from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
@@ -42,21 +46,101 @@ const WRITING_TIPS: Record<DeityKey, string[]> = {
   ],
 };
 
+// ── Theme definitions ──────────────────────────────────────
+const THEMES = [
+  { key: "deity", label: "Deity / Devotional", icon: "\uD83D\uDE4F" },
+  { key: "love", label: "Love / Romance", icon: "\uD83D\uDC95" },
+  { key: "folk", label: "Folk / Janapadha", icon: "\uD83E\uDE98" },
+  { key: "mass", label: "Mass / High Energy", icon: "\uD83D\uDD25" },
+  { key: "classical", label: "Classical / Carnatic", icon: "\uD83C\uDFB5" },
+  { key: "lullaby", label: "Lullaby / Jolapata", icon: "\uD83C\uDF19" },
+];
+
 export default function Step2Lyrics() {
   const { project, setLyrics, setSunoStyle, setActiveStep, markStepComplete } = useProject();
   const [copied, setCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [customPrompt, setCustomPrompt] = useState("");
-  const [theme, setTheme] = useState("");
+  const [selectedTheme, setSelectedTheme] = useState("deity");
   const [sunoStyleGenerated, setSunoStyleGenerated] = useState(false);
   const [lyricsLength, setLyricsLength] = useState<"short" | "medium" | "long" | "custom">("medium");
   const [customWordCount, setCustomWordCount] = useState(200);
   const [inputMode, setInputMode] = useState<"ai" | "manual">("ai");
 
+  // Template management state
+  const [showPromptTemplates, setShowPromptTemplates] = useState(false);
+  const [showSunoTemplates, setShowSunoTemplates] = useState(false);
+  const [savePromptName, setSavePromptName] = useState("");
+  const [showSavePrompt, setShowSavePrompt] = useState(false);
+  const [saveSunoName, setSaveSunoName] = useState("");
+  const [showSaveSuno, setShowSaveSuno] = useState(false);
+
   // Support both predefined deities and custom deity names
-  const deity = DEITIES.find((d) => d.key === project.deity) || 
+  const deity = DEITIES.find((d) => d.key === project.deity) ||
     (project.deity ? { key: project.deity, name: project.deity, mood: "Custom" } : null);
+
   const generateLyricsMutation = trpc.generation.generateLyrics.useMutation();
+
+  // Fetch prompt templates based on selected theme
+  const { data: promptTemplatesData, refetch: refetchPrompts } = trpc.templates.listPromptTemplates.useQuery(
+    { theme: selectedTheme },
+    { enabled: !!selectedTheme }
+  );
+
+  // Fetch SUNO style templates based on selected theme
+  const { data: sunoTemplatesData, refetch: refetchSunoStyles } = trpc.templates.listSunoStyles.useQuery(
+    { theme: selectedTheme },
+    { enabled: !!selectedTheme }
+  );
+
+  // Save prompt template mutation
+  const savePromptMutation = trpc.templates.savePromptTemplate.useMutation({
+    onSuccess: () => {
+      refetchPrompts();
+      toast.success("Prompt template saved!");
+      setShowSavePrompt(false);
+      setSavePromptName("");
+    },
+    onError: () => toast.error("Failed to save prompt template"),
+  });
+
+  // Delete prompt template mutation
+  const deletePromptMutation = trpc.templates.deletePromptTemplate.useMutation({
+    onSuccess: () => {
+      refetchPrompts();
+      toast.success("Prompt template deleted");
+    },
+  });
+
+  // Save SUNO style mutation
+  const saveSunoMutation = trpc.templates.saveSunoStyle.useMutation({
+    onSuccess: () => {
+      refetchSunoStyles();
+      toast.success("SUNO style saved!");
+      setShowSaveSuno(false);
+      setSaveSunoName("");
+    },
+    onError: () => toast.error("Failed to save SUNO style"),
+  });
+
+  // Delete SUNO style mutation
+  const deleteSunoMutation = trpc.templates.deleteSunoStyle.useMutation({
+    onSuccess: () => {
+      refetchSunoStyles();
+      toast.success("SUNO style deleted");
+    },
+  });
+
+  // Combine default + custom templates
+  const allPromptTemplates = useMemo(() => {
+    if (!promptTemplatesData) return [];
+    return [...promptTemplatesData.defaults, ...promptTemplatesData.custom];
+  }, [promptTemplatesData]);
+
+  const allSunoTemplates = useMemo(() => {
+    if (!sunoTemplatesData) return [];
+    return [...sunoTemplatesData.defaults, ...sunoTemplatesData.custom];
+  }, [sunoTemplatesData]);
 
   const getLyricsDuration = () => {
     switch (lyricsLength) {
@@ -73,7 +157,7 @@ export default function Step2Lyrics() {
       toast.error("Please select a deity first");
       return;
     }
-    const template = LYRICS_TEMPLATES[deity.key];
+    const template = LYRICS_TEMPLATES[deity.key as DeityKey];
     if (template) {
       setLyrics(template);
       toast.success("Template loaded — customize it for your song!");
@@ -83,10 +167,65 @@ export default function Step2Lyrics() {
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(project.lyrics);
+    navigator.clipboard.writeText(project.lyrics || "");
     setCopied(true);
     toast.success("Lyrics copied to clipboard");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSelectPromptTemplate = (prompt: string) => {
+    setCustomPrompt(prompt);
+    setShowPromptTemplates(false);
+    toast.success("Prompt loaded! Click Generate to create lyrics.");
+  };
+
+  const handleSelectSunoTemplate = (template: any) => {
+    setSunoStyle({
+      tempo: template.tempo,
+      style: template.style,
+      mood: template.mood,
+      instruments: Array.isArray(template.instruments) ? template.instruments : [],
+      vocals: template.vocals,
+    });
+    setSunoStyleGenerated(true);
+    setShowSunoTemplates(false);
+    toast.success("SUNO style loaded!");
+  };
+
+  const handleSaveCurrentPrompt = () => {
+    if (!savePromptName.trim()) {
+      toast.error("Please enter a name for the template");
+      return;
+    }
+    if (!customPrompt.trim()) {
+      toast.error("No prompt to save. Enter a custom prompt first.");
+      return;
+    }
+    savePromptMutation.mutate({
+      name: savePromptName,
+      theme: selectedTheme,
+      prompt: customPrompt,
+    });
+  };
+
+  const handleSaveCurrentSuno = () => {
+    if (!saveSunoName.trim()) {
+      toast.error("Please enter a name for the SUNO style");
+      return;
+    }
+    if (!project.sunoStyle) {
+      toast.error("No SUNO style to save. Generate one first.");
+      return;
+    }
+    saveSunoMutation.mutate({
+      name: saveSunoName,
+      theme: selectedTheme,
+      tempo: project.sunoStyle.tempo,
+      style: project.sunoStyle.style,
+      mood: project.sunoStyle.mood,
+      instruments: project.sunoStyle.instruments,
+      vocals: project.sunoStyle.vocals,
+    });
   };
 
   const handleAIGenerate = async () => {
@@ -94,7 +233,6 @@ export default function Step2Lyrics() {
       toast.error("Please select a deity first");
       return;
     }
-    
     if (!deity) {
       toast.error("Deity not found");
       return;
@@ -105,14 +243,14 @@ export default function Step2Lyrics() {
       const result = await generateLyricsMutation.mutateAsync({
         deity: project.deity,
         customPrompt: customPrompt || undefined,
-        theme: theme || undefined,
+        theme: selectedTheme || undefined,
         duration: getLyricsDuration(),
         language: "telugu",
       });
 
       if (result.success && result.data) {
         setLyrics(result.data.lyrics);
-        
+
         if (result.data.sunoStyle) {
           setSunoStyle({
             tempo: result.data.sunoStyle.tempo || "medium",
@@ -122,12 +260,11 @@ export default function Step2Lyrics() {
             vocals: result.data.sunoStyle.vocals || "Male devotional tenor",
           });
           setSunoStyleGenerated(true);
-          toast.success("✨ Lyrics and SUNO style generated by AI!");
+          toast.success("Lyrics and SUNO style generated by AI!");
         } else {
-          toast.success("✨ Lyrics generated by AI!");
+          toast.success("Lyrics generated by AI!");
         }
         setCustomPrompt("");
-        setTheme("");
       } else {
         toast.error(result.error || "Failed to generate lyrics");
       }
@@ -161,8 +298,63 @@ export default function Step2Lyrics() {
   const wordCount = project.lyrics ? project.lyrics.trim().split(/\s+/).filter(Boolean).length : 0;
   const lineCount = project.lyrics ? project.lyrics.trim().split("\n").filter(Boolean).length : 0;
 
+  // ── Shared styles ──────────────────────────────────────
+  const glassPanel: React.CSSProperties = {
+    padding: "1rem",
+    background: "rgba(0, 212, 255, 0.08)",
+    border: "1px solid rgba(0, 212, 255, 0.2)",
+    borderRadius: "0.5rem",
+    backdropFilter: "blur(10px)",
+  };
+
+  const greenPanel: React.CSSProperties = {
+    padding: "1rem",
+    background: "rgba(57, 255, 20, 0.08)",
+    border: "1px solid rgba(57, 255, 20, 0.2)",
+    borderRadius: "0.5rem",
+    backdropFilter: "blur(10px)",
+  };
+
+  const pinkPanel: React.CSSProperties = {
+    padding: "1rem",
+    background: "rgba(255, 0, 110, 0.08)",
+    border: "1px solid rgba(255, 0, 110, 0.2)",
+    borderRadius: "0.5rem",
+    backdropFilter: "blur(10px)",
+  };
+
+  const smallBtn = (active?: boolean): React.CSSProperties => ({
+    display: "flex",
+    alignItems: "center",
+    gap: "0.4rem",
+    fontSize: "0.7rem",
+    padding: "0.4rem 0.75rem",
+    borderRadius: "0.375rem",
+    background: active ? "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)" : "rgba(0, 212, 255, 0.1)",
+    color: active ? "#000" : "#00d4ff",
+    border: "1px solid rgba(0, 212, 255, 0.2)",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "all 200ms",
+  });
+
+  const dropdownStyle: React.CSSProperties = {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    zIndex: 50,
+    marginTop: "0.25rem",
+    maxHeight: "300px",
+    overflowY: "auto",
+    background: "rgba(10, 10, 30, 0.95)",
+    border: "1px solid rgba(0, 212, 255, 0.3)",
+    borderRadius: "0.5rem",
+    backdropFilter: "blur(20px)",
+  };
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
       {/* Header */}
       <div>
         <p style={{ fontSize: "0.75rem", fontWeight: "600", letterSpacing: "0.15em", marginBottom: "0.5rem", color: "#00d4ff", textTransform: "uppercase" }}>
@@ -172,8 +364,36 @@ export default function Step2Lyrics() {
           Write Telugu Lyrics & SUNO Style
         </h2>
         <p style={{ fontSize: "0.875rem", color: "rgba(255, 255, 255, 0.6)" }}>
-          Choose AI generation or manually enter your lyrics. Control the length and get SUNO style suggestions.
+          Choose a theme, select a prompt template, and generate lyrics with SUNO style.
         </p>
+      </div>
+
+      {/* Theme Selector */}
+      <div>
+        <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)", marginBottom: "0.5rem", display: "block" }}>
+          Song Theme
+        </label>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+          {THEMES.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setSelectedTheme(t.key)}
+              style={{
+                padding: "0.5rem 1rem",
+                borderRadius: "0.5rem",
+                background: selectedTheme === t.key ? "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)" : "rgba(0, 212, 255, 0.08)",
+                color: selectedTheme === t.key ? "#000" : "#00d4ff",
+                border: "1px solid rgba(0, 212, 255, 0.2)",
+                fontWeight: "600",
+                fontSize: "0.8rem",
+                cursor: "pointer",
+                transition: "all 200ms",
+              }}
+            >
+              {t.icon} {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Input Mode Selector */}
@@ -224,86 +444,45 @@ export default function Step2Lyrics() {
         </button>
       </div>
 
-      {/* Two-column layout: editor + tips */}
+      {/* Two-column layout: editor + options */}
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "1.5rem" }}>
-        {/* Lyrics Editor */}
+        {/* Left: Lyrics Editor */}
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          {/* Editor toolbar */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
             <span style={{ fontSize: "0.875rem", fontWeight: "600", color: "#00d4ff", fontFamily: "'Space Grotesk', sans-serif" }}>
               Lyrics Editor
             </span>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
               {inputMode === "ai" && (
                 <button
                   onClick={handleAIGenerate}
                   disabled={isGenerating || !deity}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    fontSize: "0.75rem",
-                    padding: "0.5rem 1rem",
-                    borderRadius: "0.375rem",
-                    background: "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)",
-                    color: "#000",
-                    border: "none",
-                    fontWeight: "600",
-                    cursor: "pointer",
+                    ...smallBtn(true),
                     opacity: isGenerating || !deity ? 0.6 : 1,
-                    transition: "all 200ms",
                   }}
                 >
                   <Wand2 size={12} style={{ animation: isGenerating ? "spin 1s linear infinite" : "none" }} />
                   {isGenerating ? "Generating..." : "Generate"}
                 </button>
               )}
-              <button
-                onClick={loadTemplate}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  fontSize: "0.75rem",
-                  padding: "0.5rem 1rem",
-                  borderRadius: "0.375rem",
-                  background: "rgba(0, 212, 255, 0.1)",
-                  color: "#00d4ff",
-                  border: "1px solid rgba(0, 212, 255, 0.3)",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  transition: "all 200ms",
-                }}
-              >
+              <button onClick={loadTemplate} style={smallBtn()}>
                 <FileText size={12} />
                 Template
               </button>
-              <button
-                onClick={handleCopy}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  fontSize: "0.75rem",
-                  padding: "0.5rem 1rem",
-                  borderRadius: "0.375rem",
-                  background: "rgba(0, 212, 255, 0.1)",
-                  color: copied ? "#39ff14" : "#00d4ff",
-                  border: "1px solid rgba(0, 212, 255, 0.3)",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  transition: "all 200ms",
-                }}
-              >
+              <button onClick={handleCopy} style={smallBtn()}>
                 {copied ? <Check size={12} /> : <Copy size={12} />}
                 {copied ? "Copied!" : "Copy"}
               </button>
             </div>
           </div>
 
+          {/* Textarea */}
           <textarea
-            value={project.lyrics}
+            value={project.lyrics || ""}
             onChange={(e) => setLyrics(e.target.value)}
-            placeholder={`Write your Telugu devotional lyrics here...\n\n[Pallavi]\nగోవింద గోవింద...\n\n[Charanam 1]\n...`}
+            placeholder={`Write your Telugu devotional lyrics here...\n\n[Pallavi]\n\u0C17\u0C4B\u0C35\u0C3F\u0C02\u0C26 \u0C17\u0C4B\u0C35\u0C3F\u0C02\u0C26...\n\n[Charanam 1]\n...`}
             style={{
               minHeight: "360px",
               padding: "1rem",
@@ -317,18 +496,58 @@ export default function Step2Lyrics() {
             }}
           />
 
+          {/* Word count */}
           <div style={{ display: "flex", gap: "1rem", fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.5)" }}>
             <span>{wordCount} words</span>
             <span>{lineCount} lines</span>
-            <span>~{Math.round(wordCount / 40)} min read</span>
+            <span>~{Math.max(1, Math.round(wordCount / 40))} min read</span>
           </div>
 
           {/* SUNO Style Display */}
           {sunoStyleGenerated && project.sunoStyle && (
-            <div style={{ padding: "1rem", background: "rgba(57, 255, 20, 0.08)", border: "1px solid rgba(57, 255, 20, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)" }}>
-              <p style={{ fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.75rem", color: "#39ff14", fontFamily: "'Space Grotesk', sans-serif" }}>
-                ✨ Generated SUNO Style
-              </p>
+            <div style={greenPanel}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+                <p style={{ fontSize: "0.75rem", fontWeight: "600", color: "#39ff14", fontFamily: "'Space Grotesk', sans-serif" }}>
+                  Generated SUNO Style
+                </p>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <button
+                    onClick={() => setShowSaveSuno(true)}
+                    style={smallBtn()}
+                  >
+                    <Save size={12} />
+                    Save Style
+                  </button>
+                </div>
+              </div>
+
+              {/* Save SUNO dialog */}
+              {showSaveSuno && (
+                <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                  <input
+                    type="text"
+                    value={saveSunoName}
+                    onChange={(e) => setSaveSunoName(e.target.value)}
+                    placeholder="Style name (e.g., My Bhajan Style)"
+                    style={{
+                      flex: 1,
+                      padding: "0.4rem 0.75rem",
+                      background: "rgba(0, 212, 255, 0.05)",
+                      border: "1px solid rgba(0, 212, 255, 0.2)",
+                      borderRadius: "0.375rem",
+                      color: "#fff",
+                      fontSize: "0.75rem",
+                    }}
+                  />
+                  <button onClick={handleSaveCurrentSuno} style={smallBtn(true)}>
+                    <Check size={12} /> Save
+                  </button>
+                  <button onClick={() => setShowSaveSuno(false)} style={smallBtn()}>
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
+
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", fontSize: "0.75rem" }}>
                 <div>
                   <p style={{ color: "rgba(255, 255, 255, 0.5)" }}>Tempo</p>
@@ -344,97 +563,95 @@ export default function Step2Lyrics() {
                 </div>
                 <div>
                   <p style={{ color: "rgba(255, 255, 255, 0.5)" }}>Instruments</p>
-                  <p style={{ color: "#39ff14", fontWeight: "600" }}>{project.sunoStyle.instruments.join(", ")}</p>
+                  <p style={{ color: "#39ff14", fontWeight: "600" }}>
+                    {Array.isArray(project.sunoStyle.instruments) ? project.sunoStyle.instruments.join(", ") : ""}
+                  </p>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Tips Panel */}
+        {/* Right: Options Panel */}
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {inputMode === "ai" && (
             <>
-              {/* AI Options */}
-              <div style={{ padding: "1rem", background: "rgba(0, 212, 255, 0.08)", border: "1px solid rgba(0, 212, 255, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                <p style={{ fontSize: "0.75rem", fontWeight: "600", color: "#39ff14", fontFamily: "'Space Grotesk', sans-serif" }}>
-                  ✨ AI Options
-                </p>
-                
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
-                    Lyrics Length
-                  </label>
-                  <select
-                    value={lyricsLength}
-                    onChange={(e) => setLyricsLength(e.target.value as any)}
-                    style={{
-                      padding: "0.5rem",
-                      background: "rgba(0, 212, 255, 0.05)",
-                      border: "1px solid rgba(0, 212, 255, 0.2)",
-                      borderRadius: "0.375rem",
-                      color: "#fff",
-                      fontSize: "0.75rem",
-                    }}
+              {/* Prompt Template Selector */}
+              <div style={{ ...glassPanel, position: "relative" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+                  <p style={{ fontSize: "0.75rem", fontWeight: "600", color: "#ff006e", fontFamily: "'Space Grotesk', sans-serif" }}>
+                    <BookOpen size={12} style={{ display: "inline", marginRight: "0.25rem" }} />
+                    Prompt Templates
+                  </p>
+                  <button
+                    onClick={() => setShowPromptTemplates(!showPromptTemplates)}
+                    style={smallBtn()}
                   >
-                    <option value="short">Short (2 min)</option>
-                    <option value="medium">Medium (4 min)</option>
-                    <option value="long">Long (6 min)</option>
-                    <option value="custom">Custom</option>
-                  </select>
+                    <ChevronDown size={12} style={{ transform: showPromptTemplates ? "rotate(180deg)" : "none", transition: "transform 200ms" }} />
+                    {showPromptTemplates ? "Close" : "Browse"}
+                  </button>
                 </div>
 
-                {lyricsLength === "custom" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                    <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
-                      Word Count: {customWordCount}
-                    </label>
-                    <input
-                      type="range"
-                      min="50"
-                      max="500"
-                      step="10"
-                      value={customWordCount}
-                      onChange={(e) => setCustomWordCount(parseInt(e.target.value))}
-                      style={{ width: "100%", cursor: "pointer" }}
-                    />
+                {/* Prompt template dropdown */}
+                {showPromptTemplates && (
+                  <div style={dropdownStyle}>
+                    {allPromptTemplates.length === 0 ? (
+                      <div style={{ padding: "1rem", textAlign: "center", color: "rgba(255, 255, 255, 0.4)", fontSize: "0.75rem" }}>
+                        No templates for this theme yet
+                      </div>
+                    ) : (
+                      allPromptTemplates.map((t: any) => (
+                        <div
+                          key={t.id}
+                          style={{
+                            padding: "0.75rem",
+                            borderBottom: "1px solid rgba(0, 212, 255, 0.1)",
+                            cursor: "pointer",
+                            transition: "background 200ms",
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0, 212, 255, 0.1)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div onClick={() => handleSelectPromptTemplate(t.prompt)} style={{ flex: 1 }}>
+                              <p style={{ fontSize: "0.8rem", fontWeight: "600", color: "#00d4ff", marginBottom: "0.25rem" }}>
+                                {t.name}
+                                {t.isDefault ? (
+                                  <span style={{ fontSize: "0.6rem", marginLeft: "0.5rem", color: "rgba(255, 255, 255, 0.4)" }}>DEFAULT</span>
+                                ) : null}
+                              </p>
+                              <p style={{ fontSize: "0.7rem", color: "rgba(255, 255, 255, 0.5)", lineHeight: "1.4" }}>
+                                {t.prompt.length > 100 ? t.prompt.substring(0, 100) + "..." : t.prompt}
+                              </p>
+                            </div>
+                            {!t.isDefault && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deletePromptMutation.mutate({ id: t.id });
+                                }}
+                                style={{ padding: "0.25rem", color: "#ff006e", background: "none", border: "none", cursor: "pointer" }}
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 )}
 
+                {/* Custom prompt input */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
-                    Theme
+                  <label style={{ fontSize: "0.7rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
+                    Custom Prompt
                   </label>
-                  <select
-                    value={theme}
-                    onChange={(e) => setTheme(e.target.value)}
-                    style={{
-                      padding: "0.5rem",
-                      background: "rgba(0, 212, 255, 0.05)",
-                      border: "1px solid rgba(0, 212, 255, 0.2)",
-                      borderRadius: "0.375rem",
-                      color: "#fff",
-                      fontSize: "0.75rem",
-                    }}
-                  >
-                    <option value="">Auto-detect</option>
-                    <option value="devotion">Devotion</option>
-                    <option value="gratitude">Gratitude</option>
-                    <option value="protection">Protection</option>
-                    <option value="love">Divine Love</option>
-                    <option value="wisdom">Wisdom</option>
-                  </select>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
-                    Custom Prompt (Optional)
-                  </label>
-                  <input
-                    type="text"
+                  <textarea
                     value={customPrompt}
                     onChange={(e) => setCustomPrompt(e.target.value)}
-                    placeholder="e.g., 'Add more devotion, slower pace'"
+                    placeholder="e.g., Write a devotional bhajan with Pallavi and 2 Charanams..."
+                    rows={3}
                     style={{
                       padding: "0.5rem",
                       background: "rgba(0, 212, 255, 0.05)",
@@ -442,16 +659,171 @@ export default function Step2Lyrics() {
                       borderRadius: "0.375rem",
                       color: "#fff",
                       fontSize: "0.75rem",
+                      resize: "vertical",
                     }}
                   />
+                  {customPrompt.trim() && (
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <button onClick={() => setShowSavePrompt(true)} style={smallBtn()}>
+                        <Save size={10} /> Save Prompt
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Save prompt dialog */}
+                {showSavePrompt && (
+                  <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+                    <input
+                      type="text"
+                      value={savePromptName}
+                      onChange={(e) => setSavePromptName(e.target.value)}
+                      placeholder="Template name..."
+                      style={{
+                        flex: 1,
+                        padding: "0.4rem 0.75rem",
+                        background: "rgba(0, 212, 255, 0.05)",
+                        border: "1px solid rgba(0, 212, 255, 0.2)",
+                        borderRadius: "0.375rem",
+                        color: "#fff",
+                        fontSize: "0.75rem",
+                      }}
+                    />
+                    <button onClick={handleSaveCurrentPrompt} style={smallBtn(true)}>
+                      <Check size={12} />
+                    </button>
+                    <button onClick={() => setShowSavePrompt(false)} style={smallBtn()}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* SUNO Style Templates */}
+              <div style={{ ...pinkPanel, position: "relative" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+                  <p style={{ fontSize: "0.75rem", fontWeight: "600", color: "#ff006e", fontFamily: "'Space Grotesk', sans-serif" }}>
+                    <Music size={12} style={{ display: "inline", marginRight: "0.25rem" }} />
+                    SUNO Style Templates
+                  </p>
+                  <button
+                    onClick={() => setShowSunoTemplates(!showSunoTemplates)}
+                    style={smallBtn()}
+                  >
+                    <ChevronDown size={12} style={{ transform: showSunoTemplates ? "rotate(180deg)" : "none", transition: "transform 200ms" }} />
+                    {showSunoTemplates ? "Close" : "Browse"}
+                  </button>
+                </div>
+
+                {/* SUNO template dropdown */}
+                {showSunoTemplates && (
+                  <div style={dropdownStyle}>
+                    {allSunoTemplates.length === 0 ? (
+                      <div style={{ padding: "1rem", textAlign: "center", color: "rgba(255, 255, 255, 0.4)", fontSize: "0.75rem" }}>
+                        No SUNO styles for this theme yet
+                      </div>
+                    ) : (
+                      allSunoTemplates.map((s: any) => (
+                        <div
+                          key={s.id}
+                          style={{
+                            padding: "0.75rem",
+                            borderBottom: "1px solid rgba(0, 212, 255, 0.1)",
+                            cursor: "pointer",
+                            transition: "background 200ms",
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 0, 110, 0.1)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div onClick={() => handleSelectSunoTemplate(s)} style={{ flex: 1 }}>
+                              <p style={{ fontSize: "0.8rem", fontWeight: "600", color: "#ff006e", marginBottom: "0.25rem" }}>
+                                {s.name}
+                                {s.isDefault ? (
+                                  <span style={{ fontSize: "0.6rem", marginLeft: "0.5rem", color: "rgba(255, 255, 255, 0.4)" }}>DEFAULT</span>
+                                ) : null}
+                              </p>
+                              <div style={{ display: "flex", gap: "0.75rem", fontSize: "0.65rem", color: "rgba(255, 255, 255, 0.5)" }}>
+                                <span>Tempo: {s.tempo}</span>
+                                <span>Mood: {s.mood}</span>
+                              </div>
+                              <p style={{ fontSize: "0.65rem", color: "rgba(255, 255, 255, 0.4)", marginTop: "0.25rem" }}>
+                                {Array.isArray(s.instruments) ? s.instruments.join(", ") : ""}
+                              </p>
+                            </div>
+                            {!s.isDefault && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteSunoMutation.mutate({ id: s.id });
+                                }}
+                                style={{ padding: "0.25rem", color: "#ff006e", background: "none", border: "none", cursor: "pointer" }}
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* AI Options */}
+              <div style={glassPanel}>
+                <p style={{ fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.75rem", color: "#39ff14", fontFamily: "'Space Grotesk', sans-serif" }}>
+                  AI Options
+                </p>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                    <label style={{ fontSize: "0.7rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
+                      Lyrics Length
+                    </label>
+                    <select
+                      value={lyricsLength}
+                      onChange={(e) => setLyricsLength(e.target.value as any)}
+                      style={{
+                        padding: "0.5rem",
+                        background: "rgba(0, 212, 255, 0.05)",
+                        border: "1px solid rgba(0, 212, 255, 0.2)",
+                        borderRadius: "0.375rem",
+                        color: "#fff",
+                        fontSize: "0.75rem",
+                      }}
+                    >
+                      <option value="short">Short (2 min)</option>
+                      <option value="medium">Medium (4 min)</option>
+                      <option value="long">Long (6 min)</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                  </div>
+
+                  {lyricsLength === "custom" && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                      <label style={{ fontSize: "0.7rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
+                        Word Count: {customWordCount}
+                      </label>
+                      <input
+                        type="range"
+                        min="50"
+                        max="500"
+                        step="10"
+                        value={customWordCount}
+                        onChange={(e) => setCustomWordCount(parseInt(e.target.value))}
+                        style={{ width: "100%", cursor: "pointer" }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Deity Tips */}
               {deity && WRITING_TIPS[deity.key as DeityKey] && (
-                <div style={{ padding: "1rem", background: "rgba(255, 0, 110, 0.08)", border: "1px solid rgba(255, 0, 110, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)" }}>
+                <div style={pinkPanel}>
                   <p style={{ fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.75rem", color: "#ff006e", fontFamily: "'Space Grotesk', sans-serif" }}>
-                    💡 {deity.name} Tips
+                    {deity.name} Tips
                   </p>
                   <ul style={{ fontSize: "0.7rem", color: "rgba(255, 255, 255, 0.6)", lineHeight: "1.6", listStylePosition: "inside" }}>
                     {WRITING_TIPS[deity.key as DeityKey].map((tip, i) => (
@@ -468,7 +840,7 @@ export default function Step2Lyrics() {
           {inputMode === "manual" && (
             <>
               {/* Structure guide */}
-              <div style={{ padding: "1rem", background: "rgba(0, 212, 255, 0.08)", border: "1px solid rgba(0, 212, 255, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)" }}>
+              <div style={glassPanel}>
                 <p style={{ fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.75rem", color: "#00d4ff", fontFamily: "'Space Grotesk', sans-serif" }}>
                   Song Structure
                 </p>
@@ -485,15 +857,15 @@ export default function Step2Lyrics() {
                 </pre>
               </div>
 
-              <div style={{ padding: "1rem", background: "rgba(57, 255, 20, 0.08)", border: "1px solid rgba(57, 255, 20, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)" }}>
+              <div style={greenPanel}>
                 <p style={{ fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.75rem", color: "#39ff14", fontFamily: "'Space Grotesk', sans-serif" }}>
-                  💡 Tips
+                  Tips
                 </p>
                 <ul style={{ fontSize: "0.7rem", color: "rgba(255, 255, 255, 0.6)", lineHeight: "1.6", listStylePosition: "inside" }}>
-                  <li>• Paste your existing lyrics</li>
-                  <li>• Use proper structure</li>
-                  <li>• Include deity names</li>
-                  <li>• Keep lines singable</li>
+                  <li>Paste your existing lyrics</li>
+                  <li>Use proper structure</li>
+                  <li>Include deity names</li>
+                  <li>Keep lines singable</li>
                 </ul>
               </div>
             </>
@@ -543,7 +915,7 @@ export default function Step2Lyrics() {
               transition: "all 200ms",
             }}
           >
-            Skip to Audio Upload
+            Skip to Scene Breakdown
             <ChevronRight size={16} />
           </button>
         )}

@@ -105,7 +105,7 @@ export default function Header({ sidebarOpen, onToggleSidebar, activeStep }: Hea
           letterSpacing: "0.05em",
         }}
       >
-        Step {activeStep} of 9
+        Step {activeStep} of 8
       </div>
 
       {/* Right side - User menu */}

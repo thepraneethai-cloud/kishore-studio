@@ -72,8 +72,8 @@ export default function Step8CapCut() {
   const totalDuration = project.scenes.reduce((sum, s) => sum + s.duration, 0);
 
   const handleContinue = () => {
-    markStepComplete(8);
-    setActiveStep(9);
+    markStepComplete(7);
+    setActiveStep(8);
   };
 
   return (
@@ -81,7 +81,7 @@ export default function Step8CapCut() {
       {/* Header */}
       <div>
         <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
-          Step 8
+          Step 7
         </p>
         <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
           CapCut Assembly Guide

@@ -84,20 +84,20 @@ export default function Step6ImagePrompts() {
   };
 
   const handleContinue = () => {
-    markStepComplete(6);
-    setActiveStep(7);
+    markStepComplete(5);
+    setActiveStep(6);
   };
 
   if (project.scenes.length === 0) {
     return (
       <div className="space-y-4">
         <div>
-          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>Step 6</p>
+          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>Step 5</p>
           <h2 className="text-2xl font-bold" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>Image Prompts</h2>
         </div>
         <div className="text-center py-12 rounded-lg" style={{ border: "2px dashed oklch(0.28 0.025 58)", color: "oklch(0.45 0.010 60)" }}>
           <Sparkles size={32} className="mx-auto mb-3 opacity-40" />
-          <p className="text-sm">Please complete Step 5 (Scene Breakdown) first</p>
+          <p className="text-sm">Please complete Step 4 (Scene Breakdown) first</p>
         </div>
       </div>
     );
@@ -108,7 +108,7 @@ export default function Step6ImagePrompts() {
       {/* Header */}
       <div>
         <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
-          Step 6
+          Step 5
         </p>
         <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
           Image Prompts — Bulk Generator
