@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useProject } from "@/contexts/ProjectContext";
 import { DEITIES, LYRICS_TEMPLATES, DeityKey } from "@/lib/studioData";
-import { ChevronRight, Copy, Check, FileText, Wand2 } from "lucide-react";
+import { ChevronRight, Copy, Check, FileText, Wand2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
@@ -49,11 +49,24 @@ export default function Step2Lyrics() {
   const [customPrompt, setCustomPrompt] = useState("");
   const [theme, setTheme] = useState("");
   const [sunoStyleGenerated, setSunoStyleGenerated] = useState(false);
+  const [lyricsLength, setLyricsLength] = useState<"short" | "medium" | "long" | "custom">("medium");
+  const [customWordCount, setCustomWordCount] = useState(200);
+  const [inputMode, setInputMode] = useState<"ai" | "manual">("ai");
 
   // Support both predefined deities and custom deity names
   const deity = DEITIES.find((d) => d.key === project.deity) || 
     (project.deity ? { key: project.deity, name: project.deity, mood: "Custom" } : null);
   const generateLyricsMutation = trpc.generation.generateLyrics.useMutation();
+
+  const getLyricsDuration = () => {
+    switch (lyricsLength) {
+      case "short": return 2;
+      case "medium": return 4;
+      case "long": return 6;
+      case "custom": return Math.max(2, Math.min(10, Math.round(customWordCount / 50)));
+      default: return 4;
+    }
+  };
 
   const loadTemplate = () => {
     if (project.deity) {
@@ -75,7 +88,6 @@ export default function Step2Lyrics() {
       return;
     }
     
-    // Ensure deity is properly set
     if (!deity) {
       toast.error("Deity not found");
       return;
@@ -87,14 +99,13 @@ export default function Step2Lyrics() {
         deity: project.deity,
         customPrompt: customPrompt || undefined,
         theme: theme || undefined,
-        duration: 4,
+        duration: getLyricsDuration(),
         language: "telugu",
       });
 
       if (result.success && result.data) {
         setLyrics(result.data.lyrics);
         
-        // Also generate SUNO style
         if (result.data.sunoStyle) {
           setSunoStyle({
             tempo: result.data.sunoStyle.tempo || "medium",
@@ -133,8 +144,8 @@ export default function Step2Lyrics() {
   const handleSkipToAudio = () => {
     if (project.lyrics.trim().length > 20) {
       markStepComplete(2);
-      markStepComplete(3); // Skip SUNO Style step
-      setActiveStep(4); // Go to Audio Upload
+      markStepComplete(3);
+      setActiveStep(4);
     } else {
       toast.error("Please write or load some lyrics first");
     }
@@ -153,11 +164,57 @@ export default function Step2Lyrics() {
         <h2 style={{ fontSize: "1.875rem", fontWeight: "700", marginBottom: "0.5rem", fontFamily: "'Space Grotesk', sans-serif", color: "#00d4ff" }}>
           Write Telugu Lyrics & SUNO Style
         </h2>
-        {deity && (
-          <p style={{ fontSize: "0.875rem", color: "rgba(255, 255, 255, 0.6)" }}>
-            Composing for <span style={{ color: "#ff006e" }}>{deity.name}</span> — {deity.mood}
-          </p>
-        )}
+        <p style={{ fontSize: "0.875rem", color: "rgba(255, 255, 255, 0.6)" }}>
+          Choose AI generation or manually enter your lyrics. Control the length and get SUNO style suggestions.
+        </p>
+      </div>
+
+      {/* Input Mode Selector */}
+      <div style={{ display: "flex", gap: "0.5rem" }}>
+        <button
+          onClick={() => setInputMode("ai")}
+          style={{
+            flex: 1,
+            padding: "0.75rem",
+            borderRadius: "0.5rem",
+            background: inputMode === "ai" ? "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)" : "rgba(0, 212, 255, 0.1)",
+            color: inputMode === "ai" ? "#000" : "#00d4ff",
+            border: "1px solid rgba(0, 212, 255, 0.2)",
+            fontWeight: "600",
+            fontSize: "0.875rem",
+            cursor: "pointer",
+            transition: "all 200ms",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+          }}
+        >
+          <Wand2 size={16} />
+          AI Generate
+        </button>
+        <button
+          onClick={() => setInputMode("manual")}
+          style={{
+            flex: 1,
+            padding: "0.75rem",
+            borderRadius: "0.5rem",
+            background: inputMode === "manual" ? "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)" : "rgba(0, 212, 255, 0.1)",
+            color: inputMode === "manual" ? "#000" : "#00d4ff",
+            border: "1px solid rgba(0, 212, 255, 0.2)",
+            fontWeight: "600",
+            fontSize: "0.875rem",
+            cursor: "pointer",
+            transition: "all 200ms",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+          }}
+        >
+          <FileText size={16} />
+          Manual Input
+        </button>
       </div>
 
       {/* Two-column layout: editor + tips */}
@@ -169,28 +226,30 @@ export default function Step2Lyrics() {
               Lyrics Editor
             </span>
             <div style={{ display: "flex", gap: "0.5rem" }}>
-              <button
-                onClick={handleAIGenerate}
-                disabled={isGenerating || !deity}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  fontSize: "0.75rem",
-                  padding: "0.5rem 1rem",
-                  borderRadius: "0.375rem",
-                  background: "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)",
-                  color: "#000",
-                  border: "none",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  opacity: isGenerating || !deity ? 0.6 : 1,
-                  transition: "all 200ms",
-                }}
-              >
-                <Wand2 size={12} style={{ animation: isGenerating ? "spin 1s linear infinite" : "none" }} />
-                {isGenerating ? "Generating..." : "AI Generate"}
-              </button>
+              {inputMode === "ai" && (
+                <button
+                  onClick={handleAIGenerate}
+                  disabled={isGenerating || !deity}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    fontSize: "0.75rem",
+                    padding: "0.5rem 1rem",
+                    borderRadius: "0.375rem",
+                    background: "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)",
+                    color: "#000",
+                    border: "none",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    opacity: isGenerating || !deity ? 0.6 : 1,
+                    transition: "all 200ms",
+                  }}
+                >
+                  <Wand2 size={12} style={{ animation: isGenerating ? "spin 1s linear infinite" : "none" }} />
+                  {isGenerating ? "Generating..." : "Generate"}
+                </button>
+              )}
               <button
                 onClick={loadTemplate}
                 style={{
@@ -287,88 +346,150 @@ export default function Step2Lyrics() {
 
         {/* Tips Panel */}
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          {/* Structure guide */}
-          <div style={{ padding: "1rem", background: "rgba(0, 212, 255, 0.08)", border: "1px solid rgba(0, 212, 255, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)" }}>
-            <p style={{ fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.75rem", color: "#00d4ff", fontFamily: "'Space Grotesk', sans-serif" }}>
-              Song Structure
-            </p>
-            <pre
-              style={{
-                fontSize: "0.75rem",
-                whiteSpace: "pre-wrap",
-                lineHeight: "1.5",
-                color: "rgba(255, 255, 255, 0.6)",
-                fontFamily: "'Inter', monospace",
-              }}
-            >
-              {STRUCTURE_GUIDE}
-            </pre>
-          </div>
+          {inputMode === "ai" && (
+            <>
+              {/* AI Options */}
+              <div style={{ padding: "1rem", background: "rgba(0, 212, 255, 0.08)", border: "1px solid rgba(0, 212, 255, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <p style={{ fontSize: "0.75rem", fontWeight: "600", color: "#39ff14", fontFamily: "'Space Grotesk', sans-serif" }}>
+                  ✨ AI Options
+                </p>
+                
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
+                    Lyrics Length
+                  </label>
+                  <select
+                    value={lyricsLength}
+                    onChange={(e) => setLyricsLength(e.target.value as any)}
+                    style={{
+                      padding: "0.5rem",
+                      background: "rgba(0, 212, 255, 0.05)",
+                      border: "1px solid rgba(0, 212, 255, 0.2)",
+                      borderRadius: "0.375rem",
+                      color: "#fff",
+                      fontSize: "0.75rem",
+                    }}
+                  >
+                    <option value="short">Short (2 min)</option>
+                    <option value="medium">Medium (4 min)</option>
+                    <option value="long">Long (6 min)</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </div>
 
-          {/* AI Generation Options */}
-          <div style={{ padding: "1rem", background: "rgba(0, 212, 255, 0.08)", border: "1px solid rgba(0, 212, 255, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            <p style={{ fontSize: "0.75rem", fontWeight: "600", color: "#39ff14", fontFamily: "'Space Grotesk', sans-serif" }}>
-              ✨ AI Options
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
-                Theme
-              </label>
-              <select
-                value={theme}
-                onChange={(e) => setTheme(e.target.value)}
-                style={{
-                  padding: "0.5rem",
-                  background: "rgba(0, 212, 255, 0.05)",
-                  border: "1px solid rgba(0, 212, 255, 0.2)",
-                  borderRadius: "0.375rem",
-                  color: "#fff",
-                  fontSize: "0.75rem",
-                }}
-              >
-                <option value="">Auto-detect</option>
-                <option value="devotion">Devotion</option>
-                <option value="gratitude">Gratitude</option>
-                <option value="protection">Protection</option>
-                <option value="love">Divine Love</option>
-                <option value="wisdom">Wisdom</option>
-              </select>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
-                Custom Prompt (Optional)
-              </label>
-              <input
-                type="text"
-                value={customPrompt}
-                onChange={(e) => setCustomPrompt(e.target.value)}
-                placeholder="e.g., 'Add more devotion, slower pace'"
-                style={{
-                  padding: "0.5rem",
-                  background: "rgba(0, 212, 255, 0.05)",
-                  border: "1px solid rgba(0, 212, 255, 0.2)",
-                  borderRadius: "0.375rem",
-                  color: "#fff",
-                  fontSize: "0.75rem",
-                }}
-              />
-            </div>
-          </div>
+                {lyricsLength === "custom" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
+                      Word Count: {customWordCount}
+                    </label>
+                    <input
+                      type="range"
+                      min="50"
+                      max="500"
+                      step="10"
+                      value={customWordCount}
+                      onChange={(e) => setCustomWordCount(parseInt(e.target.value))}
+                      style={{ width: "100%", cursor: "pointer" }}
+                    />
+                  </div>
+                )}
 
-          {/* Deity Tips */}
-          {deity && WRITING_TIPS[deity.key as DeityKey] && (
-            <div style={{ padding: "1rem", background: "rgba(255, 0, 110, 0.08)", border: "1px solid rgba(255, 0, 110, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)" }}>
-              <p style={{ fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.75rem", color: "#ff006e", fontFamily: "'Space Grotesk', sans-serif" }}>
-                💡 {deity.name} Tips
-              </p>
-              <ul style={{ fontSize: "0.7rem", color: "rgba(255, 255, 255, 0.6)", lineHeight: "1.6", listStylePosition: "inside" }}>
-                {WRITING_TIPS[deity.key as DeityKey].map((tip, i) => (
-                  <li key={i} style={{ marginBottom: "0.5rem" }}>
-                    {tip}
-                  </li>
-                ))}
-              </ul>
-            </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
+                    Theme
+                  </label>
+                  <select
+                    value={theme}
+                    onChange={(e) => setTheme(e.target.value)}
+                    style={{
+                      padding: "0.5rem",
+                      background: "rgba(0, 212, 255, 0.05)",
+                      border: "1px solid rgba(0, 212, 255, 0.2)",
+                      borderRadius: "0.375rem",
+                      color: "#fff",
+                      fontSize: "0.75rem",
+                    }}
+                  >
+                    <option value="">Auto-detect</option>
+                    <option value="devotion">Devotion</option>
+                    <option value="gratitude">Gratitude</option>
+                    <option value="protection">Protection</option>
+                    <option value="love">Divine Love</option>
+                    <option value="wisdom">Wisdom</option>
+                  </select>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
+                    Custom Prompt (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={customPrompt}
+                    onChange={(e) => setCustomPrompt(e.target.value)}
+                    placeholder="e.g., 'Add more devotion, slower pace'"
+                    style={{
+                      padding: "0.5rem",
+                      background: "rgba(0, 212, 255, 0.05)",
+                      border: "1px solid rgba(0, 212, 255, 0.2)",
+                      borderRadius: "0.375rem",
+                      color: "#fff",
+                      fontSize: "0.75rem",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Deity Tips */}
+              {deity && WRITING_TIPS[deity.key as DeityKey] && (
+                <div style={{ padding: "1rem", background: "rgba(255, 0, 110, 0.08)", border: "1px solid rgba(255, 0, 110, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)" }}>
+                  <p style={{ fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.75rem", color: "#ff006e", fontFamily: "'Space Grotesk', sans-serif" }}>
+                    💡 {deity.name} Tips
+                  </p>
+                  <ul style={{ fontSize: "0.7rem", color: "rgba(255, 255, 255, 0.6)", lineHeight: "1.6", listStylePosition: "inside" }}>
+                    {WRITING_TIPS[deity.key as DeityKey].map((tip, i) => (
+                      <li key={i} style={{ marginBottom: "0.5rem" }}>
+                        {tip}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
+
+          {inputMode === "manual" && (
+            <>
+              {/* Structure guide */}
+              <div style={{ padding: "1rem", background: "rgba(0, 212, 255, 0.08)", border: "1px solid rgba(0, 212, 255, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)" }}>
+                <p style={{ fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.75rem", color: "#00d4ff", fontFamily: "'Space Grotesk', sans-serif" }}>
+                  Song Structure
+                </p>
+                <pre
+                  style={{
+                    fontSize: "0.7rem",
+                    whiteSpace: "pre-wrap",
+                    lineHeight: "1.5",
+                    color: "rgba(255, 255, 255, 0.6)",
+                    fontFamily: "'Inter', monospace",
+                  }}
+                >
+                  {STRUCTURE_GUIDE}
+                </pre>
+              </div>
+
+              <div style={{ padding: "1rem", background: "rgba(57, 255, 20, 0.08)", border: "1px solid rgba(57, 255, 20, 0.2)", borderRadius: "0.5rem", backdropFilter: "blur(10px)" }}>
+                <p style={{ fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.75rem", color: "#39ff14", fontFamily: "'Space Grotesk', sans-serif" }}>
+                  💡 Tips
+                </p>
+                <ul style={{ fontSize: "0.7rem", color: "rgba(255, 255, 255, 0.6)", lineHeight: "1.6", listStylePosition: "inside" }}>
+                  <li>• Paste your existing lyrics</li>
+                  <li>• Use proper structure</li>
+                  <li>• Include deity names</li>
+                  <li>• Keep lines singable</li>
+                </ul>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -393,7 +514,7 @@ export default function Step2Lyrics() {
             transition: "all 200ms",
           }}
         >
-          Continue to SUNO Style
+          Continue to Audio Upload
           <ChevronRight size={16} />
         </button>
         {sunoStyleGenerated && (

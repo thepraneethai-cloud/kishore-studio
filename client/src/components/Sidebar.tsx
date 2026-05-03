@@ -4,20 +4,19 @@
 // ============================================================
 import { useProject } from "@/contexts/ProjectContext";
 import {
-  Flame, Music, Mic2, Wand2, Film, Video, Scissors,
-  Youtube, Sparkles, CheckCircle2, RotateCcw,
+  Flame, Music, Mic2, Film, Sparkles, Video, Scissors,
+  Youtube, CheckCircle2, RotateCcw,
 } from "lucide-react";
 
 const STEPS = [
   { id: 1, label: "Select Deity", icon: Flame, short: "Deity" },
   { id: 2, label: "Write Lyrics", icon: Music, short: "Lyrics" },
   { id: 3, label: "Audio", icon: Mic2, short: "Audio" },
-  { id: 4, label: "Music Prompt", icon: Wand2, short: "Music" },
-  { id: 5, label: "Scene Breakdown", icon: Film, short: "Scenes" },
-  { id: 6, label: "Image Prompts", icon: Sparkles, short: "Images" },
-  { id: 7, label: "Video Prompts", icon: Video, short: "Video" },
-  { id: 8, label: "CapCut Assembly", icon: Scissors, short: "Edit" },
-  { id: 9, label: "YouTube Export", icon: Youtube, short: "Export" },
+  { id: 4, label: "Scene Breakdown", icon: Film, short: "Scenes" },
+  { id: 5, label: "Image Prompts", icon: Sparkles, short: "Images" },
+  { id: 6, label: "Video Prompts", icon: Video, short: "Video" },
+  { id: 7, label: "CapCut Assembly", icon: Scissors, short: "Edit" },
+  { id: 8, label: "YouTube Export", icon: Youtube, short: "Export" },
 ];
 
 export default function Sidebar() {
@@ -100,184 +99,116 @@ export default function Sidebar() {
       <nav style={{
         flex: 1,
         overflowY: "auto",
-        padding: "0.75rem 0.5rem",
+        padding: "1rem 0",
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.25rem",
       }}>
         {STEPS.map((step) => {
           const Icon = step.icon;
           const isActive = activeStep === step.id;
-          const isDone = completedSteps.has(step.id);
-
+          const isCompleted = completedSteps.has(step.id);
+          
           return (
             <button
               key={step.id}
               onClick={() => setActiveStep(step.id)}
               style={{
-                width: "100%",
                 display: "flex",
                 alignItems: "center",
                 gap: "0.75rem",
-                padding: "0.625rem 0.75rem",
-                borderRadius: "8px",
-                marginBottom: "0.25rem",
-                textAlign: "left",
-                transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
-                border: "none",
-                cursor: "pointer",
-                background: isActive
-                  ? "linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(255, 0, 110, 0.2))"
-                  : "rgba(255, 255, 255, 0.05)",
-                backdropFilter: "blur(10px)",
-                boxShadow: isActive ? "0 0 20px rgba(0, 212, 255, 0.3)" : "none",
+                padding: "0.75rem 1rem",
+                background: isActive 
+                  ? "linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(255, 0, 110, 0.1))"
+                  : "transparent",
+                border: isActive ? "1px solid rgba(0, 212, 255, 0.3)" : "none",
                 borderLeft: isActive ? "3px solid #00d4ff" : "3px solid transparent",
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
-                  e.currentTarget.style.borderLeftColor = "#00d4ff";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                  e.currentTarget.style.borderLeftColor = "transparent";
-                }
+                color: isActive ? "#00d4ff" : "rgba(255, 255, 255, 0.6)",
+                cursor: "pointer",
+                transition: "all 200ms",
+                fontSize: "0.875rem",
+                fontWeight: isActive ? "600" : "500",
+                textAlign: "left",
               }}
             >
-              {/* Step number / check */}
-              <div style={{
-                flexShrink: 0,
-                width: "20px",
-                height: "20px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "12px",
-                fontWeight: "700",
-              }}>
-                {isDone && !isActive ? (
-                  <CheckCircle2
-                    size={16}
-                    style={{ color: "#39ff14" }}
+              <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Icon size={16} />
+                {isCompleted && (
+                  <CheckCircle2 
+                    size={12} 
+                    style={{ 
+                      position: "absolute", 
+                      right: "-4px", 
+                      bottom: "-4px",
+                      color: "#39ff14",
+                      fill: "#39ff14",
+                    }} 
                   />
-                ) : isActive ? (
-                  <Icon size={15} style={{ color: "#00d4ff" }} />
-                ) : (
-                  <span
-                    style={{
-                      color: "rgba(255, 255, 255, 0.6)",
-                      fontFamily: "'Space Grotesk', sans-serif",
-                    }}
-                  >
-                    {step.id}
-                  </span>
                 )}
               </div>
-
-              {/* Label */}
-              <span
-                style={{
-                  fontSize: "0.875rem",
-                  fontWeight: isActive ? "600" : "500",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  color: isActive
-                    ? "#00d4ff"
-                    : isDone
-                    ? "#39ff14"
-                    : "rgba(255, 255, 255, 0.8)",
-                  fontFamily: "'Inter', sans-serif",
-                }}
-              >
-                {step.label}
-              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.4)" }}>
+                  STEP {step.id} OF 8
+                </div>
+                <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {step.label}
+                </div>
+              </div>
             </button>
           );
         })}
       </nav>
 
-      {/* Progress indicator */}
-      <div style={{
-        padding: "1rem",
-        borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-      }}>
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "0.75rem",
-        }}>
-          <span style={{
-            fontSize: "0.75rem",
-            color: "rgba(255, 255, 255, 0.6)",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            fontWeight: "600",
-          }}>
-            Progress
+      {/* Progress Bar */}
+      <div style={{ padding: "1rem", borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
+        <div style={{ marginBottom: "0.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
+            PROGRESS
           </span>
-          <span style={{
-            fontSize: "0.75rem",
-            fontWeight: "700",
-            color: "#00d4ff",
-          }}>
-            {completedSteps.size}/{STEPS.length}
+          <span style={{ fontSize: "0.75rem", fontWeight: "600", color: "#00d4ff" }}>
+            {completedSteps.size}/8
           </span>
         </div>
-        <div
-          style={{
-            height: "6px",
-            borderRadius: "3px",
-            overflow: "hidden",
-            background: "rgba(255, 255, 255, 0.1)",
-          }}
-        >
+        <div style={{
+          height: "4px",
+          background: "rgba(255, 255, 255, 0.1)",
+          borderRadius: "2px",
+          overflow: "hidden",
+        }}>
           <div
             style={{
               height: "100%",
-              borderRadius: "3px",
-              transition: "width 500ms cubic-bezier(0.4, 0, 0.2, 1)",
-              width: `${(completedSteps.size / STEPS.length) * 100}%`,
-              background: "linear-gradient(90deg, #00d4ff, #ff006e, #39ff14)",
+              background: "linear-gradient(90deg, #00d4ff, #ff006e)",
+              width: `${(completedSteps.size / 8) * 100}%`,
+              transition: "width 300ms ease-out",
             }}
           />
         </div>
+      </div>
 
+      {/* New Project Button */}
+      <div style={{ padding: "1rem", borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
         <button
           onClick={resetProject}
           style={{
-            marginTop: "0.75rem",
             width: "100%",
+            padding: "0.75rem",
+            borderRadius: "0.5rem",
+            background: "rgba(255, 0, 110, 0.1)",
+            color: "#ff006e",
+            border: "1px solid rgba(255, 0, 110, 0.3)",
+            fontWeight: "600",
+            fontSize: "0.75rem",
+            cursor: "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             gap: "0.5rem",
-            fontSize: "0.75rem",
-            padding: "0.625rem",
-            borderRadius: "8px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            background: "rgba(255, 255, 255, 0.05)",
-            color: "rgba(255, 255, 255, 0.6)",
-            cursor: "pointer",
-            transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
-            fontFamily: "'Inter', sans-serif",
-            fontWeight: "500",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(0, 212, 255, 0.1)";
-            e.currentTarget.style.color = "#00d4ff";
-            e.currentTarget.style.borderColor = "#00d4ff";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-            e.currentTarget.style.color = "rgba(255, 255, 255, 0.6)";
-            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+            transition: "all 200ms",
           }}
         >
-          <RotateCcw size={12} />
-          New Project
+          <RotateCcw size={14} />
+          NEW PROJECT
         </button>
       </div>
     </aside>

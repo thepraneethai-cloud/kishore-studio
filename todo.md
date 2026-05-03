@@ -53,8 +53,8 @@
 
 ## Phase 8: Devotional Mode ✅
 - [x] Rebuild Step 1: Deity Selector (mobile-optimized, fixed deity key normalization)
-- [x] Rebuild Step 2: Lyrics Generator with ChatGPT (AI Generate button now working)
-- [x] Rebuild Step 3: SUNO Style Builder (Glassmorphism theme applied)
+- [x] Rebuild Step 2: Lyrics Generator with ChatGPT + SUNO Style generation
+- [x] Rebuild Step 3: Audio Upload (renamed from SUNO Style, with drag-drop and preview)
 - [x] Rebuild Step 4: Music Prompt Guide (Glassmorphism theme applied)
 - [x] Rebuild Step 5: Scene Breakdown (Glassmorphism theme applied)
 - [x] Rebuild Step 6: Image Prompts (Glassmorphism theme applied)
@@ -97,3 +97,18 @@
 - [ ] Prepare deployment guide
 - [ ] Final testing and QA
 - [ ] Deliver to user
+
+
+## Phase 13: Lyrics Refinement & Length Control
+- [ ] Add lyrics length selector (short/medium/long/custom word count)
+- [ ] Add custom lyrics input option (paste your own lyrics)
+- [ ] Add lyrics refinement controls (regenerate, edit, adjust)
+- [ ] Add lyrics preview with word count and duration estimate
+- [ ] Support for both AI-generated and manually-entered lyrics
+- [ ] Lyrics templates for different styles
+
+## Phase 14: Workflow Consolidation
+- [ ] Remove Step 4 (Music Prompt) - redundant with Step 2 SUNO Style
+- [ ] Consolidate workflow from 9 steps to 8 steps
+- [ ] Update sidebar and step navigation
+- [ ] Update step numbering in all components
