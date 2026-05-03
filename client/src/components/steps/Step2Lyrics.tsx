@@ -133,7 +133,7 @@ export default function Step2Lyrics() {
   };
 
   const handleContinue = () => {
-    if (project.lyrics.trim().length > 20) {
+    if (project.lyrics && project.lyrics.trim().length > 20) {
       markStepComplete(2);
       setActiveStep(3);
     } else {
@@ -142,7 +142,7 @@ export default function Step2Lyrics() {
   };
 
   const handleSkipToAudio = () => {
-    if (project.lyrics.trim().length > 20) {
+    if (project.lyrics && project.lyrics.trim().length > 20) {
       markStepComplete(2);
       markStepComplete(3);
       setActiveStep(4);
@@ -151,8 +151,8 @@ export default function Step2Lyrics() {
     }
   };
 
-  const wordCount = project.lyrics.trim().split(/\s+/).filter(Boolean).length;
-  const lineCount = project.lyrics.trim().split("\n").filter(Boolean).length;
+  const wordCount = project.lyrics ? project.lyrics.trim().split(/\s+/).filter(Boolean).length : 0;
+  const lineCount = project.lyrics ? project.lyrics.trim().split("\n").filter(Boolean).length : 0;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
