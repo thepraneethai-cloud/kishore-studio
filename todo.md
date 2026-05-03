@@ -151,3 +151,7 @@
 - [x] Add loading states for SUNO style generation
 - [x] Test SUNO style refinement workflow
 - [x] Create 22 comprehensive SUNO refinement tests (all passing)
+- [x] REDESIGN: SUNO style as SINGLE copyable box (not separate fields)
+- [x] Add Copy button to copy SUNO style to clipboard
+- [x] Fix feedback refinement procedure to work correctly
+- [x] Test feedback-based refinement with actual updates
