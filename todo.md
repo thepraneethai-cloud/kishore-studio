@@ -33,6 +33,7 @@
 - [x] Implement job retry logic
 - [ ] Add notifications for job completion
 - [x] Persist jobs in database
+- [x] Audio upload backend with S3 storage
 
 ## Phase 6: Multi-AI Integration
 - [ ] Integrate ChatGPT API for lyrics
@@ -123,3 +124,18 @@
 - [x] Add "Save as Template" button for lyrics prompts
 - [x] Add "Save SUNO Style" button for generated styles
 - [x] Theme selector auto-populates default prompts and SUNO settings
+
+## Phase 16: Comprehensive Testing (All 8 Steps)
+- [ ] Test Step 1: Deity Selector (predefined and custom deities)
+- [ ] Test Step 2: Lyrics Generator (AI generation, manual input, templates)
+- [ ] Test Step 3: Audio Upload (file upload, S3 storage, preview)
+- [ ] Test Step 4: Music Prompt (SUNO style display and editing)
+- [ ] Test Step 5: Scene Breakdown (scene creation and editing)
+- [ ] Test Step 6: Image Prompts (prompt generation and templates)
+- [ ] Test Step 7: Video Prompts (prompt generation and templates)
+- [ ] Test Step 8: CapCut Assembly (guide display and instructions)
+- [ ] Test Cost Dashboard (budget tracking, alerts, provider breakdown)
+- [ ] Test Mobile Responsiveness (all screen sizes)
+- [ ] Test Background Job System (job creation, tracking, completion)
+- [ ] Test Settings Panel (API key storage, provider selection)
+- [ ] End-to-end workflow testing (complete devotional video creation)

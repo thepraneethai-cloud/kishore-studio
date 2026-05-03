@@ -490,3 +490,116 @@ input:focus, textarea:focus, select:focus {
 .oklch-text-highlight {
   color: #39ff14 !important;
 }
+
+
+/* ============================================================
+   MOBILE-RESPONSIVE DESIGN
+   ============================================================ */
+
+/* Mobile-first: Base styles for small screens */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  .container {
+    padding: 0.75rem;
+  }
+
+  /* Main content: Full width on mobile */
+  main {
+    padding: 1rem !important;
+  }
+
+  /* Buttons: Larger touch targets */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.75rem 1rem !important;
+  }
+
+  /* Input fields: Larger touch targets */
+  input, textarea, select {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Cards: Full width with less padding */
+  .card {
+    margin: 0.5rem 0;
+    padding: 1rem;
+  }
+
+  /* Grid: Single column on mobile */
+  [data-grid] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Flex: Stack vertically on mobile */
+  [data-flex-row] {
+    flex-direction: column !important;
+  }
+
+  /* Text: Smaller on mobile */
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.1rem; }
+}
+
+/* Tablet: Medium screens */
+@media (min-width: 769px) and (max-width: 1024px) {
+  main {
+    padding: 1.5rem !important;
+  }
+
+  [data-grid] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Desktop: Large screens */
+@media (min-width: 1025px) {
+  main {
+    padding: 2rem !important;
+  }
+
+  [data-grid] {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* Touch-friendly spacing */
+@media (hover: none) and (pointer: coarse) {
+  button, a, input {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* Increase spacing between interactive elements */
+  button + button {
+    margin-left: 0.5rem;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (orientation: landscape) and (max-height: 500px) {
+  header {
+    padding: 0.5rem 1rem;
+  }
+
+  main {
+    padding: 0.75rem !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  [data-sidebar], header, nav {
+    display: none;
+  }
+
+  main {
+    padding: 0;
+    max-width: 100%;
+  }
+}
