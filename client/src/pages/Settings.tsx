@@ -1,35 +1,94 @@
-import { useState } from "react";
-import { Eye, EyeOff, Save, AlertCircle, ArrowLeft } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Eye, EyeOff, Save, AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
 
 export default function Settings() {
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<"api-keys" | "providers" | "budget">("api-keys");
   const [apiKeys, setApiKeys] = useState({
-    openai: "",
-    replicate: "",
-    anthropic: "",
+    openaiApiKey: "",
+    claudeApiKey: "",
+    geminiApiKey: "",
+    replicateApiKey: "",
   });
   const [showKeys, setShowKeys] = useState({
-    openai: false,
-    replicate: false,
-    anthropic: false,
+    openaiApiKey: false,
+    claudeApiKey: false,
+    geminiApiKey: false,
+    replicateApiKey: false,
   });
   const [providers, setProviders] = useState({
-    lyrics: "chatgpt",
-    images: "flux",
-    videos: "runway",
+    lyricsProvider: "chatgpt",
+    imageProvider: "flux",
+    videoProvider: "runway",
   });
   const [budget, setBudget] = useState({
-    monthlyLimit: 50,
-    spent: 12.34,
+    monthlyBudgetUSD: 50,
+    budgetResetDay: 1,
   });
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const handleSave = () => {
+  // Load settings from backend
+  const { data: settings } = trpc.settings.getSettings.useQuery();
+
+  // Save mutations
+  const saveApiKeysMutation = trpc.settings.saveApiKeys.useMutation();
+  const saveProvidersMutation = trpc.settings.saveProviders.useMutation();
+  const saveBudgetMutation = trpc.settings.saveBudget.useMutation();
+
+  // Load settings when they arrive from backend
+  useEffect(() => {
+    if (settings) {
+      setApiKeys({
+        openaiApiKey: settings.openaiApiKey || "",
+        claudeApiKey: settings.claudeApiKey || "",
+        geminiApiKey: settings.geminiApiKey || "",
+        replicateApiKey: settings.replicateApiKey || "",
+      });
+      setProviders({
+        lyricsProvider: settings.lyricsProvider || "chatgpt",
+        imageProvider: settings.imageProvider || "flux",
+        videoProvider: settings.videoProvider || "runway",
+      });
+      setBudget({
+        monthlyBudgetUSD: Number(settings.monthlyBudgetUSD) || 50,
+        budgetResetDay: settings.budgetResetDay || 1,
+      });
+      setLoading(false);
+    }
+  }, [settings]);
+
+  const handleSaveApiKeys = async () => {
+    await saveApiKeysMutation.mutateAsync(apiKeys);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
+
+  const handleSaveProviders = async () => {
+    await saveProvidersMutation.mutateAsync({
+      lyricsProvider: providers.lyricsProvider as "chatgpt" | "claude" | "gemini",
+      imageProvider: providers.imageProvider as "flux" | "dalle" | "midjourney",
+      videoProvider: providers.videoProvider as "runway" | "grok" | "pika",
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
+
+  const handleSaveBudget = async () => {
+    await saveBudgetMutation.mutateAsync(budget);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+        <Loader2 size={32} style={{ animation: "spin 1s linear infinite", color: "#00d4ff" }} />
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: "900px", margin: "0 auto" }}>
@@ -84,7 +143,6 @@ export default function Settings() {
           gap: "1rem",
           marginBottom: "2rem",
           borderBottom: "1px solid rgba(0, 212, 255, 0.2)",
-          paddingBottom: "1rem",
         }}
       >
         {(["api-keys", "providers", "budget"] as const).map((tab) => (
@@ -92,451 +150,257 @@ export default function Settings() {
             key={tab}
             onClick={() => setActiveTab(tab)}
             style={{
-              padding: "0.75rem 1.5rem",
-              borderRadius: "8px",
+              padding: "0.75rem 1rem",
+              background: "none",
               border: "none",
-              background: activeTab === tab ? "rgba(0, 212, 255, 0.15)" : "transparent",
               color: activeTab === tab ? "#00d4ff" : "rgba(255, 255, 255, 0.6)",
               cursor: "pointer",
-              fontWeight: "600",
               fontSize: "0.875rem",
-              transition: "all 250ms",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-            }}
-            onMouseEnter={(e) => {
-              if (activeTab !== tab) {
-                e.currentTarget.style.color = "#00d4ff";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (activeTab !== tab) {
-                e.currentTarget.style.color = "rgba(255, 255, 255, 0.6)";
-              }
+              fontWeight: activeTab === tab ? "600" : "400",
+              borderBottom: activeTab === tab ? "2px solid #00d4ff" : "none",
+              transition: "all 200ms",
+              textTransform: "capitalize",
             }}
           >
-            {tab === "api-keys" && "API Keys"}
-            {tab === "providers" && "Providers"}
-            {tab === "budget" && "Budget"}
+            {tab.replace("-", " ")}
           </button>
         ))}
       </div>
 
+      {/* Success Message */}
+      {saved && (
+        <div
+          style={{
+            padding: "1rem",
+            marginBottom: "1.5rem",
+            background: "rgba(57, 255, 20, 0.1)",
+            border: "1px solid #39ff14",
+            borderRadius: "0.5rem",
+            color: "#39ff14",
+            fontSize: "0.875rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+          }}
+        >
+          ✓ Settings saved successfully!
+        </div>
+      )}
+
       {/* API Keys Tab */}
       {activeTab === "api-keys" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-          {/* OpenAI */}
-          <div
+          {(["openaiApiKey", "claudeApiKey", "geminiApiKey", "replicateApiKey"] as const).map((key) => (
+            <div key={key}>
+              <label style={{ display: "block", marginBottom: "0.5rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>
+                {key === "openaiApiKey"
+                  ? "OpenAI API Key (ChatGPT)"
+                  : key === "claudeApiKey"
+                    ? "Claude API Key"
+                    : key === "geminiApiKey"
+                      ? "Gemini API Key"
+                      : "Replicate API Key"}
+              </label>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <input
+                  type={showKeys[key] ? "text" : "password"}
+                  value={apiKeys[key]}
+                  onChange={(e) => setApiKeys({ ...apiKeys, [key]: e.target.value })}
+                  placeholder="Enter your API key"
+                  style={{
+                    flex: 1,
+                    padding: "0.75rem",
+                    background: "rgba(0, 212, 255, 0.05)",
+                    border: "1px solid rgba(0, 212, 255, 0.2)",
+                    borderRadius: "0.5rem",
+                    color: "#fff",
+                    fontSize: "0.875rem",
+                  }}
+                />
+                <button
+                  onClick={() => setShowKeys({ ...showKeys, [key]: !showKeys[key] })}
+                  style={{
+                    padding: "0.75rem",
+                    background: "rgba(0, 212, 255, 0.1)",
+                    border: "1px solid rgba(0, 212, 255, 0.2)",
+                    borderRadius: "0.5rem",
+                    color: "#00d4ff",
+                    cursor: "pointer",
+                  }}
+                >
+                  {showKeys[key] ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+          ))}
+          <button
+            onClick={handleSaveApiKeys}
+            disabled={saveApiKeysMutation.isPending}
             style={{
-              padding: "1.5rem",
-              borderRadius: "12px",
-              background: "rgba(0, 212, 255, 0.05)",
-              border: "1px solid rgba(0, 212, 255, 0.2)",
+              padding: "0.75rem 1.5rem",
+              background: "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)",
+              border: "none",
+              borderRadius: "0.5rem",
+              color: "#000",
+              fontWeight: "600",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.5rem",
+              opacity: saveApiKeysMutation.isPending ? 0.7 : 1,
             }}
           >
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                color: "#00d4ff",
-                fontWeight: "600",
-                fontSize: "0.875rem",
-              }}
-            >
-              OpenAI API Key (ChatGPT, DALL-E)
-            </label>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <input
-                type={showKeys.openai ? "text" : "password"}
-                value={apiKeys.openai}
-                onChange={(e) => setApiKeys({ ...apiKeys, openai: e.target.value })}
-                placeholder="sk-..."
-                style={{
-                  flex: 1,
-                  padding: "0.75rem 1rem",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(0, 212, 255, 0.3)",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  color: "#fff",
-                  fontFamily: "monospace",
-                  fontSize: "0.875rem",
-                }}
-              />
-              <button
-                onClick={() => setShowKeys({ ...showKeys, openai: !showKeys.openai })}
-                style={{
-                  padding: "0.75rem 1rem",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(0, 212, 255, 0.3)",
-                  background: "rgba(0, 212, 255, 0.1)",
-                  color: "#00d4ff",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                }}
-              >
-                {showKeys.openai ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            <p style={{ fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.4)", marginTop: "0.5rem" }}>
-              Get your key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" style={{ color: "#00d4ff" }}>platform.openai.com</a>
-            </p>
-          </div>
-
-          {/* Replicate */}
-          <div
-            style={{
-              padding: "1.5rem",
-              borderRadius: "12px",
-              background: "rgba(0, 212, 255, 0.05)",
-              border: "1px solid rgba(0, 212, 255, 0.2)",
-            }}
-          >
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                color: "#00d4ff",
-                fontWeight: "600",
-                fontSize: "0.875rem",
-              }}
-            >
-              Replicate API Key (Flux, Runway, Video Generation)
-            </label>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <input
-                type={showKeys.replicate ? "text" : "password"}
-                value={apiKeys.replicate}
-                onChange={(e) => setApiKeys({ ...apiKeys, replicate: e.target.value })}
-                placeholder="r8_..."
-                style={{
-                  flex: 1,
-                  padding: "0.75rem 1rem",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(0, 212, 255, 0.3)",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  color: "#fff",
-                  fontFamily: "monospace",
-                  fontSize: "0.875rem",
-                }}
-              />
-              <button
-                onClick={() => setShowKeys({ ...showKeys, replicate: !showKeys.replicate })}
-                style={{
-                  padding: "0.75rem 1rem",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(0, 212, 255, 0.3)",
-                  background: "rgba(0, 212, 255, 0.1)",
-                  color: "#00d4ff",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                }}
-              >
-                {showKeys.replicate ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            <p style={{ fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.4)", marginTop: "0.5rem" }}>
-              Get your key from <a href="https://replicate.com/account/api-tokens" target="_blank" rel="noreferrer" style={{ color: "#00d4ff" }}>replicate.com</a>
-            </p>
-          </div>
-
-          {/* Anthropic */}
-          <div
-            style={{
-              padding: "1.5rem",
-              borderRadius: "12px",
-              background: "rgba(0, 212, 255, 0.05)",
-              border: "1px solid rgba(0, 212, 255, 0.2)",
-            }}
-          >
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                color: "#00d4ff",
-                fontWeight: "600",
-                fontSize: "0.875rem",
-              }}
-            >
-              Anthropic API Key (Claude)
-            </label>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <input
-                type={showKeys.anthropic ? "text" : "password"}
-                value={apiKeys.anthropic}
-                onChange={(e) => setApiKeys({ ...apiKeys, anthropic: e.target.value })}
-                placeholder="sk-ant-..."
-                style={{
-                  flex: 1,
-                  padding: "0.75rem 1rem",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(0, 212, 255, 0.3)",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  color: "#fff",
-                  fontFamily: "monospace",
-                  fontSize: "0.875rem",
-                }}
-              />
-              <button
-                onClick={() => setShowKeys({ ...showKeys, anthropic: !showKeys.anthropic })}
-                style={{
-                  padding: "0.75rem 1rem",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(0, 212, 255, 0.3)",
-                  background: "rgba(0, 212, 255, 0.1)",
-                  color: "#00d4ff",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                }}
-              >
-                {showKeys.anthropic ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            <p style={{ fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.4)", marginTop: "0.5rem" }}>
-              Get your key from <a href="https://console.anthropic.com/account/keys" target="_blank" rel="noreferrer" style={{ color: "#00d4ff" }}>console.anthropic.com</a>
-            </p>
-          </div>
+            {saveApiKeysMutation.isPending ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
+            Save API Keys
+          </button>
         </div>
       )}
 
       {/* Providers Tab */}
       {activeTab === "providers" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-          {/* Lyrics Provider */}
-          <div
+          {(["lyricsProvider", "imageProvider", "videoProvider"] as const).map((key) => (
+            <div key={key}>
+              <label style={{ display: "block", marginBottom: "0.5rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>
+                {key === "lyricsProvider" ? "Lyrics Provider" : key === "imageProvider" ? "Image Provider" : "Video Provider"}
+              </label>
+              <select
+                value={providers[key]}
+                onChange={(e) => setProviders({ ...providers, [key]: e.target.value })}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem",
+                  background: "rgba(0, 212, 255, 0.05)",
+                  border: "1px solid rgba(0, 212, 255, 0.2)",
+                  borderRadius: "0.5rem",
+                  color: "#fff",
+                  fontSize: "0.875rem",
+                }}
+              >
+                {key === "lyricsProvider" && (
+                  <>
+                    <option value="chatgpt">ChatGPT (OpenAI)</option>
+                    <option value="claude">Claude (Anthropic)</option>
+                    <option value="gemini">Gemini (Google)</option>
+                  </>
+                )}
+                {key === "imageProvider" && (
+                  <>
+                    <option value="flux">Flux (Replicate)</option>
+                    <option value="dalle">DALL-E (OpenAI)</option>
+                    <option value="midjourney">Midjourney</option>
+                  </>
+                )}
+                {key === "videoProvider" && (
+                  <>
+                    <option value="runway">Runway Gen-3</option>
+                    <option value="grok">Grok Photo→Video</option>
+                    <option value="pika">Pika</option>
+                  </>
+                )}
+              </select>
+            </div>
+          ))}
+          <button
+            onClick={handleSaveProviders}
+            disabled={saveProvidersMutation.isPending}
             style={{
-              padding: "1.5rem",
-              borderRadius: "12px",
-              background: "rgba(0, 212, 255, 0.05)",
-              border: "1px solid rgba(0, 212, 255, 0.2)",
+              padding: "0.75rem 1.5rem",
+              background: "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)",
+              border: "none",
+              borderRadius: "0.5rem",
+              color: "#000",
+              fontWeight: "600",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.5rem",
+              opacity: saveProvidersMutation.isPending ? 0.7 : 1,
             }}
           >
-            <label
-              style={{
-                display: "block",
-                marginBottom: "1rem",
-                color: "#00d4ff",
-                fontWeight: "600",
-                fontSize: "0.875rem",
-              }}
-            >
-              Lyrics Generation Provider
-            </label>
-            <select
-              value={providers.lyrics}
-              onChange={(e) => setProviders({ ...providers, lyrics: e.target.value })}
-              style={{
-                width: "100%",
-                padding: "0.75rem 1rem",
-                borderRadius: "8px",
-                border: "1px solid rgba(0, 212, 255, 0.3)",
-                background: "rgba(255, 255, 255, 0.05)",
-                color: "#00d4ff",
-                cursor: "pointer",
-                fontSize: "0.875rem",
-              }}
-            >
-              <option value="chatgpt">ChatGPT (OpenAI)</option>
-              <option value="claude">Claude (Anthropic)</option>
-              <option value="gemini">Gemini (Google)</option>
-            </select>
-          </div>
-
-          {/* Image Provider */}
-          <div
-            style={{
-              padding: "1.5rem",
-              borderRadius: "12px",
-              background: "rgba(0, 212, 255, 0.05)",
-              border: "1px solid rgba(0, 212, 255, 0.2)",
-            }}
-          >
-            <label
-              style={{
-                display: "block",
-                marginBottom: "1rem",
-                color: "#00d4ff",
-                fontWeight: "600",
-                fontSize: "0.875rem",
-              }}
-            >
-              Image Generation Provider
-            </label>
-            <select
-              value={providers.images}
-              onChange={(e) => setProviders({ ...providers, images: e.target.value })}
-              style={{
-                width: "100%",
-                padding: "0.75rem 1rem",
-                borderRadius: "8px",
-                border: "1px solid rgba(0, 212, 255, 0.3)",
-                background: "rgba(255, 255, 255, 0.05)",
-                color: "#00d4ff",
-                cursor: "pointer",
-                fontSize: "0.875rem",
-              }}
-            >
-              <option value="flux">Flux (Replicate) - $0.04/image</option>
-              <option value="dalle">DALL-E 3 (OpenAI) - $0.04/image</option>
-              <option value="stable">Stable Diffusion (Replicate) - $0.004/image</option>
-            </select>
-          </div>
-
-          {/* Video Provider */}
-          <div
-            style={{
-              padding: "1.5rem",
-              borderRadius: "12px",
-              background: "rgba(0, 212, 255, 0.05)",
-              border: "1px solid rgba(0, 212, 255, 0.2)",
-            }}
-          >
-            <label
-              style={{
-                display: "block",
-                marginBottom: "1rem",
-                color: "#00d4ff",
-                fontWeight: "600",
-                fontSize: "0.875rem",
-              }}
-            >
-              Video Generation Provider
-            </label>
-            <select
-              value={providers.videos}
-              onChange={(e) => setProviders({ ...providers, videos: e.target.value })}
-              style={{
-                width: "100%",
-                padding: "0.75rem 1rem",
-                borderRadius: "8px",
-                border: "1px solid rgba(0, 212, 255, 0.3)",
-                background: "rgba(255, 255, 255, 0.05)",
-                color: "#00d4ff",
-                cursor: "pointer",
-                fontSize: "0.875rem",
-              }}
-            >
-              <option value="runway">Runway Gen-3 (Replicate) - $0.07/5s</option>
-              <option value="pika">Pika - $0.05/video</option>
-              <option value="grok">Grok Photo→Video - Free tier available</option>
-            </select>
-          </div>
+            {saveProvidersMutation.isPending ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
+            Save Providers
+          </button>
         </div>
       )}
 
       {/* Budget Tab */}
       {activeTab === "budget" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-          {/* Budget Card */}
-          <div
-            style={{
-              padding: "1.5rem",
-              borderRadius: "12px",
-              background: "rgba(0, 212, 255, 0.05)",
-              border: "1px solid rgba(0, 212, 255, 0.2)",
-            }}
-          >
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                color: "#00d4ff",
-                fontWeight: "600",
-                fontSize: "0.875rem",
-              }}
-            >
-              Monthly Budget Limit (USD)
+          <div>
+            <label style={{ display: "block", marginBottom: "0.5rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>
+              Monthly Budget (USD)
             </label>
             <input
               type="number"
-              value={budget.monthlyLimit}
-              onChange={(e) => setBudget({ ...budget, monthlyLimit: parseFloat(e.target.value) })}
+              value={budget.monthlyBudgetUSD}
+              onChange={(e) => setBudget({ ...budget, monthlyBudgetUSD: Number(e.target.value) })}
+              min="1"
+              step="0.01"
               style={{
                 width: "100%",
-                padding: "0.75rem 1rem",
-                borderRadius: "8px",
-                border: "1px solid rgba(0, 212, 255, 0.3)",
-                background: "rgba(255, 255, 255, 0.05)",
-                color: "#00d4ff",
+                padding: "0.75rem",
+                background: "rgba(0, 212, 255, 0.05)",
+                border: "1px solid rgba(0, 212, 255, 0.2)",
+                borderRadius: "0.5rem",
+                color: "#fff",
                 fontSize: "0.875rem",
               }}
             />
           </div>
-
-          {/* Usage Card */}
-          <div
-            style={{
-              padding: "1.5rem",
-              borderRadius: "12px",
-              background: "rgba(255, 0, 110, 0.05)",
-              border: "1px solid rgba(255, 0, 110, 0.2)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
-              <AlertCircle size={20} style={{ color: "#ff006e" }} />
-              <span style={{ color: "#ff006e", fontWeight: "600" }}>Current Usage This Month</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-              <span style={{ color: "rgba(255, 255, 255, 0.6)" }}>Spent:</span>
-              <span style={{ color: "#00d4ff", fontWeight: "600" }}>${budget.spent.toFixed(2)}</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
-              <span style={{ color: "rgba(255, 255, 255, 0.6)" }}>Remaining:</span>
-              <span style={{ color: "#39ff14", fontWeight: "600" }}>
-                ${(budget.monthlyLimit - budget.spent).toFixed(2)}
-              </span>
-            </div>
-            {/* Progress bar */}
-            <div
+          <div>
+            <label style={{ display: "block", marginBottom: "0.5rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>
+              Budget Reset Day (1-31)
+            </label>
+            <input
+              type="number"
+              value={budget.budgetResetDay}
+              onChange={(e) => setBudget({ ...budget, budgetResetDay: Math.min(31, Math.max(1, Number(e.target.value))) })}
+              min="1"
+              max="31"
               style={{
                 width: "100%",
-                height: "8px",
-                borderRadius: "4px",
-                background: "rgba(255, 255, 255, 0.1)",
-                overflow: "hidden",
+                padding: "0.75rem",
+                background: "rgba(0, 212, 255, 0.05)",
+                border: "1px solid rgba(0, 212, 255, 0.2)",
+                borderRadius: "0.5rem",
+                color: "#fff",
+                fontSize: "0.875rem",
               }}
-            >
-              <div
-                style={{
-                  height: "100%",
-                  width: `${(budget.spent / budget.monthlyLimit) * 100}%`,
-                  background: budget.spent / budget.monthlyLimit > 0.8 ? "#ff006e" : "#00d4ff",
-                  transition: "width 250ms",
-                }}
-              />
-            </div>
+            />
           </div>
+          <button
+            onClick={handleSaveBudget}
+            disabled={saveBudgetMutation.isPending}
+            style={{
+              padding: "0.75rem 1.5rem",
+              background: "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)",
+              border: "none",
+              borderRadius: "0.5rem",
+              color: "#000",
+              fontWeight: "600",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.5rem",
+              opacity: saveBudgetMutation.isPending ? 0.7 : 1,
+            }}
+          >
+            {saveBudgetMutation.isPending ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
+            Save Budget
+          </button>
         </div>
       )}
 
-      {/* Save Button */}
-      <div style={{ marginTop: "2rem", display: "flex", justifyContent: "flex-end" }}>
-        <button
-          onClick={handleSave}
-          style={{
-            padding: "0.75rem 1.5rem",
-            borderRadius: "8px",
-            border: "none",
-            background: saved ? "rgba(57, 255, 20, 0.2)" : "rgba(0, 212, 255, 0.2)",
-            color: saved ? "#39ff14" : "#00d4ff",
-            cursor: "pointer",
-            fontWeight: "600",
-            fontSize: "0.875rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            transition: "all 250ms",
-          }}
-        >
-          <Save size={18} />
-          {saved ? "Saved!" : "Save Settings"}
-        </button>
-      </div>
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, userSettings, UserSettings, InsertUserSettings } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -87,6 +87,46 @@ export async function getUserByOpenId(openId: string) {
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
 
   return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUserSettings(userId: number): Promise<UserSettings | undefined> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get user settings: database not available");
+    return undefined;
+  }
+
+  try {
+    const result = await db.select().from(userSettings).where(eq(userSettings.userId, userId)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
+  } catch (error) {
+    console.error("[Database] Failed to get user settings:", error);
+    return undefined;
+  }
+}
+
+export async function upsertUserSettings(userId: number, settings: Partial<InsertUserSettings>): Promise<UserSettings | undefined> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot upsert user settings: database not available");
+    return undefined;
+  }
+
+  try {
+    const values: InsertUserSettings = {
+      userId,
+      ...settings,
+    };
+
+    await db.insert(userSettings).values(values).onDuplicateKeyUpdate({
+      set: settings,
+    });
+
+    return getUserSettings(userId);
+  } catch (error) {
+    console.error("[Database] Failed to upsert user settings:", error);
+    throw error;
+  }
 }
 
 // TODO: add feature queries here as your schema grows.
