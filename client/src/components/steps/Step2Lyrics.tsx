@@ -69,9 +69,16 @@ export default function Step2Lyrics() {
   };
 
   const loadTemplate = () => {
-    if (project.deity) {
-      setLyrics(LYRICS_TEMPLATES[project.deity]);
+    if (!deity) {
+      toast.error("Please select a deity first");
+      return;
+    }
+    const template = LYRICS_TEMPLATES[deity.key];
+    if (template) {
+      setLyrics(template);
       toast.success("Template loaded — customize it for your song!");
+    } else {
+      toast.error("No template available for this deity");
     }
   };
 
