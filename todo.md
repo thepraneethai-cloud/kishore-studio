@@ -99,27 +99,27 @@
 - [ ] Deliver to user
 
 
-## Phase 13: Lyrics Refinement & Length Control
-- [ ] Add lyrics length selector (short/medium/long/custom word count)
-- [ ] Add custom lyrics input option (paste your own lyrics)
-- [ ] Add lyrics refinement controls (regenerate, edit, adjust)
-- [ ] Add lyrics preview with word count and duration estimate
-- [ ] Support for both AI-generated and manually-entered lyrics
-- [ ] Lyrics templates for different styles
+## Phase 13: Lyrics Refinement & Length Control ✅
+- [x] Add lyrics length selector (short/medium/long/custom word count)
+- [x] Add custom lyrics input option (paste your own lyrics)
+- [x] Add lyrics refinement controls (regenerate, edit, adjust)
+- [x] Add lyrics preview with word count and duration estimate
+- [x] Support for both AI-generated and manually-entered lyrics
+- [x] Lyrics templates for different styles
 
-## Phase 14: Workflow Consolidation
-- [ ] Remove Step 4 (Music Prompt) - redundant with Step 2 SUNO Style
-- [ ] Consolidate workflow from 9 steps to 8 steps
-- [ ] Update sidebar and step navigation
-- [ ] Update step numbering in all components
+## Phase 14: Workflow Consolidation ✅
+- [x] Remove Step 4 (Music Prompt) - redundant with Step 2 SUNO Style
+- [x] Consolidate workflow from 9 steps to 8 steps
+- [x] Update sidebar and step navigation
+- [x] Update step numbering in all components
 
-## Phase 15: Saveable Templates & Theme Defaults
-- [ ] Add database schema for prompt templates (lyrics prompts)
-- [ ] Add database schema for SUNO style templates
-- [ ] Create backend tRPC procedures for template CRUD (save, list, delete)
-- [ ] Build default theme-based prompts (Deity, Love, Folk, Mass, etc.)
-- [ ] Build default SUNO style presets per theme
-- [ ] Update Step 2 UI with prompt template selector
-- [ ] Add "Save as Template" button for lyrics prompts
-- [ ] Add "Save SUNO Style" button for generated styles
-- [ ] Theme selector auto-populates default prompts and SUNO settings
+## Phase 15: Saveable Templates & Theme Defaults ✅
+- [x] Add database schema for prompt templates (lyrics prompts)
+- [x] Add database schema for SUNO style templates
+- [x] Create backend tRPC procedures for template CRUD (save, list, delete)
+- [x] Build default theme-based prompts (Deity, Love, Folk, Mass, etc.)
+- [x] Build default SUNO style presets per theme
+- [x] Update Step 2 UI with prompt template selector
+- [x] Add "Save as Template" button for lyrics prompts
+- [x] Add "Save SUNO Style" button for generated styles
+- [x] Theme selector auto-populates default prompts and SUNO settings
