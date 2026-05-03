@@ -52,8 +52,8 @@
 - [ ] Add cost breakdown reports
 
 ## Phase 8: Devotional Mode
-- [ ] Rebuild Step 1: Deity Selector (mobile-optimized)
-- [ ] Rebuild Step 2: Lyrics Generator with ChatGPT
+- [x] Rebuild Step 1: Deity Selector (mobile-optimized, fixed deity key normalization)
+- [x] Rebuild Step 2: Lyrics Generator with ChatGPT (AI Generate button now working)
 - [ ] Rebuild Step 3: SUNO Style Builder
 - [ ] Rebuild Step 4: Music Prompt Guide
 - [ ] Rebuild Step 5: Scene Breakdown

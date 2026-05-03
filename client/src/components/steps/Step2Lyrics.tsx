@@ -49,7 +49,9 @@ export default function Step2Lyrics() {
   const [customPrompt, setCustomPrompt] = useState("");
   const [theme, setTheme] = useState("");
 
-  const deity = DEITIES.find((d) => d.key === project.deity);
+  // Support both predefined deities and custom deity names
+  const deity = DEITIES.find((d) => d.key === project.deity) || 
+    (project.deity ? { key: project.deity, name: project.deity, mood: "Custom" } : null);
   const generateLyricsMutation = trpc.generation.generateLyrics.useMutation();
 
   const loadTemplate = () => {
@@ -69,6 +71,12 @@ export default function Step2Lyrics() {
   const handleAIGenerate = async () => {
     if (!project.deity || project.deity.trim().length === 0) {
       toast.error("Please select a deity first");
+      return;
+    }
+    
+    // Ensure deity is properly set
+    if (!deity) {
+      toast.error("Deity not found");
       return;
     }
 
