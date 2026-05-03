@@ -139,3 +139,15 @@
 - [ ] Test Background Job System (job creation, tracking, completion)
 - [ ] Test Settings Panel (API key storage, provider selection)
 - [ ] End-to-end workflow testing (complete devotional video creation)
+
+## Phase 17: Step 2 Enhancement - SUNO Style Refinement
+- [x] Separate SUNO style into its own box/card in Step 2 UI
+- [x] Auto-generate SUNO style when "Generate Lyrics" is clicked
+- [x] Add "Refine SUNO Style" button for feedback-based regeneration
+- [x] Add feedback input field for SUNO style refinement
+- [x] Backend procedure to regenerate SUNO style based on feedback
+- [x] Maintain separate "Generate Lyrics" button
+- [x] Display SUNO style fields: Tempo, Mood, Instruments, Vocals
+- [x] Add loading states for SUNO style generation
+- [x] Test SUNO style refinement workflow
+- [x] Create 22 comprehensive SUNO refinement tests (all passing)

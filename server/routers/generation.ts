@@ -147,6 +147,37 @@ export const generationRouter = router({
     }),
 
   // ============================================================
+  // REFINE SUNO STYLE BASED ON FEEDBACK
+  // ============================================================
+  refineSunoStyle: publicProcedure
+    .input(
+      z.object({
+        lyrics: z.string(),
+        currentStyle: z.record(z.string(), z.any()).optional(),
+        feedback: z.string(),
+        theme: z.string().optional(),
+        deity: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const result = await generateDevotionalLyrics({
+          deity: input.deity || "General",
+          customPrompt: `Based on these lyrics and feedback, generate a refined SUNO music style. Lyrics: ${input.lyrics.substring(0, 200)}. User feedback: ${input.feedback}`,
+          theme: input.theme,
+          duration: 4,
+          language: "telugu",
+        });
+        return { success: true, data: result.sunoStyle || {} };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Failed to refine SUNO style",
+        };
+      }
+    }),
+
+  // ============================================================
   // POLL JOB STATUS
   // ============================================================
   pollJob: publicProcedure
