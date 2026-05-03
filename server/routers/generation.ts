@@ -3,8 +3,12 @@
 // ============================================================
 
 import { z } from "zod";
-import { publicProcedure, router } from "../_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
 import { generateDevotionalLyrics } from "../_core/lyricsGeneration";
+import { storagePut } from "../storage";
+import { getDb } from "../db";
+import { projects } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
 import {
   generateImageBatch,
   generateVideoBatch,
@@ -12,6 +16,48 @@ import {
 } from "../_core/replicate";
 
 export const generationRouter = router({
+  // ============================================================
+  // AUDIO UPLOAD
+  // ============================================================
+  uploadAudio: protectedProcedure
+    .input(
+      z.object({
+        projectId: z.number(),
+        audioBuffer: z.union([z.instanceof(Buffer), z.instanceof(Uint8Array)]),
+        fileName: z.string(),
+        mimeType: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        // Upload to S3
+        const { url, key } = await storagePut(
+          `projects/${input.projectId}/audio/${input.fileName}`,
+          input.audioBuffer,
+          input.mimeType
+        );
+
+        // Update project with audio URL
+        const db = await getDb();
+        if (!db) throw new Error("Database connection failed");
+        await db
+          .update(projects)
+          .set({
+            audioUrl: url,
+            audioStorageKey: key,
+            updatedAt: new Date(),
+          })
+          .where(eq(projects.id, input.projectId));
+
+        return { success: true, url, key };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Failed to upload audio",
+        };
+      }
+    }),
+
   // ============================================================
   // LYRICS GENERATION
   // ============================================================

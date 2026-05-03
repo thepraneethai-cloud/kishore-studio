@@ -3,11 +3,12 @@
 // ============================================================
 import { useState } from "react";
 import { useProject } from "@/contexts/ProjectContext";
-import { ChevronRight, Upload, Music, Check, Trash2 } from "lucide-react";
+import { ChevronRight, Upload, Music, Check, Trash2, Loader } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 export default function Step3Audio() {
-  const { project, setActiveStep, markStepComplete } = useProject();
+  const { project: contextProject, setActiveStep, markStepComplete } = useProject();
   const [uploading, setUploading] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState<string>("");
@@ -46,13 +47,43 @@ export default function Step3Audio() {
     toast.success("Audio file removed");
   };
 
-  const handleContinue = () => {
+  const uploadAudioMutation = trpc.generation.uploadAudio.useMutation();
+
+  const handleContinue = async () => {
     if (!audioFile && !audioUrl) {
       toast.error("Please upload an audio file first");
       return;
     }
-    markStepComplete(3);
-    setActiveStep(4);
+
+    // If audio file exists and hasn't been uploaded yet
+    if (audioFile && !(contextProject as any).audioUrl) {
+      setUploading(true);
+      try {
+        const buffer = await audioFile.arrayBuffer();
+        const result = await uploadAudioMutation.mutateAsync({
+          projectId: Number(contextProject.id) || 0,
+          audioBuffer: new Uint8Array(buffer),
+          fileName: audioFile.name,
+          mimeType: audioFile.type,
+        });
+
+        if (result.success) {
+          toast.success("Audio uploaded successfully!");
+          markStepComplete(3);
+          setActiveStep(4);
+        } else {
+          toast.error(result.error || "Failed to upload audio");
+        }
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Upload failed");
+      } finally {
+        setUploading(false);
+      }
+    } else {
+      // Audio already uploaded or skipped
+      markStepComplete(3);
+      setActiveStep(4);
+    }
   };
 
   return (
@@ -226,15 +257,15 @@ export default function Step3Audio() {
       {/* Continue Button */}
       <button
         onClick={handleContinue}
-        disabled={!audioFile && !audioUrl}
+        disabled={(!audioFile && !audioUrl) || uploading}
         style={{
           padding: "0.75rem",
           borderRadius: "0.5rem",
-          background: !audioFile && !audioUrl ? "rgba(0, 212, 255, 0.2)" : "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)",
-          color: !audioFile && !audioUrl ? "rgba(255, 255, 255, 0.4)" : "#000",
+          background: (!audioFile && !audioUrl) || uploading ? "rgba(0, 212, 255, 0.2)" : "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)",
+          color: (!audioFile && !audioUrl) || uploading ? "rgba(255, 255, 255, 0.4)" : "#000",
           border: "none",
           fontWeight: "600",
-          cursor: !audioFile && !audioUrl ? "not-allowed" : "pointer",
+          cursor: (!audioFile && !audioUrl) || uploading ? "not-allowed" : "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -242,8 +273,17 @@ export default function Step3Audio() {
           transition: "all 200ms",
         }}
       >
-        Continue to Scene Breakdown
-        <ChevronRight size={16} />
+        {uploading ? (
+          <>
+            <Loader size={16} style={{ animation: "spin 1s linear infinite" }} />
+            Uploading...
+          </>
+        ) : (
+          <>
+            Continue to Scene Breakdown
+            <ChevronRight size={16} />
+          </>
+        )}
       </button>
     </div>
   );

@@ -22,6 +22,13 @@
       "when": 1777775521986,
       "tag": "0002_lyrical_silver_samurai",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1777781943769,
+      "tag": "0003_panoramic_bruce_banner",
+      "breakpoints": true
     }
   ]
 }
