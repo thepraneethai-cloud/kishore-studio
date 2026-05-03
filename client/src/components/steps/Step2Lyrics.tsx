@@ -310,7 +310,12 @@ export default function Step2Lyrics() {
                 {deity.name} Writing Tips
               </p>
               <ul style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                {WRITING_TIPS[project.deity as DeityKey].map((tip, i) => (
+                {(WRITING_TIPS[project.deity as DeityKey] || [
+                  `Write devotional lyrics honoring ${project.deity}`,
+                  "Use poetic language and metaphors",
+                  "Include specific attributes or stories",
+                  "Structure with Pallavi (chorus) and Charanams (verses)",
+                ]).map((tip: string, i: number) => (
                   <li key={i} style={{ display: "flex", gap: "0.5rem", fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.6)" }}>
                     <span style={{ color: "#ff006e" }}>•</span>
                     {tip}
