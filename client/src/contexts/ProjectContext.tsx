@@ -1,7 +1,7 @@
 // ============================================================
 // DESIGN: "Digital Sanctum" — project state management
 // ============================================================
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import {
   Project,
   createEmptyProject,
@@ -42,6 +42,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   });
 
   const [activeStep, setActiveStep] = useState(1);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(() => {
     try {
@@ -52,9 +53,15 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
-  // Persist project to localStorage
+  // Persist project to localStorage — debounced so rapid keystrokes don't thrash storage
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...project, updatedAt: Date.now() }));
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...project, updatedAt: Date.now() }));
+    }, 500);
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
   }, [project]);
 
   useEffect(() => {
