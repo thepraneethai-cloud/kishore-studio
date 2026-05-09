@@ -3,7 +3,7 @@
 // ============================================================
 
 import { z } from "zod";
-import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
+import { protectedProcedure, router } from "../_core/trpc";
 import { generateDevotionalLyrics } from "../_core/lyricsGeneration";
 import { storagePut } from "../storage";
 import { getDb } from "../db";
@@ -61,7 +61,7 @@ export const generationRouter = router({
   // ============================================================
   // LYRICS GENERATION
   // ============================================================
-  generateLyrics: publicProcedure
+  generateLyrics: protectedProcedure
     .input(
       z.object({
         deity: z.string(), // Accept any custom deity name (Hanuman, Shiva, custom mythology, etc.)
@@ -92,7 +92,7 @@ export const generationRouter = router({
   // ============================================================
   // IMAGE GENERATION (Batch)
   // ============================================================
-  generateImages: publicProcedure
+  generateImages: protectedProcedure
     .input(
       z.object({
         prompts: z.array(z.string()).min(1).max(50),
@@ -121,7 +121,7 @@ export const generationRouter = router({
   // ============================================================
   // VIDEO GENERATION (Batch)
   // ============================================================
-  generateVideos: publicProcedure
+  generateVideos: protectedProcedure
     .input(
       z.object({
         videos: z.array(
@@ -149,7 +149,7 @@ export const generationRouter = router({
   // ============================================================
   // REFINE SUNO STYLE BASED ON FEEDBACK
   // ============================================================
-  refineSunoStyle: publicProcedure
+  refineSunoStyle: protectedProcedure
     .input(
       z.object({
         lyrics: z.string(),
@@ -180,7 +180,7 @@ export const generationRouter = router({
   // ============================================================
   // POLL JOB STATUS
   // ============================================================
-  pollJob: publicProcedure
+  pollJob: protectedProcedure
     .input(
       z.object({
         jobId: z.string(),
@@ -202,7 +202,7 @@ export const generationRouter = router({
   // ============================================================
   // POLL MULTIPLE JOBS
   // ============================================================
-  pollJobs: publicProcedure
+  pollJobs: protectedProcedure
     .input(
       z.object({
         jobIds: z.array(z.string()),
