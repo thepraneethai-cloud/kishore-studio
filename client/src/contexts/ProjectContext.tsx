@@ -25,6 +25,11 @@ interface ProjectContextType {
   resetProject: () => void;
   completedSteps: Set<number>;
   markStepComplete: (step: number) => void;
+  // Undo
+  undoLyrics: () => void;
+  undoScenes: () => void;
+  canUndoLyrics: boolean;
+  canUndoScenes: boolean;
 }
 
 const ProjectContext = createContext<ProjectContextType | null>(null);
@@ -45,6 +50,14 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
 
   const [activeStep, setActiveStep] = useState(1);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // History stacks — kept in memory only, not persisted (volatile undo)
+  const lyricsHistoryRef = useRef<string[]>([]);
+  const scenesHistoryRef = useRef<Scene[][]>([]);
+  const [canUndoLyrics, setCanUndoLyrics] = useState(false);
+  const [canUndoScenes, setCanUndoScenes] = useState(false);
+
+  const HISTORY_LIMIT = 5;
 
   const upsertProject = trpc.projects.upsert.useMutation({
     onSuccess: (data) => {
@@ -106,7 +119,21 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setLyrics = useCallback((lyrics: string) => {
-    setProject((p) => ({ ...p, lyrics }));
+    setProject((p) => {
+      if (p.lyrics && p.lyrics !== lyrics) {
+        lyricsHistoryRef.current = [p.lyrics, ...lyricsHistoryRef.current].slice(0, HISTORY_LIMIT);
+        setCanUndoLyrics(true);
+      }
+      return { ...p, lyrics };
+    });
+  }, []);
+
+  const undoLyrics = useCallback(() => {
+    const prev = lyricsHistoryRef.current[0];
+    if (!prev) return;
+    lyricsHistoryRef.current = lyricsHistoryRef.current.slice(1);
+    setCanUndoLyrics(lyricsHistoryRef.current.length > 0);
+    setProject((p) => ({ ...p, lyrics: prev }));
   }, []);
 
   const setSunoStyle = useCallback((style: Partial<SunoStyle>) => {
@@ -114,7 +141,21 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setScenes = useCallback((scenes: Scene[]) => {
-    setProject((p) => ({ ...p, scenes }));
+    setProject((p) => {
+      if (p.scenes.length > 0) {
+        scenesHistoryRef.current = [p.scenes, ...scenesHistoryRef.current].slice(0, HISTORY_LIMIT);
+        setCanUndoScenes(true);
+      }
+      return { ...p, scenes };
+    });
+  }, []);
+
+  const undoScenes = useCallback(() => {
+    const prev = scenesHistoryRef.current[0];
+    if (!prev) return;
+    scenesHistoryRef.current = scenesHistoryRef.current.slice(1);
+    setCanUndoScenes(scenesHistoryRef.current.length > 0);
+    setProject((p) => ({ ...p, scenes: prev }));
   }, []);
 
   const updateScene = useCallback((id: number, updates: Partial<Scene>) => {
@@ -135,6 +176,10 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     setProject(createEmptyProject());
     setCompletedSteps(new Set());
     setActiveStep(1);
+    lyricsHistoryRef.current = [];
+    scenesHistoryRef.current = [];
+    setCanUndoLyrics(false);
+    setCanUndoScenes(false);
     localStorage.removeItem(SERVER_ID_KEY);
   }, []);
 
@@ -158,6 +203,10 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         resetProject,
         completedSteps,
         markStepComplete,
+        undoLyrics,
+        undoScenes,
+        canUndoLyrics,
+        canUndoScenes,
       }}
     >
       {children}

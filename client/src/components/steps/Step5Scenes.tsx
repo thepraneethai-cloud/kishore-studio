@@ -5,15 +5,15 @@
 import { useState } from "react";
 import { useProject } from "@/contexts/ProjectContext";
 import { DEITIES, Scene } from "@/lib/studioData";
-import { ChevronRight, Wand2, Plus, Trash2, GripVertical } from "lucide-react";
+import { ChevronRight, Wand2, Plus, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 
-// Scene suggestion templates per deity
+// Scene suggestion templates per deity — keyword-matched to lyric lines
 const SCENE_TEMPLATES: Record<string, { keywords: string[]; description: string }[]> = {
   venkateswara: [
     { keywords: ["govinda", "గోవింద"], description: "Thousands of devotees chanting Govinda with hands raised, golden temple gopuram in background" },
     { keywords: ["alipiri", "అలిపిరి", "మెట్లు"], description: "Stone steps of Alipiri covered with barefoot pilgrims, lush green hills, misty morning" },
-    { keywords: ["deepam", "దీపం", "lamp"], description: "Row of brass oil lamps (diyas) burning in temple corridor, golden light reflecting on black granite floor" },
+    { keywords: ["deepam", "దీపం", "lamp"], description: "Row of brass oil lamps (diyas) burning in temple corridor, golden light on black granite floor" },
     { keywords: ["tirumala", "తిరుమల", "hills", "కొండ"], description: "Aerial view of Tirumala seven hills at sunrise, golden mist, temple visible at peak" },
     { keywords: ["darshan", "దర్శన"], description: "Close-up of golden idol of Venkateswara with flower garlands, divine glow, incense smoke" },
     { keywords: ["prasad", "ప్రసాద", "laddu"], description: "Tirupati laddu prasad being distributed, golden light, devotees receiving with folded hands" },
@@ -21,30 +21,104 @@ const SCENE_TEMPLATES: Record<string, { keywords: string[]; description: string 
     { keywords: ["bell", "గంట", "nadaswaram"], description: "Temple bells ringing, nadaswaram musicians playing, flower petals falling from above" },
   ],
   ganesha: [
-    { keywords: ["ganapati", "గణపతి", "ganesha"], description: "Magnificent Ganesha idol with golden crown, surrounded by marigold flowers and diyas" },
+    { keywords: ["ganapati", "గణపతి", "ganesha", "వినాయక"], description: "Magnificent Ganesha idol with golden crown, surrounded by marigold flowers and diyas" },
     { keywords: ["modak", "మోదక"], description: "Plate of modak sweets offered to Ganesha, golden light, incense smoke curling upward" },
-    { keywords: ["mushika", "mouse", "వాహన"], description: "Ganesha's mouse vehicle at his feet, tiny and humble, surrounded by flowers" },
+    { keywords: ["mushika", "mouse", "వాహన", "ఎలుక"], description: "Ganesha's mouse vehicle at his feet, tiny and humble, surrounded by flowers" },
     { keywords: ["lotus", "కమలం"], description: "Pink lotus flowers floating on sacred water, morning light, temple bells in background" },
-    { keywords: ["procession", "శోభాయాత్ర"], description: "Colorful Ganesh procession through streets, drums, flowers, joyful devotees" },
-    { keywords: ["tusk", "దంత"], description: "Close-up of Ganesha's broken tusk, symbolic and sacred, golden ornaments" },
+    { keywords: ["procession", "శోభాయాత్ర", "chavithi", "చవితి"], description: "Colorful Ganesh Chaturthi procession through streets, drums, flowers, joyful devotees" },
+    { keywords: ["tusk", "దంత", "ekadanta", "ఏకదంత"], description: "Close-up of Ganesha's symbolic broken tusk, golden ornaments, sacred atmosphere" },
+    { keywords: ["vighn", "విఘ్న", "obstacle"], description: "Ganesha removing obstacles — rocky path clearing as divine light shines ahead" },
   ],
   lakshmi: [
     { keywords: ["lotus", "కమలం", "padma"], description: "Goddess Lakshmi seated on pink lotus, golden light, white elephants on either side" },
-    { keywords: ["gold", "బంగారు", "coins"], description: "Gold coins flowing from Lakshmi's hands, abundance and prosperity, warm golden light" },
-    { keywords: ["elephant", "ఏనుగు"], description: "Two white elephants performing abhishek with water trunks, sacred and majestic" },
-    { keywords: ["diya", "దీప", "lamp"], description: "Rows of lit diyas in a dark room, warm amber glow, flower petals scattered" },
-    { keywords: ["saree", "వస్త్రం", "red"], description: "Red silk saree with golden border, divine feminine grace, temple setting" },
-    { keywords: ["prosperity", "సంపద", "wealth"], description: "Overflowing pot of gold and jewels, lotus flowers, divine abundance" },
+    { keywords: ["gold", "బంగారు", "coins", "నాణేలు"], description: "Gold coins flowing from Lakshmi's hands, abundance and prosperity, warm golden light" },
+    { keywords: ["elephant", "ఏనుగు", "gajaraj"], description: "Two white elephants performing abhishek with water trunks, sacred and majestic" },
+    { keywords: ["diya", "దీప", "lamp", "deepam"], description: "Rows of lit diyas in a dark room, warm amber glow, flower petals scattered" },
+    { keywords: ["saree", "వస్త్రం", "red", "ఎరుపు"], description: "Red silk saree with golden border, divine feminine grace, ornate temple setting" },
+    { keywords: ["prosperity", "సంపద", "wealth", "dhana", "ధన"], description: "Overflowing pot of gold and jewels, lotus flowers, divine abundance" },
+    { keywords: ["diwali", "దీపావళి", "festival"], description: "Rows of diyas lighting up a dark doorway, Diwali night celebration, golden glow" },
   ],
   shiva: [
     { keywords: ["kailash", "కైలాస"], description: "Snow-capped Mount Kailash at dawn, divine golden light, mystical clouds" },
-    { keywords: ["nataraja", "నటరాజ"], description: "Shiva as Nataraja in cosmic dance, ring of fire, divine energy" },
-    { keywords: ["lingam", "లింగం"], description: "Shiva lingam with milk abhishek, flowers, bilva leaves, sacred atmosphere" },
-    { keywords: ["ganga", "గంగ"], description: "Sacred Ganga river flowing from Shiva's matted hair, moonlit night" },
-    { keywords: ["trishul", "త్రిశూల"], description: "Shiva's trident glowing with divine energy, mountains in background" },
+    { keywords: ["nataraja", "నటరాజ", "dance", "నృత్యం"], description: "Shiva as Nataraja in cosmic dance, ring of fire, divine energy" },
+    { keywords: ["lingam", "లింగం", "abhishek"], description: "Shiva lingam with milk abhishek, flowers, bilva leaves, sacred atmosphere" },
+    { keywords: ["ganga", "గంగ", "river"], description: "Sacred Ganga river flowing from Shiva's matted hair, moonlit night" },
+    { keywords: ["trishul", "త్రిశూల", "trident"], description: "Shiva's trident glowing with divine energy, mountain peaks in background" },
     { keywords: ["nandi", "నంది"], description: "White Nandi bull facing Shiva lingam, sacred and devoted, temple setting" },
-    { keywords: ["moon", "చంద్రుడు", "crescent"], description: "Crescent moon in Shiva's hair, night sky, stars, divine glow" },
-    { keywords: ["ash", "భస్మం", "bhasma"], description: "Sacred ash (vibhuti) being applied, three horizontal lines, divine ritual" },
+    { keywords: ["moon", "చంద్రుడు", "crescent"], description: "Crescent moon in Shiva's matted hair, dark blue night sky, stars shining" },
+    { keywords: ["ash", "భస్మం", "bhasma", "vibhuti"], description: "Sacred vibhuti (ash) being applied in three horizontal lines, divine ritual" },
+    { keywords: ["shivaratri", "శివరాత్రి"], description: "Maha Shivaratri night puja — crowds of devotees with oil lamps around a huge Shiva lingam" },
+  ],
+  krishna: [
+    { keywords: ["flute", "వేణువు", "bansuri", "మురళి"], description: "Krishna playing the divine flute under a Kadamba tree, moonlit Vrindavan, cows listening" },
+    { keywords: ["radha", "రాధ", "brindavan", "బృందావన"], description: "Radha and Krishna in divine union, surrounded by golden lotus flowers, soft moonlight" },
+    { keywords: ["govinda", "గోవింద", "butter", "వెన్న"], description: "Baby Krishna stealing butter, mischievous smile, earthen pot, soft golden light" },
+    { keywords: ["gita", "గీత", "chariot", "రథం"], description: "Krishna as charioteer in the Kurukshetra battlefield, Arjuna listening, divine glow" },
+    { keywords: ["mathura", "మథుర", "vrindavan", "వృందావన"], description: "Sacred Vrindavan forest at dusk, peacocks dancing, divine blue light filtering through trees" },
+    { keywords: ["peacock", "నెమలి", "feather", "పింఛం"], description: "Peacock feather crown of Krishna, divine blue beauty, temple setting" },
+    { keywords: ["gopi", "గోపి", "dance", "raas", "రాస్"], description: "Raas Leela — Krishna dancing with gopis in a circle, golden lamps, divine joy" },
+    { keywords: ["janmashtami", "జన్మాష్టమి"], description: "Janmashtami celebration — Baby Krishna in a golden cradle, flowers, devotees singing" },
+  ],
+  hanuman: [
+    { keywords: ["anjaneya", "అంజనేయ", "hanuman", "హనుమాన్"], description: "Majestic Hanuman idol in devotional pose, mountains in background, divine orange glow" },
+    { keywords: ["rama", "రామ", "seva", "సేవ"], description: "Hanuman bowing at Rama's feet with complete devotion, lotus flowers, temple light" },
+    { keywords: ["ocean", "సముద్రం", "fly", "ఎగురు", "lanka"], description: "Hanuman leaping across the ocean, fiery tail, Lanka visible in distance, night sky" },
+    { keywords: ["sita", "సీత", "ring", "ఉంగరం"], description: "Hanuman presenting Rama's ring to Sita in Ashoka garden, moonlight, tears of joy" },
+    { keywords: ["mountain", "కొండ", "sanjeevani", "సంజీవని"], description: "Hanuman carrying the entire Dronagiri mountain with sacred herbs, divine strength" },
+    { keywords: ["strength", "బలం", "shakti", "శక్తి"], description: "Hanuman in powerful Panchamukha (five-faced) form, divine energy, blazing light" },
+    { keywords: ["prayer", "ప్రార్థన", "bhakta"], description: "Hanuman Chalisa recitation — devotees around an oil lamp at dawn, hands folded" },
+  ],
+  rama: [
+    { keywords: ["ayodhya", "అయోధ్య"], description: "Grand Ayodhya cityscape — Ram Mandir with golden spires, Sarayu river, dawn light" },
+    { keywords: ["sita", "సీత", "wife", "consort"], description: "Rama and Sita seated on golden throne together, Hanuman at their feet, lotus flowers" },
+    { keywords: ["forest", "అడవి", "vanavasa", "వనవాస"], description: "Rama, Sita, and Lakshmana walking through lush forest, birds following, divine light" },
+    { keywords: ["bow", "ధనుస్సు", "arrow", "బాణం"], description: "Rama drawing his divine bow (Kodanda), determined and righteous, golden light" },
+    { keywords: ["bridge", "వంతెన", "setu", "ocean"], description: "Rama Setu — the divine bridge across the ocean built by Vanarasena, twilight sky" },
+    { keywords: ["crown", "పట్టాభిషేకం", "king", "raja"], description: "Rama's coronation (Pattabhisheka) in Ayodhya — golden throne, flower rain, divine light" },
+    { keywords: ["hanuman", "హనుమ", "devotee"], description: "Hanuman opening his heart to reveal Rama and Sita inside, divine golden glow" },
+  ],
+  saraswati: [
+    { keywords: ["veena", "వీణ", "music", "sangeet"], description: "Goddess Saraswati playing the Veena on a white lotus, divine music notes floating in air" },
+    { keywords: ["swan", "హంస", "white", "తెలుపు"], description: "White swan beside Saraswati on a lotus pond, pure white feathers, morning light" },
+    { keywords: ["book", "పుస్తకం", "knowledge", "vidya", "విద్య"], description: "Saraswati holding sacred books and lotus, divine wisdom flowing, white and gold palette" },
+    { keywords: ["student", "విద్యార్థి", "learning", "blessings"], description: "Students bowing before Saraswati idol, flowers, oil lamps, seeking divine blessings" },
+    { keywords: ["puja", "పూజ", "vasant", "panchami"], description: "Vasant Panchami celebration — yellow flowers, marigolds, golden light, Saraswati puja" },
+    { keywords: ["river", "నది", "flowing"], description: "Sacred river Saraswati flowing with divine light, lotus flowers, misty morning" },
+  ],
+  durga: [
+    { keywords: ["lion", "సింహం", "vahana", "వాహన"], description: "Durga on her lion vehicle, fierce and radiant, ten arms holding weapons, divine fire" },
+    { keywords: ["mahishasura", "మహిషాసుర", "victory", "vijay"], description: "Durga slaying Mahishasura — dynamic fierce pose, divine sword, buffalo demon defeated" },
+    { keywords: ["navratri", "నవరాత్రి", "nine", "nights"], description: "Nine nights of Navratri — colorful garba dancers, lit diyas, Durga idol in center" },
+    { keywords: ["weapons", "ఆయుధాలు", "ten", "arms"], description: "Close-up of Durga's ten divine arms each holding a sacred weapon, golden glow" },
+    { keywords: ["mother", "అమ్మ", "amma", "mata"], description: "Durga as the divine mother — compassionate and fierce simultaneously, devotees at her feet" },
+    { keywords: ["protection", "రక్షణ", "shakti", "శక్తి"], description: "Divine Shakti energy radiating from Durga, blue-and-gold sacred light, protective aura" },
+    { keywords: ["devi", "దేవి", "bhavani", "भवानी"], description: "Durga Devi in full divine form — golden ornaments, red saree, fierce compassionate eyes" },
+  ],
+  murugan: [
+    { keywords: ["vel", "వేల్", "spear", "शक्ति"], description: "Murugan's divine Vel (spear) glowing with sacred energy, peacock in background, golden light" },
+    { keywords: ["peacock", "నెమలి", "mayura", "vahana"], description: "Murugan riding his peacock vahana, feathers spread in glory, sunset sky" },
+    { keywords: ["palani", "పాలని", "hill", "temple"], description: "Palani Murugan temple on the hilltop, devotees climbing, golden dawn light" },
+    { keywords: ["valli", "వల్లి", "devasena", "consort"], description: "Murugan with Valli and Devasena on either side, divine radiance, lotus throne" },
+    { keywords: ["kavadi", "కవాడి", "pilgrim"], description: "Kavadi pilgrims in colorful attire carrying ornate kavadis, spiritual procession" },
+    { keywords: ["shanmukha", "షణ్ముఖ", "six", "faces"], description: "Shanmukha — Murugan's six-faced form, each face radiant and divine, sacred light" },
+    { keywords: ["skanda", "స్కంద", "war", "victory"], description: "Murugan as divine commander Skanda — spear raised, peacock beside, victorious" },
+  ],
+  narasimha: [
+    { keywords: ["prahlada", "ప్రహ్లాద"], description: "Young Prahlada praying fearlessly while Hiranyakashipu threatens, divine light protecting him" },
+    { keywords: ["pillar", "స్తంభం", "emerge", "వెలువడు"], description: "Narasimha emerging from the golden pillar — half-man half-lion form, fierce divine light" },
+    { keywords: ["hiranyakashipu", "హిరణ్యకశిప", "demon"], description: "Narasimha subduing Hiranyakashipu — fierce and protective, twilight hour (Sandhya)" },
+    { keywords: ["ahobilam", "అహోబిలం", "temple", "shrine"], description: "Sacred Ahobilam temple complex in the Nallamala hills, divine forest, stone carvings" },
+    { keywords: ["fierce", "ఉగ్ర", "ugra", "roar"], description: "Ugra Narasimha — fierce lion face with divine mane, golden energy radiating outward" },
+    { keywords: ["lakshmi", "లక్ష్మి", "consort", "shanta"], description: "Shanta (calm) Narasimha with Lakshmi on his lap, devotees offering prayers" },
+  ],
+  ayyappa: [
+    { keywords: ["sabarimala", "శబరిమల", "temple", "shrine"], description: "Sabarimala temple atop the sacred mountain at night, star-lit sky, devotee camp fires" },
+    { keywords: ["18 steps", "18 మెట్లు", "pathinettam", "padi"], description: "The 18 sacred Pathinettampadi steps at Sabarimala, devotees climbing in black attire" },
+    { keywords: ["swami", "స్వామి", "saranam", "శరణం"], description: "Devotees chanting 'Swamiye Saranam Ayyappa', hands raised, divine forest atmosphere" },
+    { keywords: ["deeksha", "దీక్ష", "mandalam", "41 days"], description: "Ayyappa devotees in black attire carrying holy Irumudi on their heads, forest path" },
+    { keywords: ["makara", "మకర", "vilakku", "star"], description: "Makaravilakku night — the divine star appearing over Sabarimala, thousands of lamps" },
+    { keywords: ["forest", "అడవి", "tiger", "పులి"], description: "Sacred forest path to Sabarimala — tall trees, divine mist, a distant tiger retreating" },
+    { keywords: ["bell", "గంట", "puja", "worship"], description: "Evening puja at Ayyappa temple — lit diyas, incense, bell sounds, devotional chanting" },
   ],
 };
 
@@ -79,7 +153,7 @@ function generateScenesFromLyrics(lyrics: string, deityKey: string): Scene[] {
 }
 
 export default function Step5Scenes() {
-  const { project, setScenes, setActiveStep, markStepComplete } = useProject();
+  const { project, setScenes, setActiveStep, markStepComplete, undoScenes, canUndoScenes } = useProject();
   const [isGenerating, setIsGenerating] = useState(false);
   const deity = DEITIES.find((d) => d.key === project.deity);
 
@@ -161,7 +235,7 @@ export default function Step5Scenes() {
             Analyzes your lyrics and creates scene descriptions + image prompts for every line
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button
             onClick={handleAutoGenerate}
             disabled={isGenerating}
@@ -175,6 +249,21 @@ export default function Step5Scenes() {
             <Wand2 size={14} className={isGenerating ? "animate-spin" : ""} />
             {isGenerating ? "Generating..." : "Auto-Generate"}
           </button>
+          {canUndoScenes && (
+            <button
+              onClick={() => { undoScenes(); toast.success("Restored previous scenes"); }}
+              title="Undo — restore previous scenes"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all hover:opacity-80"
+              style={{
+                background: "oklch(0.20 0.04 35)",
+                color: "oklch(0.72 0.12 55)",
+                border: "1px solid oklch(0.35 0.07 45)",
+              }}
+            >
+              <Undo2 size={14} />
+              Undo
+            </button>
+          )}
           <button
             onClick={handleAddScene}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all hover:opacity-80"

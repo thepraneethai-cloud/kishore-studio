@@ -2,7 +2,11 @@
 // DESIGN: "Digital Sanctum" — all data for the studio workflow
 // ============================================================
 
-export type DeityKey = "venkateswara" | "ganesha" | "lakshmi" | "shiva" | (string & {});
+export type DeityKey =
+  | "venkateswara" | "ganesha" | "lakshmi" | "shiva"
+  | "krishna" | "hanuman" | "rama" | "saraswati"
+  | "durga" | "murugan" | "narasimha" | "ayyappa"
+  | (string & {});
 
 export interface Deity {
   key: DeityKey;
@@ -60,6 +64,94 @@ export const DEITIES: Deity[] = [
     themes: ["Mahadeva", "Nataraja", "Lingam", "Trishul", "Ganga", "Nandi"],
     visualStyle: "Blue throat, crescent moon, trident, ash, Ganga",
     color: "#6B8DD6",
+  },
+  {
+    key: "krishna",
+    name: "Krishna",
+    teluguName: "శ్రీ కృష్ణుడు",
+    mood: "Joyful, Playful, Deeply Devotional",
+    audience: "All devotees, Janmashtami celebrations, Radha-Krishna devotees",
+    instruments: ["Flute", "Tabla", "Mridangam", "Harmonium"],
+    themes: ["Govinda", "Radha", "Brindavana", "Flute", "Butter", "Gita", "Mathura", "Vrindavan"],
+    visualStyle: "Dark blue skin, flute, peacock feather crown, yellow silk, lotus",
+    color: "#1A6B8A",
+  },
+  {
+    key: "hanuman",
+    name: "Hanuman",
+    teluguName: "హనుమంతుడు",
+    mood: "Heroic, Devotionally Surrendered, Victorious",
+    audience: "All devotees, Hanuman Jayanti, those seeking strength",
+    instruments: ["Mridangam", "Dholak", "Nadaswaram", "Veena"],
+    themes: ["Anjaneya", "Rama's servant", "Lanka", "Sita rescue", "Divine strength", "Panchamukha"],
+    visualStyle: "Red form, mace, Rama's ring, mountain, flying, devotee pose",
+    color: "#CC4400",
+  },
+  {
+    key: "rama",
+    name: "Rama",
+    teluguName: "శ్రీ రాముడు",
+    mood: "Majestic, Virtuous, Devotionally Reverent",
+    audience: "All devotees, Ram Navami, Ramayana devotees",
+    instruments: ["Veena", "Nadaswaram", "Flute", "Mridangam"],
+    themes: ["Raghava", "Ayodhya", "Sita", "Forest exile", "Bridge to Lanka", "Dharma", "Dasaratha"],
+    visualStyle: "Blue skin, bow and arrow, Sita by side, Hanuman at feet, royal attire",
+    color: "#2E5FA3",
+  },
+  {
+    key: "saraswati",
+    name: "Saraswati",
+    teluguName: "సరస్వతీ దేవి",
+    mood: "Pure, Serene, Gracefully Transcendent",
+    audience: "Students, artists, musicians, Vasant Panchami",
+    instruments: ["Veena", "Flute", "Bells", "Violin"],
+    themes: ["Sharada", "White swan", "Veena", "Books", "Knowledge", "Arts", "Learning"],
+    visualStyle: "White saree, white lotus, Veena, swan, books, white background",
+    color: "#E8D5A3",
+  },
+  {
+    key: "durga",
+    name: "Durga",
+    teluguName: "దుర్గాదేవి",
+    mood: "Powerful, Fierce, Unconditionally Protective",
+    audience: "Shakti devotees, Navratri, those seeking protection",
+    instruments: ["Dappu", "Nadaswaram", "Tabla", "Bells"],
+    themes: ["Bhavani", "Lion vehicle", "Ten arms", "Mahishasura victory", "Navratri", "Devi power"],
+    visualStyle: "Ten arms with weapons, lion vehicle, red saree, fierce but compassionate",
+    color: "#B8344A",
+  },
+  {
+    key: "murugan",
+    name: "Murugan",
+    teluguName: "మురుగన్ స్వామి",
+    mood: "Youthful, Radiant, Victorious",
+    audience: "South Indian devotees, Skanda Sashti, Kavadi devotees",
+    instruments: ["Nadaswaram", "Mridangam", "Veena", "Flute"],
+    themes: ["Kartikeya", "Subramanya", "Vel spear", "Peacock vehicle", "Palani", "Valli", "Devasena"],
+    visualStyle: "Youthful form, vel spear, peacock vehicle, six faces (Shanmukha), radiant",
+    color: "#7B3FA0",
+  },
+  {
+    key: "narasimha",
+    name: "Narasimha",
+    teluguName: "నరసింహ స్వామి",
+    mood: "Fierce, Awe-Inspiring, Protective",
+    audience: "Vaishnava devotees, those seeking divine protection, Ahobilam pilgrims",
+    instruments: ["Nadaswaram", "Mridangam", "Veena", "Bells"],
+    themes: ["Ugra Narasimha", "Prahlada", "Pillar miracle", "Hiranyakashipu", "Ahobilam", "Half-lion"],
+    visualStyle: "Half-man half-lion, fierce face, Prahlada, lotus throne, divine energy",
+    color: "#8B6914",
+  },
+  {
+    key: "ayyappa",
+    name: "Ayyappa",
+    teluguName: "అయ్యప్ప స్వామి",
+    mood: "Austere, Devotionally Surrendered, Sacred",
+    audience: "Sabarimala pilgrims, 41-day vrat devotees, South Indian devotees",
+    instruments: ["Flute", "Mridangam", "Chenda", "Bells"],
+    themes: ["Dharmasastha", "Sabarimala", "18 steps", "Mandala Deeksha", "Makaravilakku", "Swamiye Saranam"],
+    visualStyle: "Forest setting, bell garland, tiger, sitting in yoga pose, sacred blue mountains",
+    color: "#2D6B45",
   },
 ];
 
@@ -137,7 +229,7 @@ export function createEmptyProject(): Project {
 }
 
 // ── Lyrics templates per deity ──────────────────────────────
-export const LYRICS_TEMPLATES: Record<DeityKey, string> = {
+export const LYRICS_TEMPLATES: Record<string, string> = {
   venkateswara: `[Pallavi]
 గోవింద గోవింద వేంకటేశ గోవింద
 శ్రీనివాస బాలాజీ గోవింద గోవింద

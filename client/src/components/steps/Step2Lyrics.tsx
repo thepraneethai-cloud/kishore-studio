@@ -4,7 +4,7 @@
 
 import { useProject } from "@/contexts/ProjectContext";
 import { useState } from "react";
-import { Music, Copy, Zap, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import { Music, Copy, Zap, RefreshCw, ChevronDown, ChevronUp, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { DEITIES } from "@/lib/studioData";
@@ -50,7 +50,7 @@ function sunoStyleText(style: Record<string, unknown>) {
 
 // ── component ────────────────────────────────────────────────
 export default function Step2Lyrics() {
-  const { project, setLyrics, setSunoStyle, setActiveStep, markStepComplete } = useProject();
+  const { project, setLyrics, setSunoStyle, setActiveStep, markStepComplete, undoLyrics, canUndoLyrics } = useProject();
 
   // prompt inputs
   const [theme,          setTheme]          = useState("devotion");
@@ -334,13 +334,25 @@ export default function Step2Lyrics() {
               <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#00d4ff", margin: 0 }}>
                 Generated Lyrics
               </p>
-              <button
-                onClick={() => copyToClipboard(project.lyrics, "Lyrics")}
-                style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.4rem 0.75rem", background: "rgba(0,212,255,0.1)", color: "#00d4ff", border: "1px solid rgba(0,212,255,0.3)", borderRadius: "0.375rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}
-              >
-                <Copy size={12} />
-                Copy
-              </button>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                {canUndoLyrics && (
+                  <button
+                    onClick={() => { undoLyrics(); toast.success("Restored previous lyrics"); }}
+                    title="Undo — restore previous version"
+                    style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.4rem 0.75rem", background: "rgba(255,150,50,0.12)", color: "#ff9632", border: "1px solid rgba(255,150,50,0.35)", borderRadius: "0.375rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}
+                  >
+                    <Undo2 size={12} />
+                    Undo
+                  </button>
+                )}
+                <button
+                  onClick={() => copyToClipboard(project.lyrics, "Lyrics")}
+                  style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.4rem 0.75rem", background: "rgba(0,212,255,0.1)", color: "#00d4ff", border: "1px solid rgba(0,212,255,0.3)", borderRadius: "0.375rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}
+                >
+                  <Copy size={12} />
+                  Copy
+                </button>
+              </div>
             </div>
             <textarea
               value={project.lyrics}
