@@ -1,12 +1,14 @@
 // ============================================================
 // DESIGN: "Digital Sanctum" — Step 5: Scene Breakdown Generator
 // Auto-generates scenes from lyrics, each lyric → one visual
+// Director Mode: emotional arc + shot vocabulary via LLM agent
 // ============================================================
 import { useState } from "react";
 import { useProject } from "@/contexts/ProjectContext";
-import { DEITIES, Scene } from "@/lib/studioData";
-import { ChevronRight, Wand2, Plus, Trash2, Undo2 } from "lucide-react";
+import { DEITIES, Scene, EmotionalWeight, ShotType, CameraMovement } from "@/lib/studioData";
+import { ChevronRight, Wand2, Plus, Trash2, Undo2, Clapperboard, Info } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 // Scene suggestion templates per deity — keyword-matched to lyric lines
 const SCENE_TEMPLATES: Record<string, { keywords: string[]; description: string }[]> = {
@@ -131,7 +133,6 @@ function generateScenesFromLyrics(lyrics: string, deityKey: string): Scene[] {
   const templates = SCENE_TEMPLATES[deityKey] || [];
 
   return lines.slice(0, 32).map((line, i) => {
-    // Try to match a template
     const lowerLine = line.toLowerCase();
     const matched = templates.find((t) =>
       t.keywords.some((k) => lowerLine.includes(k.toLowerCase()))
@@ -152,10 +153,44 @@ function generateScenesFromLyrics(lyrics: string, deityKey: string): Scene[] {
   });
 }
 
+// ── Emotional weight display config ──────────────────────────
+const WEIGHT_CONFIG: Record<EmotionalWeight, { label: string; color: string; bg: string }> = {
+  reverent:    { label: "Reverent",    color: "oklch(0.65 0.08 230)", bg: "oklch(0.18 0.04 230 / 0.5)" },
+  longing:     { label: "Longing",     color: "oklch(0.72 0.12 55)",  bg: "oklch(0.18 0.06 55 / 0.5)"  },
+  devotional:  { label: "Devotional",  color: "oklch(0.75 0.12 75)",  bg: "oklch(0.18 0.06 75 / 0.5)"  },
+  ecstatic:    { label: "Ecstatic",    color: "oklch(0.88 0.15 85)",  bg: "oklch(0.20 0.08 85 / 0.5)"  },
+  surrendered: { label: "Surrendered", color: "oklch(0.60 0.06 180)", bg: "oklch(0.16 0.03 180 / 0.5)" },
+};
+
+const SHOT_CONFIG: Record<ShotType, { label: string; abbr: string }> = {
+  WS:  { label: "Wide Shot",     abbr: "WS" },
+  MS:  { label: "Medium Shot",   abbr: "MS" },
+  CU:  { label: "Close-Up",      abbr: "CU" },
+  ECU: { label: "Extreme CU",    abbr: "ECU" },
+};
+
+const MOVE_CONFIG: Record<CameraMovement, { label: string }> = {
+  "push-in":   { label: "Push In" },
+  "pull-back": { label: "Pull Back" },
+  "pan":       { label: "Pan" },
+  "tilt-up":   { label: "Tilt Up" },
+  "static":    { label: "Static" },
+};
+
 export default function Step5Scenes() {
-  const { project, setScenes, setActiveStep, markStepComplete, undoScenes, canUndoScenes } = useProject();
+  const {
+    project, setScenes, setActiveStep, markStepComplete,
+    undoScenes, canUndoScenes, setCinematicStyle, updateScene,
+  } = useProject();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showDirectorNotes, setShowDirectorNotes] = useState(true);
+  const [showStyleSheet, setShowStyleSheet] = useState(false);
   const deity = DEITIES.find((d) => d.key === project.deity);
+
+  const directorMutation = trpc.generation.directorAnalysis.useMutation();
+
+  const hasDirectorData = project.scenes.some((s) => s.emotionalWeight);
 
   const handleAutoGenerate = () => {
     if (!project.lyrics || !project.lyrics.trim()) {
@@ -169,6 +204,51 @@ export default function Step5Scenes() {
       setIsGenerating(false);
       toast.success(`Generated ${scenes.length} scenes from your lyrics!`);
     }, 800);
+  };
+
+  const handleDirectorAnalysis = async () => {
+    if (project.scenes.length === 0) {
+      toast.error("Generate scenes first before running Director Analysis");
+      return;
+    }
+    setIsAnalyzing(true);
+    try {
+      const result = await directorMutation.mutateAsync({
+        deity: deity?.name || project.deity || "Deity",
+        scenes: project.scenes.map((s) => ({
+          sceneId: s.id,
+          lyricLine: s.lyricLine,
+          sceneDescription: s.sceneDescription,
+        })),
+      });
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "Director analysis failed");
+      }
+
+      // Apply enriched prompts + director fields to each scene
+      const updatedScenes = project.scenes.map((scene) => {
+        const directed = result.data!.scenes.find((d) => d.id === scene.id);
+        if (!directed) return scene;
+        return {
+          ...scene,
+          emotionalWeight: directed.emotionalWeight as EmotionalWeight,
+          shotType: directed.shotType as ShotType,
+          cameraMovement: directed.cameraMovement as CameraMovement,
+          directorNote: directed.directorNote,
+          imagePrompt: directed.enrichedImagePrompt || scene.imagePrompt,
+          motionPrompt: directed.enrichedMotionPrompt || scene.motionPrompt,
+        };
+      });
+      setScenes(updatedScenes);
+      setCinematicStyle(result.data.cinematicStyle);
+      setShowStyleSheet(true);
+      toast.success("Director Analysis complete — shot vocabulary applied to all scenes!");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Director analysis failed");
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleAddScene = () => {
@@ -204,6 +284,15 @@ export default function Step5Scenes() {
 
   const totalDuration = project.scenes.reduce((sum, s) => sum + s.duration, 0);
 
+  // Emotional arc visualization data
+  const arcColors: Record<EmotionalWeight, string> = {
+    reverent:    "#6699cc",
+    longing:     "#d4a017",
+    devotional:  "#e8820c",
+    ecstatic:    "#ffd700",
+    surrendered: "#66bb9a",
+  };
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -215,13 +304,82 @@ export default function Step5Scenes() {
           Scene Breakdown
         </h2>
         <p className="text-sm" style={{ color: "oklch(0.60 0.015 68)" }}>
-          Map each lyric line to a visual scene. Auto-generate all scenes from your lyrics in one click.
+          Map each lyric line to a visual scene. Then run Director Analysis to apply professional shot vocabulary and emotional arc.
         </p>
       </div>
 
-      {/* Auto-generate bar */}
+      {/* Cinematic Style Sheet — shown after Director Analysis */}
+      {project.cinematicStyle && (
+        <div className="shrine-panel p-4 space-y-2">
+          <button
+            onClick={() => setShowStyleSheet(!showStyleSheet)}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <div className="flex items-center gap-2">
+              <Clapperboard size={14} style={{ color: "oklch(0.72 0.12 75)" }} />
+              <span className="text-sm font-semibold" style={{ color: "oklch(0.80 0.12 78)", fontFamily: "'Cinzel', serif" }}>
+                Cinematic Style Sheet
+              </span>
+            </div>
+            <span className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>
+              {showStyleSheet ? "▼" : "▶"}
+            </span>
+          </button>
+          {showStyleSheet && (
+            <div className="space-y-2 pt-1">
+              <div>
+                <p className="text-xs font-semibold mb-0.5" style={{ color: "oklch(0.65 0.10 75)" }}>Color Palette</p>
+                <p className="text-xs" style={{ color: "oklch(0.70 0.015 68)" }}>{project.cinematicStyle.colorPalette}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold mb-0.5" style={{ color: "oklch(0.65 0.10 75)" }}>Lighting Style</p>
+                <p className="text-xs" style={{ color: "oklch(0.70 0.015 68)" }}>{project.cinematicStyle.lightingStyle}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold mb-0.5" style={{ color: "oklch(0.65 0.10 75)" }}>Mood Arc</p>
+                <p className="text-xs" style={{ color: "oklch(0.70 0.015 68)" }}>{project.cinematicStyle.moodArc}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Emotional Arc Visualization */}
+      {hasDirectorData && (
+        <div className="shrine-panel p-4 space-y-2">
+          <p className="text-xs font-semibold" style={{ color: "oklch(0.65 0.10 75)", fontFamily: "'Cinzel', serif" }}>
+            Emotional Arc
+          </p>
+          <div className="flex gap-0.5 rounded overflow-hidden" style={{ height: "8px" }}>
+            {project.scenes.map((scene) => {
+              const color = scene.emotionalWeight ? arcColors[scene.emotionalWeight] : "#333";
+              return (
+                <div
+                  key={scene.id}
+                  style={{ flex: 1, background: color, opacity: 0.8, transition: "background 300ms" }}
+                  title={scene.emotionalWeight || ""}
+                />
+              );
+            })}
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            {(Object.keys(WEIGHT_CONFIG) as EmotionalWeight[]).map((w) => {
+              const count = project.scenes.filter((s) => s.emotionalWeight === w).length;
+              if (!count) return null;
+              return (
+                <div key={w} className="flex items-center gap-1 text-xs">
+                  <div style={{ width: "8px", height: "8px", borderRadius: "2px", background: arcColors[w] }} />
+                  <span style={{ color: "oklch(0.55 0.012 65)" }}>{WEIGHT_CONFIG[w].label} ({count})</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Action bar */}
       <div
-        className="flex items-center justify-between p-4 rounded-lg"
+        className="flex items-center justify-between p-4 rounded-lg flex-wrap gap-3"
         style={{
           background: "linear-gradient(135deg, oklch(0.72 0.12 75 / 0.08), oklch(0.65 0.14 65 / 0.08))",
           border: "1px solid oklch(0.72 0.12 75 / 0.25)",
@@ -229,10 +387,10 @@ export default function Step5Scenes() {
       >
         <div>
           <p className="text-sm font-semibold" style={{ color: "oklch(0.80 0.12 78)", fontFamily: "'Cinzel', serif" }}>
-            Auto-Generate All Scenes
+            Scene Generation
           </p>
           <p className="text-xs mt-0.5" style={{ color: "oklch(0.55 0.012 65)" }}>
-            Analyzes your lyrics and creates scene descriptions + image prompts for every line
+            Auto-generate from lyrics, then apply Director Analysis
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -249,6 +407,26 @@ export default function Step5Scenes() {
             <Wand2 size={14} className={isGenerating ? "animate-spin" : ""} />
             {isGenerating ? "Generating..." : "Auto-Generate"}
           </button>
+
+          {project.scenes.length > 0 && (
+            <button
+              onClick={handleDirectorAnalysis}
+              disabled={isAnalyzing}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-60"
+              style={{
+                background: isAnalyzing
+                  ? "oklch(0.22 0.018 52)"
+                  : "linear-gradient(135deg, oklch(0.55 0.10 270), oklch(0.45 0.12 280))",
+                color: isAnalyzing ? "oklch(0.55 0.012 65)" : "#fff",
+                border: "none",
+              }}
+              title="Analyze emotional arc and apply professional shot vocabulary (WS/MS/CU/ECU)"
+            >
+              <Clapperboard size={14} className={isAnalyzing ? "animate-pulse" : ""} />
+              {isAnalyzing ? "Analyzing..." : hasDirectorData ? "Re-Analyze" : "Director Analysis"}
+            </button>
+          )}
+
           {canUndoScenes && (
             <button
               onClick={() => { undoScenes(); toast.success("Restored previous scenes"); }}
@@ -274,10 +452,28 @@ export default function Step5Scenes() {
             }}
           >
             <Plus size={14} />
-            Add Scene
+            Add
           </button>
         </div>
       </div>
+
+      {/* Director notes toggle */}
+      {hasDirectorData && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowDirectorNotes(!showDirectorNotes)}
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded transition-colors"
+            style={{
+              background: showDirectorNotes ? "oklch(0.55 0.10 270 / 0.15)" : "oklch(0.22 0.018 52)",
+              color: showDirectorNotes ? "oklch(0.75 0.10 270)" : "oklch(0.55 0.012 65)",
+              border: `1px solid ${showDirectorNotes ? "oklch(0.55 0.10 270 / 0.4)" : "oklch(0.28 0.025 58)"}`,
+            }}
+          >
+            <Info size={10} />
+            {showDirectorNotes ? "Hide" : "Show"} Director Notes
+          </button>
+        </div>
+      )}
 
       {/* Stats */}
       {project.scenes.length > 0 && (
@@ -285,6 +481,9 @@ export default function Step5Scenes() {
           <span style={{ color: "oklch(0.72 0.12 75)" }}>{project.scenes.length} scenes</span>
           <span>~{totalDuration}s total</span>
           <span>~{Math.round(totalDuration / 60)}:{String(totalDuration % 60).padStart(2, "0")} video length</span>
+          {hasDirectorData && (
+            <span style={{ color: "oklch(0.65 0.10 270)" }}>✓ Director analyzed</span>
+          )}
         </div>
       )}
 
@@ -298,69 +497,117 @@ export default function Step5Scenes() {
           <p className="text-sm">No scenes yet — click "Auto-Generate" to create scenes from your lyrics</p>
         </div>
       ) : (
-        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
-          {project.scenes.map((scene, idx) => (
-            <div
-              key={scene.id}
-              className="shrine-panel p-3 space-y-2"
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className="flex-shrink-0 w-6 h-6 rounded flex items-center justify-center text-xs font-bold mt-0.5"
-                  style={{ background: "oklch(0.72 0.12 75 / 0.15)", color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}
-                >
-                  {idx + 1}
-                </div>
-                <div className="flex-1 space-y-2">
-                  {/* Lyric line */}
-                  <input
-                    type="text"
-                    value={scene.lyricLine}
-                    onChange={(e) => handleUpdateScene(scene.id, "lyricLine", e.target.value)}
-                    placeholder="Lyric line..."
-                    className="sanctum-input telugu-text text-sm"
-                    style={{ padding: "0.375rem 0.625rem" }}
-                  />
-                  {/* Scene description */}
-                  <input
-                    type="text"
-                    value={scene.sceneDescription}
-                    onChange={(e) => handleUpdateScene(scene.id, "sceneDescription", e.target.value)}
-                    placeholder="Scene description..."
-                    className="sanctum-input text-xs"
-                    style={{ padding: "0.375rem 0.625rem" }}
-                  />
-                  {/* Duration */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>Duration:</span>
-                    <select
-                      value={scene.duration}
-                      onChange={(e) => handleUpdateScene(scene.id, "duration", Number(e.target.value))}
-                      className="text-xs rounded px-2 py-1"
-                      style={{
-                        background: "oklch(0.16 0.016 52)",
-                        border: "1px solid oklch(0.28 0.025 58)",
-                        color: "oklch(0.70 0.015 68)",
-                      }}
-                    >
-                      {[3, 4, 5, 6, 7, 8, 10].map((d) => (
-                        <option key={d} value={d} style={{ background: "oklch(0.18 0.016 52)" }}>
-                          {d}s
-                        </option>
-                      ))}
-                    </select>
+        <div className="space-y-3 max-h-[560px] overflow-y-auto pr-1">
+          {project.scenes.map((scene, idx) => {
+            const weightConfig = scene.emotionalWeight ? WEIGHT_CONFIG[scene.emotionalWeight] : null;
+            const shotConfig = scene.shotType ? SHOT_CONFIG[scene.shotType] : null;
+            const moveConfig = scene.cameraMovement ? MOVE_CONFIG[scene.cameraMovement] : null;
+
+            return (
+              <div key={scene.id} className="shrine-panel p-3 space-y-2">
+                <div className="flex items-start gap-3">
+                  <div
+                    className="flex-shrink-0 w-6 h-6 rounded flex items-center justify-center text-xs font-bold mt-0.5"
+                    style={{ background: "oklch(0.72 0.12 75 / 0.15)", color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}
+                  >
+                    {idx + 1}
                   </div>
+                  <div className="flex-1 space-y-2">
+                    {/* Director badges row */}
+                    {(weightConfig || shotConfig || moveConfig) && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {weightConfig && (
+                          <span
+                            className="text-xs px-2 py-0.5 rounded"
+                            style={{ background: weightConfig.bg, color: weightConfig.color, border: `1px solid ${weightConfig.color}40` }}
+                          >
+                            {weightConfig.label}
+                          </span>
+                        )}
+                        {shotConfig && (
+                          <span
+                            className="text-xs px-2 py-0.5 rounded font-mono font-semibold"
+                            style={{ background: "oklch(0.55 0.10 270 / 0.15)", color: "oklch(0.75 0.10 270)", border: "1px solid oklch(0.55 0.10 270 / 0.3)" }}
+                            title={shotConfig.label}
+                          >
+                            {shotConfig.abbr}
+                          </span>
+                        )}
+                        {moveConfig && (
+                          <span
+                            className="text-xs px-2 py-0.5 rounded"
+                            style={{ background: "oklch(0.18 0.016 52)", color: "oklch(0.55 0.012 65)", border: "1px solid oklch(0.28 0.025 58)" }}
+                          >
+                            {moveConfig.label}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Director note */}
+                    {showDirectorNotes && scene.directorNote && (
+                      <p
+                        className="text-xs italic"
+                        style={{
+                          color: "oklch(0.60 0.08 270)",
+                          borderLeft: "2px solid oklch(0.55 0.10 270 / 0.4)",
+                          paddingLeft: "0.5rem",
+                        }}
+                      >
+                        {scene.directorNote}
+                      </p>
+                    )}
+
+                    {/* Lyric line */}
+                    <input
+                      type="text"
+                      value={scene.lyricLine}
+                      onChange={(e) => handleUpdateScene(scene.id, "lyricLine", e.target.value)}
+                      placeholder="Lyric line..."
+                      className="sanctum-input telugu-text text-sm"
+                      style={{ padding: "0.375rem 0.625rem" }}
+                    />
+                    {/* Scene description */}
+                    <input
+                      type="text"
+                      value={scene.sceneDescription}
+                      onChange={(e) => handleUpdateScene(scene.id, "sceneDescription", e.target.value)}
+                      placeholder="Scene description..."
+                      className="sanctum-input text-xs"
+                      style={{ padding: "0.375rem 0.625rem" }}
+                    />
+                    {/* Duration */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>Duration:</span>
+                      <select
+                        value={scene.duration}
+                        onChange={(e) => handleUpdateScene(scene.id, "duration", Number(e.target.value))}
+                        className="text-xs rounded px-2 py-1"
+                        style={{
+                          background: "oklch(0.16 0.016 52)",
+                          border: "1px solid oklch(0.28 0.025 58)",
+                          color: "oklch(0.70 0.015 68)",
+                        }}
+                      >
+                        {[3, 4, 5, 6, 7, 8, 10].map((d) => (
+                          <option key={d} value={d} style={{ background: "oklch(0.18 0.016 52)" }}>
+                            {d}s
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteScene(scene.id)}
+                    className="flex-shrink-0 p-1.5 rounded transition-colors hover:bg-red-500/10"
+                    style={{ color: "oklch(0.45 0.010 60)" }}
+                  >
+                    <Trash2 size={13} />
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleDeleteScene(scene.id)}
-                  className="flex-shrink-0 p-1.5 rounded transition-colors hover:bg-red-500/10"
-                  style={{ color: "oklch(0.45 0.010 60)" }}
-                >
-                  <Trash2 size={13} />
-                </button>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

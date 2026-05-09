@@ -1,11 +1,12 @@
 // ============================================================
 // DESIGN: "Digital Sanctum" — Step 6: Bulk Image Prompts
 // Supports both copy-for-external-tools and in-app generation via Replicate
+// Character Consistency: shared style prefix + seed locking
 // ============================================================
 import { useState, useEffect, useCallback } from "react";
 import { useProject } from "@/contexts/ProjectContext";
-import { DEITIES } from "@/lib/studioData";
-import { ChevronRight, Copy, Check, Download, Sparkles, Image, Loader2, AlertCircle, Settings } from "lucide-react";
+import { DEITIES, getDefaultCharacterPrefix } from "@/lib/studioData";
+import { ChevronRight, Copy, Check, Download, Sparkles, Image, Loader2, AlertCircle, Settings, Shuffle, Lock, Unlock } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -30,13 +31,14 @@ interface ImageJob {
 }
 
 export default function Step6ImagePrompts() {
-  const { project, setScenes, setActiveStep, markStepComplete } = useProject();
+  const { project, setScenes, setActiveStep, markStepComplete, setCharacterPrefix, setImageSeed } = useProject();
   const { isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState(0);
   const [showNegative, setShowNegative] = useState(false);
+  const [seedLocked, setSeedLocked] = useState(project.imageSeed !== null);
 
   // Generation state
   const [imageJobs, setImageJobs] = useState<ImageJob[]>([]);
@@ -45,6 +47,13 @@ export default function Step6ImagePrompts() {
 
   const utils = trpc.useUtils();
   const deity = DEITIES.find((d) => d.key === project.deity);
+
+  // Auto-populate character prefix when deity is first selected and prefix is empty
+  useEffect(() => {
+    if (deity && !project.characterPrefix) {
+      setCharacterPrefix(getDefaultCharacterPrefix(deity));
+    }
+  }, [deity, project.characterPrefix, setCharacterPrefix]);
 
   // Fetch user's Replicate API key from settings
   const { data: userSettings } = trpc.settings.getSettings.useQuery(undefined, {
@@ -122,6 +131,8 @@ export default function Step6ImagePrompts() {
         model: "flux-dev",
         width: 1024,
         height: 576,
+        stylePrefix: project.characterPrefix || undefined,
+        seed: project.imageSeed ?? undefined,
       });
 
       if (!result.success || !result.data) {
@@ -196,6 +207,22 @@ export default function Step6ImagePrompts() {
     setScenes(project.scenes.map((s) => (s.id === id ? { ...s, imagePrompt: value } : s)));
   };
 
+  const handleRandomSeed = () => {
+    const seed = Math.floor(Math.random() * 2_147_483_647);
+    setImageSeed(seed);
+    setSeedLocked(true);
+    toast.success(`Seed locked: ${seed}`);
+  };
+
+  const handleToggleSeedLock = () => {
+    if (seedLocked) {
+      setImageSeed(null);
+      setSeedLocked(false);
+    } else {
+      handleRandomSeed();
+    }
+  };
+
   const handleContinue = () => {
     markStepComplete(5);
     setActiveStep(6);
@@ -234,11 +261,89 @@ export default function Step6ImagePrompts() {
         </p>
       </div>
 
+      {/* Character Consistency Panel */}
+      <div className="shrine-panel p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold" style={{ color: "oklch(0.80 0.12 78)", fontFamily: "'Cinzel', serif" }}>
+              Style Lock
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "oklch(0.50 0.012 65)" }}>
+              Prepended to every prompt — keeps all images visually consistent
+            </p>
+          </div>
+          {deity && (
+            <button
+              onClick={() => setCharacterPrefix(getDefaultCharacterPrefix(deity))}
+              className="text-xs px-2.5 py-1.5 rounded transition-colors flex items-center gap-1"
+              style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.28 0.025 58)" }}
+            >
+              <Sparkles size={10} />
+              Reset to {deity.name} default
+            </button>
+          )}
+        </div>
+        <textarea
+          value={project.characterPrefix}
+          onChange={(e) => setCharacterPrefix(e.target.value)}
+          placeholder="Tanjore painting style, gold leaf, South Indian temple art, consistent character design..."
+          className="sanctum-input text-xs w-full"
+          rows={3}
+          style={{ padding: "0.5rem 0.625rem", resize: "vertical" }}
+        />
+
+        {/* Seed control */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold" style={{ color: "oklch(0.60 0.012 65)" }}>
+            Seed
+          </span>
+          <input
+            type="number"
+            value={project.imageSeed ?? ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              setImageSeed(v === "" ? null : Number(v));
+              setSeedLocked(v !== "");
+            }}
+            placeholder="none (random)"
+            className="sanctum-input text-xs"
+            style={{ padding: "0.375rem 0.625rem", width: "140px" }}
+          />
+          <button
+            onClick={handleRandomSeed}
+            className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded transition-colors"
+            style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.28 0.025 58)" }}
+            title="Roll a random seed"
+          >
+            <Shuffle size={10} />
+            Random
+          </button>
+          <button
+            onClick={handleToggleSeedLock}
+            className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded transition-colors"
+            style={{
+              background: seedLocked ? "oklch(0.18 0.06 150 / 0.3)" : "oklch(0.22 0.018 52)",
+              color: seedLocked ? "oklch(0.72 0.12 145)" : "oklch(0.50 0.012 65)",
+              border: `1px solid ${seedLocked ? "oklch(0.50 0.12 145 / 0.5)" : "oklch(0.28 0.025 58)"}`,
+            }}
+            title={seedLocked ? "Unlock seed (use random each time)" : "Lock seed (same look for all images)"}
+          >
+            {seedLocked ? <Lock size={10} /> : <Unlock size={10} />}
+            {seedLocked ? "Locked" : "Unlocked"}
+          </button>
+        </div>
+        {seedLocked && project.imageSeed !== null && (
+          <p className="text-xs" style={{ color: "oklch(0.55 0.012 65)" }}>
+            All {project.scenes.length} images will use seed <span style={{ color: "oklch(0.72 0.12 145)", fontFamily: "monospace" }}>{project.imageSeed}</span> — consistent look guaranteed.
+          </p>
+        )}
+      </div>
+
       {/* Style selector + actions */}
       <div className="shrine-panel p-4 space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
-            Visual Style
+            Scene Style
           </p>
           <div className="flex gap-2 flex-wrap">
             <button
@@ -312,6 +417,11 @@ export default function Step6ImagePrompts() {
             </p>
             <p className="text-xs mt-0.5" style={{ color: "oklch(0.50 0.012 65)" }}>
               Flux Dev via Replicate — ~$0.01/image
+              {project.imageSeed !== null && (
+                <span style={{ color: "oklch(0.72 0.12 145)", marginLeft: "0.5rem" }}>
+                  · seed {project.imageSeed}
+                </span>
+              )}
             </p>
           </div>
           {!replicateApiKey ? (

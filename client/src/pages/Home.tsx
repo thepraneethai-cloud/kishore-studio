@@ -13,7 +13,8 @@ import Step6ImagePrompts from "@/components/steps/Step6ImagePrompts";
 import Step7VideoPrompts from "@/components/steps/Step7VideoPrompts";
 import Step8CapCut from "@/components/steps/Step8CapCut";
 import Step9YouTube from "@/components/steps/Step9YouTube";
-import { useState } from "react";
+import { useIsMobile } from "@/hooks/useMobile";
+import { useEffect, useState } from "react";
 
 const STEP_COMPONENTS: Record<number, React.ComponentType> = {
   1: Step1Deity,
@@ -28,8 +29,14 @@ const STEP_COMPONENTS: Record<number, React.ComponentType> = {
 
 export default function Home() {
   const { activeStep } = useProject();
+  const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const StepComponent = STEP_COMPONENTS[activeStep] || Step1Deity;
+
+  // Close sidebar by default on mobile
+  useEffect(() => {
+    if (isMobile) setSidebarOpen(false);
+  }, [isMobile]);
 
   return (
     <div
@@ -45,16 +52,39 @@ export default function Home() {
       <Header sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} activeStep={activeStep} />
 
       {/* Main content area */}
-      <div style={{ display: "grid", gridTemplateColumns: sidebarOpen ? "280px 1fr" : "1fr", flex: 1, transition: "grid-template-columns 250ms ease-out" }}>
-        {/* Sidebar - Conditionally rendered */}
+      <div
+        style={{
+          display: "grid",
+          // On mobile the sidebar floats as an overlay — don't reserve column space
+          gridTemplateColumns: (!isMobile && sidebarOpen) ? "224px 1fr" : "1fr",
+          flex: 1,
+          transition: "grid-template-columns 250ms ease-out",
+        }}
+      >
+        {/* Sidebar — rendered when open; on mobile it floats as a fixed drawer */}
         {sidebarOpen && (
-          <div
-            style={{
-              animation: "slideInLeft 250ms ease-out",
-            }}
-          >
-            <Sidebar />
-          </div>
+          <>
+            {/* Mobile: tap-away backdrop */}
+            {isMobile && (
+              <div
+                onClick={() => setSidebarOpen(false)}
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  background: "rgba(0, 0, 0, 0.6)",
+                  zIndex: 35,
+                  backdropFilter: "blur(2px)",
+                }}
+              />
+            )}
+            <div
+              style={{
+                animation: "slideInLeft 250ms ease-out",
+              }}
+            >
+              <Sidebar onClose={isMobile ? () => setSidebarOpen(false) : undefined} />
+            </div>
+          </>
         )}
 
         {/* Main workspace */}
@@ -70,12 +100,11 @@ export default function Home() {
           <div
             style={{
               flex: 1,
-              padding: "2rem",
+              padding: isMobile ? "1rem" : "2rem",
               maxWidth: "1200px",
               margin: "0 auto",
               width: "100%",
             }}
-            onClick={() => setSidebarOpen(false)}
           >
             <StepComponent />
           </div>

@@ -14,6 +14,7 @@ export interface ReplicateImageInput {
   height?: number;
   steps?: number;
   guidance?: number;
+  seed?: number;
 }
 
 export interface ReplicateVideoInput {
@@ -100,6 +101,7 @@ export async function generateImageWithReplicate(
       num_inference_steps: input.steps || 28,
       guidance_scale: input.guidance || 3.5,
     }),
+    ...(input.seed != null && { seed: input.seed }),
   }, apiKey);
 }
 
@@ -151,7 +153,12 @@ export async function pollGenerationJob(
 export async function generateImageBatch(
   prompts: string[],
   apiKey: string,
-  options?: { model?: "flux-pro" | "flux-dev" | "flux-schnell"; width?: number; height?: number }
+  options?: {
+    model?: "flux-pro" | "flux-dev" | "flux-schnell";
+    width?: number;
+    height?: number;
+    seed?: number;
+  }
 ): Promise<GenerationJob[]> {
   return Promise.all(
     prompts.map((prompt) =>
@@ -161,6 +168,7 @@ export async function generateImageBatch(
           model: options?.model || "flux-dev",
           width: options?.width,
           height: options?.height,
+          seed: options?.seed,
         },
         apiKey
       )

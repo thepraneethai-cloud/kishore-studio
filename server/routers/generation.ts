@@ -15,6 +15,7 @@ import {
   generateVideoBatch,
   pollGenerationJob,
 } from "../_core/replicate";
+import { analyzeSceneArc } from "../_core/sceneDirector";
 
 // Per-unit cost estimates in USD
 const UNIT_COSTS = {
@@ -128,6 +129,41 @@ export const generationRouter = router({
     }),
 
   // ============================================================
+  // DIRECTOR ANALYSIS — emotional arc + shot vocabulary
+  // ============================================================
+  directorAnalysis: protectedProcedure
+    .input(
+      z.object({
+        deity: z.string(),
+        scenes: z.array(
+          z.object({
+            sceneId: z.number(),
+            lyricLine: z.string(),
+            sceneDescription: z.string(),
+          })
+        ).min(1).max(50),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        await assertBudgetAvailable(ctx.user.id);
+        const userSettings = await getUserSettings(ctx.user.id);
+        const result = await analyzeSceneArc(
+          input.deity,
+          input.scenes,
+          userSettings?.geminiApiKey || undefined
+        );
+        void recordCost(ctx.user.id, "lyrics", "gemini", UNIT_COSTS.lyrics * 3); // director analysis is ~3x a lyrics call
+        return { success: true, data: result };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Director analysis failed",
+        };
+      }
+    }),
+
+  // ============================================================
   // IMAGE GENERATION (Batch)
   // ============================================================
   generateImages: protectedProcedure
@@ -138,15 +174,22 @@ export const generationRouter = router({
         model: z.enum(["flux-pro", "flux-dev", "flux-schnell"]).optional(),
         width: z.number().optional(),
         height: z.number().optional(),
+        stylePrefix: z.string().optional(),
+        seed: z.number().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       try {
         await assertBudgetAvailable(ctx.user.id);
-        const jobs = await generateImageBatch(input.prompts, input.replicateApiKey, {
+        // Prepend character style prefix to every prompt if provided
+        const resolvedPrompts = input.stylePrefix
+          ? input.prompts.map((p) => `${input.stylePrefix} | ${p}`)
+          : input.prompts;
+        const jobs = await generateImageBatch(resolvedPrompts, input.replicateApiKey, {
           model: (input.model as "flux-pro" | "flux-dev" | "flux-schnell" | undefined) || "flux-dev",
           width: input.width,
           height: input.height,
+          seed: input.seed,
         });
         // Record one row per image submitted (jobs may still be pending)
         void recordCost(ctx.user.id, "image", "flux", UNIT_COSTS.image, input.prompts.length);

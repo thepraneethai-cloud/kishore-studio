@@ -181,6 +181,16 @@ export const MOOD_OPTIONS = [
   "Meditative & Peaceful", "Emotional & Devotional", "Mystical & Transcendent",
 ];
 
+export type EmotionalWeight = "reverent" | "longing" | "devotional" | "ecstatic" | "surrendered";
+export type ShotType = "WS" | "MS" | "CU" | "ECU";
+export type CameraMovement = "push-in" | "pull-back" | "pan" | "tilt-up" | "static";
+
+export interface CinematicStyle {
+  colorPalette: string;
+  lightingStyle: string;
+  moodArc: string;
+}
+
 export interface Scene {
   id: number;
   lyricLine: string;
@@ -188,6 +198,11 @@ export interface Scene {
   imagePrompt: string;
   motionPrompt: string;
   duration: number; // seconds
+  // Director Analysis fields (optional — added after running director agent)
+  emotionalWeight?: EmotionalWeight;
+  shotType?: ShotType;
+  cameraMovement?: CameraMovement;
+  directorNote?: string;
 }
 
 export interface Project {
@@ -201,6 +216,11 @@ export interface Project {
   youtubeDescription: string;
   youtubeTags: string[];
   thumbnailPrompt: string;
+  // Character consistency — prepended to every image prompt + shared seed
+  characterPrefix: string;
+  imageSeed: number | null;
+  // Cinematic Style Sheet — set by Director Analysis agent
+  cinematicStyle: CinematicStyle | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -223,9 +243,33 @@ export function createEmptyProject(): Project {
     youtubeDescription: "",
     youtubeTags: [],
     thumbnailPrompt: "",
+    characterPrefix: "",
+    imageSeed: null,
+    cinematicStyle: null,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
+}
+
+// ── Default character style prefix per deity ────────────────
+export function getDefaultCharacterPrefix(deity: Deity): string {
+  const baseStyle = "Tanjore painting style, gold leaf details, jewel tones, South Indian temple art, ultra-detailed, 8K, consistent art style, divine glow, no text, no watermarks";
+  const deitySpecific: Record<string, string> = {
+    venkateswara: "Lord Venkateswara in black idol form, golden crown (Kireedam), ornate jewelry, Tirupati temple aesthetic",
+    ganesha:      "Lord Ganesha with elephant head, Ekadanta, one full tusk right side, one broken tusk stub left side, seated posture, modak, mouse vehicle",
+    lakshmi:      "Goddess Lakshmi seated on pink lotus, four arms, gold coins falling, white elephants, red silk saree, serene expression",
+    shiva:        "Lord Shiva with crescent moon in matted hair, Ganga flowing, blue throat, trident (trishul), Nandi bull, ash-smeared",
+    krishna:      "Lord Krishna with dark blue skin, peacock feather crown, yellow dhoti, flute (murali), radiant divine smile",
+    hanuman:      "Lord Hanuman in red, muscular form, mace (gada), Rama's ring, devotional pose, orange glow",
+    rama:         "Lord Rama with blue skin, bow and arrow, royal attire, Sita beside him, Hanuman at feet",
+    saraswati:    "Goddess Saraswati in white saree, seated on white lotus, Veena in hands, white swan, books, serene expression",
+    durga:        "Goddess Durga with ten arms holding weapons, riding lion, red saree, fierce yet compassionate expression",
+    murugan:      "Lord Murugan youthful form, vel spear, peacock vehicle, radiant golden glow, six faces (Shanmukha)",
+    narasimha:    "Lord Narasimha with half-lion half-human form, fierce face, Prahlada beside him, lotus throne",
+    ayyappa:      "Lord Ayyappa in forest setting, bell garland, tiger, sitting in yoga meditation pose, sacred mountains",
+  };
+  const specific = deitySpecific[deity.key];
+  return specific ? `${specific}, ${baseStyle}` : `${deity.name} divine form, ${baseStyle}`;
 }
 
 // ── Lyrics templates per deity ──────────────────────────────

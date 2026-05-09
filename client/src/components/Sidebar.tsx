@@ -1,11 +1,12 @@
 // ============================================================
 // SIDEBAR: Glassmorphism theme with vibrant accents
 // Electric blue, neon pink, lime green
+// Mobile: slide-in drawer with backdrop tap-to-close
 // ============================================================
 import { useProject } from "@/contexts/ProjectContext";
 import {
   Flame, Music, Mic2, Film, Sparkles, Video, Scissors,
-  Youtube, CheckCircle2, RotateCcw,
+  Youtube, CheckCircle2, RotateCcw, X,
 } from "lucide-react";
 
 const STEPS = [
@@ -19,8 +20,17 @@ const STEPS = [
   { id: 8, label: "YouTube Export", icon: Youtube, short: "Export" },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export default function Sidebar({ onClose }: SidebarProps) {
   const { activeStep, setActiveStep, completedSteps, project, resetProject } = useProject();
+
+  const handleStepClick = (stepId: number) => {
+    setActiveStep(stepId);
+    onClose?.();
+  };
 
   return (
     <aside
@@ -33,7 +43,7 @@ export default function Sidebar() {
         display: "flex",
         flexDirection: "column",
         zIndex: 40,
-        background: "rgba(10, 10, 20, 0.9)",
+        background: "rgba(10, 10, 20, 0.97)",
         backdropFilter: "blur(10px)",
         borderRight: "1px solid rgba(255, 255, 255, 0.1)",
       }}
@@ -42,56 +52,87 @@ export default function Sidebar() {
       <div style={{
         padding: "1.25rem 1rem",
         borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        gap: "0.5rem",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
-          <div
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+            <div
+              style={{
+                width: "28px",
+                height: "28px",
+                borderRadius: "6px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "14px",
+                fontWeight: "700",
+                background: "linear-gradient(135deg, #00d4ff, #00f0ff)",
+                color: "#000",
+                flexShrink: 0,
+              }}
+            >
+              🕉
+            </div>
+            <span
+              style={{
+                fontSize: "0.875rem",
+                fontWeight: "600",
+                letterSpacing: "0.05em",
+                color: "#00d4ff",
+                fontFamily: "'Space Grotesk', sans-serif",
+              }}
+            >
+              Studio
+            </span>
+          </div>
+          <p style={{
+            fontSize: "0.75rem",
+            color: "rgba(255, 255, 255, 0.6)",
+          }}>
+            Kishore's Studio
+          </p>
+          {project.deity && (
+            <p
+              style={{
+                fontSize: "0.75rem",
+                marginTop: "0.25rem",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                maxWidth: "150px",
+                color: "#ff006e",
+                fontWeight: "500",
+              }}
+            >
+              {project.title || "New Project"}
+            </p>
+          )}
+        </div>
+
+        {/* Close button — only visible when onClose is provided (mobile) */}
+        {onClose && (
+          <button
+            onClick={onClose}
             style={{
-              width: "28px",
-              height: "28px",
-              borderRadius: "6px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "14px",
-              fontWeight: "700",
-              background: "linear-gradient(135deg, #00d4ff, #00f0ff)",
-              color: "#000",
+              width: "32px",
+              height: "32px",
+              borderRadius: "6px",
+              border: "1px solid rgba(255, 255, 255, 0.15)",
+              background: "transparent",
+              color: "rgba(255, 255, 255, 0.6)",
+              cursor: "pointer",
+              flexShrink: 0,
             }}
+            aria-label="Close navigation"
           >
-            🕉
-          </div>
-          <span
-            style={{
-              fontSize: "0.875rem",
-              fontWeight: "600",
-              letterSpacing: "0.05em",
-              color: "#00d4ff",
-              fontFamily: "'Space Grotesk', sans-serif",
-            }}
-          >
-            Studio
-          </span>
-        </div>
-        <p style={{
-          fontSize: "0.75rem",
-          color: "rgba(255, 255, 255, 0.6)",
-        }}>
-          Kishore's Studio
-        </p>
-        {project.deity && (
-          <p
-            style={{
-              fontSize: "0.75rem",
-              marginTop: "0.25rem",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              color: "#ff006e",
-              fontWeight: "500",
-            }}
-          >
-            {project.title || "New Project"}
-          </p>
+            <X size={16} />
+          </button>
         )}
       </div>
 
@@ -108,17 +149,17 @@ export default function Sidebar() {
           const Icon = step.icon;
           const isActive = activeStep === step.id;
           const isCompleted = completedSteps.has(step.id);
-          
+
           return (
             <button
               key={step.id}
-              onClick={() => setActiveStep(step.id)}
+              onClick={() => handleStepClick(step.id)}
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: "0.75rem",
                 padding: "0.75rem 1rem",
-                background: isActive 
+                background: isActive
                   ? "linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(255, 0, 110, 0.1))"
                   : "transparent",
                 border: isActive ? "1px solid rgba(0, 212, 255, 0.3)" : "none",
@@ -134,15 +175,15 @@ export default function Sidebar() {
               <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Icon size={16} />
                 {isCompleted && (
-                  <CheckCircle2 
-                    size={12} 
-                    style={{ 
-                      position: "absolute", 
-                      right: "-4px", 
+                  <CheckCircle2
+                    size={12}
+                    style={{
+                      position: "absolute",
+                      right: "-4px",
                       bottom: "-4px",
                       color: "#39ff14",
                       fill: "#39ff14",
-                    }} 
+                    }}
                   />
                 )}
               </div>

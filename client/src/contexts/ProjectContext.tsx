@@ -8,6 +8,7 @@ import {
   Scene,
   SunoStyle,
   DeityKey,
+  CinematicStyle,
 } from "@/lib/studioData";
 import { trpc } from "@/lib/trpc";
 
@@ -22,6 +23,9 @@ interface ProjectContextType {
   setScenes: (scenes: Scene[]) => void;
   updateScene: (id: number, updates: Partial<Scene>) => void;
   setYouTubeData: (data: Partial<Pick<Project, "youtubeTitle" | "youtubeDescription" | "youtubeTags" | "thumbnailPrompt">>) => void;
+  setCharacterPrefix: (prefix: string) => void;
+  setImageSeed: (seed: number | null) => void;
+  setCinematicStyle: (style: CinematicStyle | null) => void;
   resetProject: () => void;
   completedSteps: Set<number>;
   markStepComplete: (step: number) => void;
@@ -165,6 +169,18 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  const setCharacterPrefix = useCallback((prefix: string) => {
+    setProject((p) => ({ ...p, characterPrefix: prefix }));
+  }, []);
+
+  const setImageSeed = useCallback((seed: number | null) => {
+    setProject((p) => ({ ...p, imageSeed: seed }));
+  }, []);
+
+  const setCinematicStyle = useCallback((style: CinematicStyle | null) => {
+    setProject((p) => ({ ...p, cinematicStyle: style }));
+  }, []);
+
   const setYouTubeData = useCallback(
     (data: Partial<Pick<Project, "youtubeTitle" | "youtubeDescription" | "youtubeTags" | "thumbnailPrompt">>) => {
       setProject((p) => ({ ...p, ...data }));
@@ -200,6 +216,9 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         setScenes,
         updateScene,
         setYouTubeData,
+        setCharacterPrefix,
+        setImageSeed,
+        setCinematicStyle,
         resetProject,
         completedSteps,
         markStepComplete,
