@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
+import { assertBudgetAvailable } from "../_core/budgetCheck";
 import { generateDevotionalLyrics } from "../_core/lyricsGeneration";
 import { storagePut } from "../storage";
 import { getDb } from "../db";
@@ -71,8 +72,9 @@ export const generationRouter = router({
         language: z.enum(["telugu", "english"]).optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       try {
+        await assertBudgetAvailable(ctx.user.id);
         const lyrics = await generateDevotionalLyrics({
           deity: input.deity,
           customPrompt: input.customPrompt,
@@ -102,8 +104,9 @@ export const generationRouter = router({
         height: z.number().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       try {
+        await assertBudgetAvailable(ctx.user.id);
         const jobs = await generateImageBatch(input.prompts, input.replicateApiKey, {
           model: (input.model as "flux-pro" | "flux-dev" | undefined) || "flux-pro",
           width: input.width,
@@ -134,8 +137,9 @@ export const generationRouter = router({
         replicateApiKey: z.string(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       try {
+        await assertBudgetAvailable(ctx.user.id);
         const jobs = await generateVideoBatch(input.videos, input.replicateApiKey);
         return { success: true, data: jobs };
       } catch (error) {
@@ -159,8 +163,9 @@ export const generationRouter = router({
         deity: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       try {
+        await assertBudgetAvailable(ctx.user.id);
         const result = await generateDevotionalLyrics({
           deity: input.deity || "General",
           customPrompt: `Based on these lyrics and feedback, generate a refined SUNO music style. Lyrics: ${input.lyrics.substring(0, 200)}. User feedback: ${input.feedback}`,
