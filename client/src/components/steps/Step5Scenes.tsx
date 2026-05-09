@@ -99,7 +99,7 @@ export default function Step5Scenes() {
 
   const handleAddScene = () => {
     const newScene: Scene = {
-      id: Date.now(),
+      id: Date.now() + Math.floor(Math.random() * 100000),
       lyricLine: "",
       sceneDescription: "",
       imagePrompt: "",
@@ -135,7 +135,7 @@ export default function Step5Scenes() {
       {/* Header */}
       <div>
         <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
-          Step 4
+          Step 5
         </p>
         <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
           Scene Breakdown

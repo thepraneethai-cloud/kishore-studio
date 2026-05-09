@@ -6,7 +6,7 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { jobs } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export const jobsRouter = router({
@@ -111,16 +111,12 @@ export const jobsRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
-      const results = await Promise.all(
-        input.jobIds.map(async (jobId) => {
-          const jobList = await db.select().from(jobs).where(eq(jobs.id, jobId));
-          const job = jobList[0];
-          if (!job || job.userId !== ctx.user.id) return null;
-          return job;
-        })
-      );
+      if (input.jobIds.length === 0) return [];
 
-      return results.filter((j) => j !== null);
+      return db
+        .select()
+        .from(jobs)
+        .where(and(inArray(jobs.id, input.jobIds), eq(jobs.userId, ctx.user.id)));
     }),
 
   // Cancel a job
