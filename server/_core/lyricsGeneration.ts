@@ -148,7 +148,16 @@ Return a JSON object with this exact structure:
     }
 
     const contentStr = typeof content === "string" ? content : JSON.stringify(content);
-    const parsed = JSON.parse(contentStr);
+    // Strip markdown code fences — some models wrap JSON in ```json ... ``` despite json_schema format
+    const jsonStr = contentStr.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+
+    let parsed: { pallavi: string; charanam1: string; charanam2?: string; outro?: string; notes: string };
+    try {
+      parsed = JSON.parse(jsonStr);
+    } catch {
+      console.error("[LyricsGeneration] Invalid JSON from LLM:", contentStr);
+      throw new Error("LLM returned malformed JSON — please try generating again.");
+    }
 
     // Combine all sections into a single lyrics string
     const lyrics = [
