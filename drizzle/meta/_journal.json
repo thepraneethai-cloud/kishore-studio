@@ -29,6 +29,13 @@
       "when": 1777781943769,
       "tag": "0003_panoramic_bruce_banner",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1778284800000,
+      "tag": "0004_add_db_indexes",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,6 @@
 import {
   int,
+  index,
   mysqlEnum,
   mysqlTable,
   text,
@@ -53,7 +54,9 @@ export const projects = mysqlTable("projects", {
   metadata: json("metadata"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => [
+  index("idx_projects_userId").on(table.userId),
+]);
 
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = typeof projects.$inferInsert;
@@ -76,7 +79,11 @@ export const jobs = mysqlTable("jobs", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   completedAt: timestamp("completedAt"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => [
+  index("idx_jobs_userId").on(table.userId),
+  index("idx_jobs_projectId").on(table.projectId),
+  index("idx_jobs_status").on(table.status),
+]);
 
 export type Job = typeof jobs.$inferSelect;
 export type InsertJob = typeof jobs.$inferInsert;
@@ -118,7 +125,9 @@ export const costTracking = mysqlTable("costTracking", {
   cost: decimal("cost", { precision: 10, scale: 4 }).notNull(),
   jobId: varchar("jobId", { length: 64 }),
   date: timestamp("date").defaultNow().notNull(),
-});
+}, (table) => [
+  index("idx_costTracking_userId").on(table.userId),
+]);
 
 export type CostTracking = typeof costTracking.$inferSelect;
 export type InsertCostTracking = typeof costTracking.$inferInsert;
@@ -139,7 +148,9 @@ export const scenes = mysqlTable("scenes", {
   videoUrl: text("videoUrl"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => [
+  index("idx_scenes_projectId").on(table.projectId),
+]);
 
 export type Scene = typeof scenes.$inferSelect;
 export type InsertScene = typeof scenes.$inferInsert;
@@ -156,7 +167,9 @@ export const promptTemplates = mysqlTable("promptTemplates", {
   isDefault: int("isDefault").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => [
+  index("idx_promptTemplates_userId").on(table.userId),
+]);
 
 export type PromptTemplate = typeof promptTemplates.$inferSelect;
 export type InsertPromptTemplate = typeof promptTemplates.$inferInsert;
@@ -177,7 +190,9 @@ export const sunoStyleTemplates = mysqlTable("sunoStyleTemplates", {
   isDefault: int("isDefault").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => [
+  index("idx_sunoStyleTemplates_userId").on(table.userId),
+]);
 
 export type SunoStyleTemplate = typeof sunoStyleTemplates.$inferSelect;
 export type InsertSunoStyleTemplate = typeof sunoStyleTemplates.$inferInsert;
