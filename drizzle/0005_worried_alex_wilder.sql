@@ -1,0 +1,1 @@
+ALTER TABLE `userSettings` DROP PRIMARY KEY, ADD PRIMARY KEY(`id`);

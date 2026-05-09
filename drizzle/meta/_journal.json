@@ -36,6 +36,13 @@
       "when": 1778284800000,
       "tag": "0004_add_db_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1778356901737,
+      "tag": "0005_worried_alex_wilder",
+      "breakpoints": true
     }
   ]
 }
