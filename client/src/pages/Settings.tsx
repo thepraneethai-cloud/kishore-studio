@@ -300,69 +300,67 @@ export default function Settings() {
         {/* Providers Tab */}
         {activeTab === "providers" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-            {(["lyricsProvider", "imageProvider", "videoProvider"] as const).map((key) => (
-              <div key={key}>
-                <label style={{ display: "block", marginBottom: "0.5rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>
-                  {key === "lyricsProvider" ? "Lyrics Provider" : key === "imageProvider" ? "Image Provider" : "Video Provider"}
-                </label>
-                <select
-                  value={providers[key]}
-                  onChange={(e) => setProviders({ ...providers, [key]: e.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    background: "rgba(0, 212, 255, 0.05)",
-                    border: "1px solid rgba(0, 212, 255, 0.2)",
-                    borderRadius: "0.5rem",
-                    color: "#fff",
-                    fontSize: "0.875rem",
-                  }}
-                >
-                  {key === "lyricsProvider" && (
-                    <>
-                      <option value="chatgpt">ChatGPT (OpenAI)</option>
-                      <option value="claude">Claude (Anthropic)</option>
-                      <option value="gemini">Gemini (Google)</option>
-                    </>
-                  )}
-                  {key === "imageProvider" && (
-                    <>
-                      <option value="flux">Flux (Replicate)</option>
-                      <option value="dalle">DALL-E (OpenAI)</option>
-                      <option value="midjourney">Midjourney</option>
-                    </>
-                  )}
-                  {key === "videoProvider" && (
-                    <>
-                      <option value="runway">Runway Gen-3</option>
-                      <option value="grok">Grok Photo→Video</option>
-                      <option value="pika">Pika</option>
-                    </>
-                  )}
-                </select>
+            {/* Info banner */}
+            <div style={{ padding: "1rem", background: "rgba(0, 212, 255, 0.07)", border: "1px solid rgba(0, 212, 255, 0.25)", borderRadius: "0.5rem", fontSize: "0.8rem", color: "rgba(255,255,255,0.7)", lineHeight: "1.5" }}>
+              <strong style={{ color: "#00d4ff" }}>Active providers</strong> are highlighted. Add your own API key in the API Keys tab to use your own quota — otherwise the platform key is used.
+            </div>
+
+            {/* Lyrics */}
+            <div>
+              <label style={{ display: "block", marginBottom: "0.5rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>Lyrics Provider</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "rgba(57,255,20,0.07)", border: "1px solid rgba(57,255,20,0.4)", borderRadius: "0.5rem" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#39ff14", flexShrink: 0 }} />
+                  <span style={{ flex: 1, color: "#fff", fontSize: "0.875rem" }}>Gemini 2.5 Flash (Google)</span>
+                  <span style={{ fontSize: "0.7rem", color: "#39ff14", fontWeight: "600" }}>ACTIVE</span>
+                </div>
+                {["ChatGPT (OpenAI)", "Claude (Anthropic)"].map((label) => (
+                  <div key={label} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.5rem", opacity: 0.5 }}>
+                    <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+                    <span style={{ flex: 1, color: "rgba(255,255,255,0.6)", fontSize: "0.875rem" }}>{label}</span>
+                    <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.4)", fontWeight: "600" }}>COMING SOON</span>
+                  </div>
+                ))}
               </div>
-            ))}
-            <button
-              onClick={handleSaveProviders}
-              disabled={saving}
-              style={{
-                padding: "0.75rem 1.5rem",
-                background: "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)",
-                border: "none",
-                borderRadius: "0.5rem",
-                color: "#000",
-                fontWeight: "600",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.5rem",
-                opacity: saving ? 0.7 : 1,
-              }}
-            >
-              {saving ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
-              Save Providers
-            </button>
+            </div>
+
+            {/* Images */}
+            <div>
+              <label style={{ display: "block", marginBottom: "0.5rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>Image Provider</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "rgba(57,255,20,0.07)", border: "1px solid rgba(57,255,20,0.4)", borderRadius: "0.5rem" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#39ff14", flexShrink: 0 }} />
+                  <span style={{ flex: 1, color: "#fff", fontSize: "0.875rem" }}>Flux Dev / Pro (Replicate)</span>
+                  <span style={{ fontSize: "0.7rem", color: "#39ff14", fontWeight: "600" }}>ACTIVE</span>
+                </div>
+                {["DALL-E 3 (OpenAI)", "Midjourney"].map((label) => (
+                  <div key={label} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.5rem", opacity: 0.5 }}>
+                    <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+                    <span style={{ flex: 1, color: "rgba(255,255,255,0.6)", fontSize: "0.875rem" }}>{label}</span>
+                    <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.4)", fontWeight: "600" }}>COMING SOON</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Video */}
+            <div>
+              <label style={{ display: "block", marginBottom: "0.5rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>Video Provider</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "rgba(57,255,20,0.07)", border: "1px solid rgba(57,255,20,0.4)", borderRadius: "0.5rem" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#39ff14", flexShrink: 0 }} />
+                  <span style={{ flex: 1, color: "#fff", fontSize: "0.875rem" }}>MiniMax Video-01-Live (Replicate)</span>
+                  <span style={{ fontSize: "0.7rem", color: "#39ff14", fontWeight: "600" }}>ACTIVE</span>
+                </div>
+                {["Runway Gen-3", "Pika"].map((label) => (
+                  <div key={label} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.5rem", opacity: 0.5 }}>
+                    <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+                    <span style={{ flex: 1, color: "rgba(255,255,255,0.6)", fontSize: "0.875rem" }}>{label}</span>
+                    <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.4)", fontWeight: "600" }}>COMING SOON</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 

@@ -7,14 +7,46 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { assertBudgetAvailable } from "../_core/budgetCheck";
 import { generateDevotionalLyrics } from "../_core/lyricsGeneration";
 import { storagePut } from "../storage";
-import { getDb } from "../db";
-import { projects } from "../../drizzle/schema";
+import { getDb, getUserSettings } from "../db";
+import { projects, costTracking } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import {
   generateImageBatch,
   generateVideoBatch,
   pollGenerationJob,
 } from "../_core/replicate";
+
+// Per-unit cost estimates in USD
+const UNIT_COSTS = {
+  lyrics:  0.0001, // gemini-2.5-flash is extremely cheap
+  image:   0.0100, // flux-dev ~$0.01/image
+  video:   0.0500, // minimax video-01 ~$0.05/clip
+};
+
+async function recordCost(
+  userId: number,
+  type: "lyrics" | "image" | "video",
+  provider: string,
+  unitCost: number,
+  count = 1,
+  jobId?: string
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return; // best-effort — never block generation on cost logging
+  try {
+    const rows = Array.from({ length: count }, () => ({
+      userId,
+      type,
+      provider,
+      cost: unitCost.toFixed(4),
+      jobId: jobId || null,
+      date: new Date(),
+    }));
+    await db.insert(costTracking).values(rows);
+  } catch (err) {
+    console.error("[CostTracking] Failed to log cost:", err);
+  }
+}
 
 export const generationRouter = router({
   // ============================================================
@@ -75,13 +107,17 @@ export const generationRouter = router({
     .mutation(async ({ input, ctx }) => {
       try {
         await assertBudgetAvailable(ctx.user.id);
+        const userSettings = await getUserSettings(ctx.user.id);
         const lyrics = await generateDevotionalLyrics({
           deity: input.deity,
           customPrompt: input.customPrompt,
           theme: input.theme,
           duration: input.duration || 4,
           language: input.language || "telugu",
+          llmApiKey: userSettings?.geminiApiKey || undefined,
         });
+        // Record cost after success (non-blocking)
+        void recordCost(ctx.user.id, "lyrics", "gemini", UNIT_COSTS.lyrics);
         return { success: true, data: lyrics };
       } catch (error) {
         return {
@@ -108,10 +144,12 @@ export const generationRouter = router({
       try {
         await assertBudgetAvailable(ctx.user.id);
         const jobs = await generateImageBatch(input.prompts, input.replicateApiKey, {
-          model: (input.model as "flux-pro" | "flux-dev" | undefined) || "flux-pro",
+          model: (input.model as "flux-pro" | "flux-dev" | "flux-schnell" | undefined) || "flux-dev",
           width: input.width,
           height: input.height,
         });
+        // Record one row per image submitted (jobs may still be pending)
+        void recordCost(ctx.user.id, "image", "flux", UNIT_COSTS.image, input.prompts.length);
         return { success: true, data: jobs };
       } catch (error) {
         return {
@@ -141,6 +179,7 @@ export const generationRouter = router({
       try {
         await assertBudgetAvailable(ctx.user.id);
         const jobs = await generateVideoBatch(input.videos, input.replicateApiKey);
+        void recordCost(ctx.user.id, "video", "minimax", UNIT_COSTS.video, input.videos.length);
         return { success: true, data: jobs };
       } catch (error) {
         return {

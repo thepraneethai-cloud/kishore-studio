@@ -5,11 +5,12 @@
 import { invokeLLM } from "./llm";
 
 export interface LyricsGenerationInput {
-  deity: string; // Accept any deity name (Hanuman, Shiva, custom mythology, etc.)
-  customPrompt?: string; // User can provide their own direction
-  theme?: string; // e.g., "devotion", "gratitude", "protection"
-  duration?: number; // Estimated duration in minutes (3-6)
-  language?: "telugu" | "english"; // Output language
+  deity: string;
+  customPrompt?: string;
+  theme?: string;
+  duration?: number;
+  language?: "telugu" | "english";
+  llmApiKey?: string; // User's own Gemini key; falls back to server Forge key when absent
 }
 
 export interface SunoStyle {
@@ -65,7 +66,7 @@ export async function generateDevotionalLyrics(
   let systemPrompt = `You are an expert Telugu devotional songwriter. Your task is to create authentic, emotionally resonant devotional lyrics (bhajans) that honor the deity and resonate with devotees.
 
 DEITY CONTEXT:
-${deityContext}
+${deityContext || `${input.deity} is a revered Hindu deity. Create authentic devotional content that honors traditional bhajan conventions for this deity.`}
 
 REQUIREMENTS:
 - Write in ${input.language === "english" ? "English (transliterated Telugu names)" : "Telugu script"}
@@ -140,7 +141,7 @@ Return a JSON object with this exact structure:
           },
         },
       },
-    });
+    }, input.llmApiKey ? { apiKey: input.llmApiKey } : undefined);
 
     const content = response.choices[0]?.message.content;
     if (!content) {

@@ -15,7 +15,7 @@ export const projectsRouter = router({
         title: z.string(),
         deity: z.string().nullable().optional(),
         lyrics: z.string().optional(),
-        sunoStyle: z.record(z.unknown()).optional(),
+        sunoStyle: z.record(z.string(), z.unknown()).optional(),
         scenes: z.array(z.unknown()).optional(),
         youtubeTitle: z.string().optional(),
         youtubeDescription: z.string().optional(),

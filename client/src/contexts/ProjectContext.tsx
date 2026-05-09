@@ -80,7 +80,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         title: project.title,
         deity: project.deity,
         lyrics: project.lyrics,
-        sunoStyle: project.sunoStyle as Record<string, unknown>,
+        sunoStyle: project.sunoStyle as unknown as Record<string, unknown>,
         scenes: project.scenes,
         youtubeTitle: project.youtubeTitle,
         youtubeDescription: project.youtubeDescription,

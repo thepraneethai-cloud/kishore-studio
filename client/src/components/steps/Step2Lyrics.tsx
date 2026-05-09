@@ -139,7 +139,7 @@ export default function Step2Lyrics() {
     }
     refineSunoMutation.mutate({
       lyrics:       project.lyrics,
-      currentStyle: project.sunoStyle as Record<string, unknown>,
+      currentStyle: project.sunoStyle as unknown as Record<string, unknown>,
       feedback:     sunoFeedback,
       deity:        project.deity ?? undefined,
       theme,
@@ -148,7 +148,7 @@ export default function Step2Lyrics() {
 
   const isGenerating = generateMutation.isPending;
   const isRefiningSuno = refineSunoMutation.isPending;
-  const sunoStyle = project.sunoStyle as Record<string, unknown> | null;
+  const sunoStyle = project.sunoStyle as unknown as Record<string, unknown> | null;
 
   // ── styles ────────────────────────────────────────────────
   const panel = {
