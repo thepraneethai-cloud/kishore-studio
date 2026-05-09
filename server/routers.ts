@@ -3,6 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { generationRouter } from "./routers/generation";
+import { projectsRouter } from "./routers/projects";
 import { settingsRouter } from "./routers/settings";
 import { jobsRouter } from "./routers/jobs";
 import { templatesRouter } from "./routers/templates";
@@ -23,6 +24,7 @@ export const appRouter = router({
   }),
 
   generation: generationRouter,
+  projects: projectsRouter,
   settings: settingsRouter,
   jobs: jobsRouter,
   templates: templatesRouter,

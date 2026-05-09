@@ -9,6 +9,7 @@ import {
   SunoStyle,
   DeityKey,
 } from "@/lib/studioData";
+import { trpc } from "@/lib/trpc";
 
 interface ProjectContextType {
   project: Project;
@@ -30,6 +31,7 @@ const ProjectContext = createContext<ProjectContextType | null>(null);
 
 const STORAGE_KEY = "telugu-studio-project";
 const STEPS_KEY = "telugu-studio-steps";
+const SERVER_ID_KEY = "telugu-studio-server-id";
 
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [project, setProject] = useState<Project>(() => {
@@ -44,6 +46,19 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [activeStep, setActiveStep] = useState(1);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const upsertProject = trpc.projects.upsert.useMutation({
+    onSuccess: (data) => {
+      if (data?.serverProjectId) {
+        localStorage.setItem(SERVER_ID_KEY, String(data.serverProjectId));
+      }
+    },
+    onError: (err) => {
+      if (err.data?.code !== "UNAUTHORIZED") {
+        console.error("[ProjectContext] Server save failed:", err.message);
+      }
+    },
+  });
+
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(() => {
     try {
       const saved = localStorage.getItem(STEPS_KEY);
@@ -53,16 +68,30 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
-  // Persist project to localStorage — debounced so rapid keystrokes don't thrash storage
+  // Persist project locally and to server — debounced so rapid keystrokes don't thrash storage
   useEffect(() => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...project, updatedAt: Date.now() }));
+
+      const savedServerId = localStorage.getItem(SERVER_ID_KEY);
+      upsertProject.mutate({
+        serverProjectId: savedServerId ? Number(savedServerId) : undefined,
+        title: project.title,
+        deity: project.deity,
+        lyrics: project.lyrics,
+        sunoStyle: project.sunoStyle as Record<string, unknown>,
+        scenes: project.scenes,
+        youtubeTitle: project.youtubeTitle,
+        youtubeDescription: project.youtubeDescription,
+        youtubeTags: project.youtubeTags,
+        thumbnailPrompt: project.thumbnailPrompt,
+      });
     }, 500);
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
-  }, [project]);
+  }, [project, upsertProject.mutate]);
 
   useEffect(() => {
     localStorage.setItem(STEPS_KEY, JSON.stringify(Array.from(completedSteps)));
@@ -106,6 +135,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     setProject(createEmptyProject());
     setCompletedSteps(new Set());
     setActiveStep(1);
+    localStorage.removeItem(SERVER_ID_KEY);
   }, []);
 
   const markStepComplete = useCallback((step: number) => {
