@@ -32,6 +32,9 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  // Log all env var keys at startup to diagnose Railway variable injection
+  console.log("[Startup] ENV keys:", Object.keys(process.env).sort().join(", "));
+
   // Run DB migrations before accepting traffic
   if (process.env.NODE_ENV === "production") {
     await runMigrations();
