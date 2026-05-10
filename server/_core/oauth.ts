@@ -20,14 +20,15 @@ export function registerOAuthRoutes(app: Express) {
     }
 
     try {
-      await db.upsertUser({
+      // Best-effort DB upsert — don't fail login if DB is unavailable
+      db.upsertUser({
         openId: "admin",
         name: "Kishore",
         email: "thepraneethai@gmail.com",
         loginMethod: "password",
         role: "admin",
         lastSignedIn: new Date(),
-      });
+      }).catch((err) => console.warn("[Auth] DB upsert skipped:", err?.message));
 
       const sessionToken = await sdk.createSessionToken("admin", {
         name: "Kishore",
