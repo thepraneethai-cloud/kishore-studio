@@ -609,42 +609,72 @@ export default function Step5Scenes() {
                     )}
 
                     {/* Lyric line */}
-                    <input
-                      type="text"
+                    <textarea
                       value={scene.lyricLine}
                       onChange={(e) => handleUpdateScene(scene.id, "lyricLine", e.target.value)}
                       placeholder="Lyric line..."
-                      className="sanctum-input telugu-text text-sm"
-                      style={{ padding: "0.375rem 0.625rem" }}
+                      rows={2}
+                      className="telugu-text w-full text-sm"
+                      style={{
+                        padding: "0.375rem 0.625rem",
+                        background: "oklch(0.15 0.012 52)",
+                        border: "1px solid oklch(0.30 0.025 58)",
+                        borderRadius: "0.375rem",
+                        color: "#fff",
+                        resize: "none",
+                        outline: "none",
+                        lineHeight: "1.5",
+                        fontFamily: "'Noto Sans Telugu', 'Inter', sans-serif",
+                      }}
                     />
-                    {/* Scene description */}
-                    <input
-                      type="text"
-                      value={scene.sceneDescription}
-                      onChange={(e) => handleUpdateScene(scene.id, "sceneDescription", e.target.value)}
-                      placeholder="Scene description..."
-                      className="sanctum-input text-xs"
-                      style={{ padding: "0.375rem 0.625rem" }}
-                    />
-                    {/* Duration */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>Duration:</span>
-                      <select
-                        value={scene.duration}
-                        onChange={(e) => handleUpdateScene(scene.id, "duration", Number(e.target.value))}
-                        className="text-xs rounded px-2 py-1"
+                    {/* Scene description + Duration in one row */}
+                    <div className="flex gap-2 items-start">
+                      <textarea
+                        value={scene.sceneDescription}
+                        onChange={(e) => handleUpdateScene(scene.id, "sceneDescription", e.target.value)}
+                        placeholder="Scene description..."
+                        rows={2}
+                        className="flex-1 text-xs"
                         style={{
-                          background: "oklch(0.16 0.016 52)",
+                          padding: "0.375rem 0.625rem",
+                          background: "oklch(0.15 0.012 52)",
                           border: "1px solid oklch(0.28 0.025 58)",
-                          color: "oklch(0.70 0.015 68)",
+                          borderRadius: "0.375rem",
+                          color: "oklch(0.80 0.012 68)",
+                          resize: "none",
+                          outline: "none",
+                          lineHeight: "1.5",
+                          minWidth: 0,
                         }}
-                      >
-                        {[3, 4, 5, 6, 7, 8, 10].map((d) => (
-                          <option key={d} value={d} style={{ background: "oklch(0.18 0.016 52)" }}>
-                            {d}s
-                          </option>
-                        ))}
-                      </select>
+                      />
+                      <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
+                        <span className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>Dur.</span>
+                        <select
+                          value={scene.duration}
+                          onChange={(e) => handleUpdateScene(scene.id, "duration", Number(e.target.value))}
+                          style={{
+                            appearance: "none",
+                            WebkitAppearance: "none",
+                            padding: "0.375rem 0.5rem",
+                            background: "oklch(0.16 0.016 52)",
+                            border: "1px solid oklch(0.28 0.025 58)",
+                            borderRadius: "0.375rem",
+                            color: "oklch(0.72 0.12 75)",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            outline: "none",
+                            width: "54px",
+                            textAlign: "center",
+                          }}
+                        >
+                          {[3, 4, 5, 6, 7, 8, 10].map((d) => (
+                            <option key={d} value={d} style={{ background: "oklch(0.18 0.016 52)" }}>
+                              {d}s
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </div>
                   <button
