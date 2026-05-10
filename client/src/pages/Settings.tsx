@@ -353,15 +353,19 @@ export default function Settings() {
                   outline: "none",
                 }}
               >
-                <optgroup label="Forge (platform key — no own key needed)">
-                  <option value="gemini-2.5-flash">Gemini 2.5 Flash — fast · smart · default</option>
-                  <option value="gemini-2.5-pro">Gemini 2.5 Pro — most capable · slower</option>
+                <optgroup label="Gemini (platform key — no own key needed)">
+                  <option value="gemini-2.5-flash">Gemini 2.5 Flash — fast · default</option>
+                  <option value="gemini-2.5-pro">Gemini 2.5 Pro — most capable</option>
                 </optgroup>
-                <optgroup label="Google direct (requires own Gemini API key)">
+                <optgroup label="Gemini (requires own Gemini API key)">
                   <option value="gemini-2.0-flash">Gemini 2.0 Flash — fast · stable</option>
-                  <option value="gemini-2.0-flash-thinking-exp">Gemini 2.0 Flash Thinking — step-by-step reasoning</option>
-                  <option value="gemini-1.5-pro">Gemini 1.5 Pro — proven · long context</option>
-                  <option value="gemini-1.5-flash">Gemini 1.5 Flash — lightweight · fast</option>
+                  <option value="gemini-2.0-flash-thinking-exp">Gemini 2.0 Flash Thinking — reasoning</option>
+                  <option value="gemini-1.5-pro">Gemini 1.5 Pro — long context</option>
+                </optgroup>
+                <optgroup label="ChatGPT (requires own OpenAI API key)">
+                  <option value="gpt-4o">GPT-4o — powerful</option>
+                  <option value="gpt-4o-mini">GPT-4o Mini — fast · cheap</option>
+                  <option value="gpt-4-turbo">GPT-4 Turbo</option>
                 </optgroup>
               </select>
               {providers.llmModel && providers.llmModel !== "gemini-2.5-flash" && (

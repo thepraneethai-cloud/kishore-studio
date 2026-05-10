@@ -124,6 +124,7 @@ export const generationRouter = router({
           language: input.language || "telugu",
           llmApiKey: userSettings?.geminiApiKey || undefined,
           llmModel: input.llmModel || userSettings?.llmModel || undefined,
+          openaiApiKey: userSettings?.openaiApiKey || undefined,
         });
         // Record cost after success (non-blocking)
         void recordCost(ctx.user.id, "lyrics", "gemini", UNIT_COSTS.lyrics);
@@ -176,6 +177,7 @@ export const generationRouter = router({
           {
             ...(userSettings?.geminiApiKey ? { apiKey: userSettings.geminiApiKey } : {}),
             model: input.llmModel || userSettings?.llmModel || undefined,
+            ...(userSettings?.openaiApiKey ? { openaiApiKey: userSettings.openaiApiKey } : {}),
           }
         );
 
@@ -217,7 +219,8 @@ export const generationRouter = router({
           input.deity,
           input.scenes,
           userSettings?.geminiApiKey || undefined,
-          input.llmModel || userSettings?.llmModel || undefined
+          input.llmModel || userSettings?.llmModel || undefined,
+          userSettings?.openaiApiKey || undefined
         );
         void recordCost(ctx.user.id, "lyrics", "gemini", UNIT_COSTS.lyrics * 3); // director analysis is ~3x a lyrics call
         return { success: true, data: result };

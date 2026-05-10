@@ -11,8 +11,9 @@ export interface LyricsGenerationInput {
   theme?: string;
   duration?: number;
   language?: "telugu" | "english";
-  llmApiKey?: string; // User's own Gemini key; falls back to server Forge key when absent
-  llmModel?: string;  // Model override (e.g. "gemini-2.5-pro"); falls back to endpoint default when absent
+  llmApiKey?: string;    // User's own Gemini key; falls back to server Forge key when absent
+  llmModel?: string;     // Model override (e.g. "gemini-2.5-pro" or "gpt-4o"); falls back to endpoint default when absent
+  openaiApiKey?: string; // User's OpenAI key; required when llmModel is a GPT model
 }
 
 export interface SunoStyle {
@@ -99,7 +100,15 @@ const DEITY_CONTEXT: Record<string, string> = {
 // Runtime cache for dynamically-generated deity contexts (avoids re-generating each request)
 const deityContextCache = new Map<string, string>();
 
-async function getDeityContext(deity: string, llmApiKey?: string, llmModel?: string): Promise<string> {
+function buildLLMOptions(llmApiKey?: string, llmModel?: string, openaiApiKey?: string) {
+  return {
+    ...(llmApiKey ? { apiKey: llmApiKey } : {}),
+    ...(llmModel ? { model: llmModel } : {}),
+    ...(openaiApiKey ? { openaiApiKey } : {}),
+  };
+}
+
+async function getDeityContext(deity: string, llmApiKey?: string, llmModel?: string, openaiApiKey?: string): Promise<string> {
   const key = deity.toLowerCase().trim();
 
   // Check hardcoded map first (covers all known deities instantly)
@@ -134,7 +143,7 @@ async function getDeityContext(deity: string, llmApiKey?: string, llmModel?: str
         role: "user",
         content: `In 3-4 sentences, describe "${deity}" as a Hindu deity for writing Telugu devotional songs (bhajans). Include: who they are and their divine role, the most common devotional themes and sacred places associated with them, traditional instruments used in their worship music, and the typical emotional mood of their bhajans. Be specific and concise.`,
       }],
-    }, { ...(llmApiKey ? { apiKey: llmApiKey } : {}), ...(llmModel ? { model: llmModel } : {}) });
+    }, buildLLMOptions(llmApiKey, llmModel, openaiApiKey));
 
     const content = response.choices[0]?.message.content;
     const context = typeof content === "string" && content.trim()
@@ -159,7 +168,7 @@ export async function generateDevotionalLyrics(
   const duration = input.duration || 4;
 
   // Fetches hardcoded context instantly, or generates via LLM for unlisted deities
-  const deityContext = await getDeityContext(input.deity, input.llmApiKey, input.llmModel);
+  const deityContext = await getDeityContext(input.deity, input.llmApiKey, input.llmModel, input.openaiApiKey);
 
   let systemPrompt = `You are an expert Telugu devotional songwriter. Your task is to create authentic, emotionally resonant devotional lyrics (bhajans) that honor the deity and resonate with devotees.
 
@@ -264,7 +273,7 @@ Return a JSON object with this exact structure:
           },
         },
       },
-    }, { ...(input.llmApiKey ? { apiKey: input.llmApiKey } : {}), ...(input.llmModel ? { model: input.llmModel } : {}) });
+    }, buildLLMOptions(input.llmApiKey, input.llmModel, input.openaiApiKey));
 
     const content = response.choices[0]?.message.content;
     if (!content) {

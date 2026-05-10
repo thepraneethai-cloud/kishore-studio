@@ -273,11 +273,8 @@ const normalizeResponseFormat = ({
 
 export async function invokeLLM(
   params: InvokeParams,
-  options?: { apiKey?: string; model?: string }
+  options?: { apiKey?: string; model?: string; openaiApiKey?: string }
 ): Promise<InvokeResult> {
-  const resolvedApiKey = options?.apiKey || ENV.forgeApiKey;
-  assertApiKey(resolvedApiKey);
-
   const {
     messages,
     tools,
@@ -289,8 +286,48 @@ export async function invokeLLM(
     response_format,
   } = params;
 
-  // Caller can override the model; otherwise pick a sensible default per endpoint
   const model = options?.model ?? (options?.apiKey ? "gemini-2.0-flash" : "gemini-2.5-flash");
+  const isOpenAI = /^(gpt-|o1|o3)/.test(model);
+
+  // ── OpenAI path ───────────────────────────────────────────────
+  if (isOpenAI) {
+    const openaiKey = options?.openaiApiKey;
+    if (!openaiKey) {
+      throw new Error(`OpenAI API key required for model "${model}". Add it in Settings → API Keys.`);
+    }
+
+    const normalizedResponseFormat = normalizeResponseFormat({ responseFormat, response_format, outputSchema, output_schema });
+    // OpenAI strict json_schema requires every property in `required`; downgrade to json_object
+    const oaiFormat = normalizedResponseFormat?.type === "json_schema"
+      ? { type: "json_object" as const }
+      : normalizedResponseFormat;
+
+    const oaiPayload: Record<string, unknown> = {
+      model,
+      messages: messages.map(normalizeMessage),
+      max_tokens: params.maxTokens ?? params.max_tokens ?? 4096,
+    };
+    if (params.temperature !== undefined) oaiPayload.temperature = params.temperature;
+    if (tools && tools.length > 0) oaiPayload.tools = tools;
+    const normalizedToolChoice = normalizeToolChoice(toolChoice || tool_choice, tools);
+    if (normalizedToolChoice) oaiPayload.tool_choice = normalizedToolChoice;
+    if (oaiFormat) oaiPayload.response_format = oaiFormat;
+
+    const oaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${openaiKey}` },
+      body: JSON.stringify(oaiPayload),
+    });
+    if (!oaiResponse.ok) {
+      const errorText = await oaiResponse.text();
+      throw new Error(`LLM invoke failed: ${oaiResponse.status} ${oaiResponse.statusText} – ${errorText}`);
+    }
+    return (await oaiResponse.json()) as InvokeResult;
+  }
+
+  // ── Gemini path ───────────────────────────────────────────────
+  const resolvedApiKey = options?.apiKey || ENV.forgeApiKey;
+  assertApiKey(resolvedApiKey);
 
   const payload: Record<string, unknown> = {
     model,

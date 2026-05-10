@@ -544,11 +544,20 @@ export default function Step2Lyrics() {
                   minWidth: "230px",
                 }}
               >
-                <option value="gemini-2.5-flash">Gemini 2.5 Flash (default)</option>
-                <option value="gemini-2.5-pro">Gemini 2.5 Pro (powerful)</option>
-                <option value="gemini-2.0-flash">Gemini 2.0 Flash (own key)</option>
-                <option value="gemini-2.0-flash-thinking-exp">Gemini 2.0 Flash Thinking (own key)</option>
-                <option value="gemini-1.5-pro">Gemini 1.5 Pro (own key)</option>
+                <optgroup label="Gemini (platform key)">
+                  <option value="gemini-2.5-flash">Gemini 2.5 Flash — fast · default</option>
+                  <option value="gemini-2.5-pro">Gemini 2.5 Pro — most capable</option>
+                </optgroup>
+                <optgroup label="Gemini (own Gemini key)">
+                  <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                  <option value="gemini-2.0-flash-thinking-exp">Gemini 2.0 Flash Thinking</option>
+                  <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                </optgroup>
+                <optgroup label="ChatGPT (own OpenAI key)">
+                  <option value="gpt-4o">GPT-4o — powerful</option>
+                  <option value="gpt-4o-mini">GPT-4o Mini — fast · cheap</option>
+                  <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                </optgroup>
               </select>
             </div>
           </div>

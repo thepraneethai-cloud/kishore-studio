@@ -116,7 +116,8 @@ export async function analyzeSceneArc(
   deity: string,
   scenes: SceneDirectorInput[],
   llmApiKey?: string,
-  llmModel?: string
+  llmModel?: string,
+  openaiApiKey?: string
 ): Promise<DirectorAnalysisResult> {
   if (scenes.length === 0) {
     throw new Error("No scenes to analyze");
@@ -138,7 +139,11 @@ export async function analyzeSceneArc(
       ],
       maxTokens: 4000,
     },
-    { ...(llmApiKey ? { apiKey: llmApiKey } : {}), ...(llmModel ? { model: llmModel } : {}) }
+    {
+      ...(llmApiKey ? { apiKey: llmApiKey } : {}),
+      ...(llmModel ? { model: llmModel } : {}),
+      ...(openaiApiKey ? { openaiApiKey } : {}),
+    }
   );
 
   const rawContent = result.choices[0]?.message?.content ?? "";
