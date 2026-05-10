@@ -224,7 +224,7 @@ Return a JSON object with this exact structure. CRITICAL: separate each song lin
   // directivePrompt (from vision generator) becomes the primary creative brief.
   // customPrompt (iterate feedback / manual direction) is appended to the system prompt.
   if (input.customPrompt) {
-    systemPrompt += `\n\nUSER DIRECTION:\n${input.customPrompt}\n\nIncorporate this direction while maintaining devotional authenticity and the JSON structure above.`;
+    systemPrompt += `\n\nUSER DIRECTION:\n${input.customPrompt}\n\nIncorporate this direction while maintaining devotional authenticity. REMINDER: output valid JSON where every song line is separated by \\n inside the string value — never join lines into one sentence.`;
   }
 
   const userMessage = input.directivePrompt
