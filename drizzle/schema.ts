@@ -94,7 +94,7 @@ export type InsertJob = typeof jobs.$inferInsert;
 export const userSettings = mysqlTable("userSettings", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().unique(),
-  lyricsProvider: mysqlEnum("lyricsProvider", ["chatgpt", "claude", "gemini"]).default("chatgpt"),
+  lyricsProvider: mysqlEnum("lyricsProvider", ["chatgpt", "claude", "gemini", "groq", "mistral"]).default("chatgpt"),
   imageProvider: mysqlEnum("imageProvider", ["flux", "dalle", "midjourney"]).default("flux"),
   videoProvider: mysqlEnum("videoProvider", ["runway", "grok", "pika"]).default("runway"),
   openaiApiKey: text("openaiApiKey"),
@@ -105,6 +105,8 @@ export const userSettings = mysqlTable("userSettings", {
   midjourneyApiKey: text("midjourneyApiKey"),
   grokApiKey: text("grokApiKey"),
   pikaApiKey: text("pikaApiKey"),
+  groqApiKey: text("groqApiKey"),
+  mistralApiKey: text("mistralApiKey"),
   llmModel: text("llm_model").default("gemini-2.5-flash"),
   monthlyBudgetUSD: decimal("monthlyBudgetUSD", { precision: 10, scale: 2 }).default("50.00"),
   budgetResetDay: int("budgetResetDay").default(1),
