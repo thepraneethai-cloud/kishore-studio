@@ -4,7 +4,7 @@
 
 import { useProject } from "@/contexts/ProjectContext";
 import { useState, useEffect } from "react";
-import { Music, Copy, Zap, RefreshCw, ChevronDown, ChevronUp, Undo2, Sparkles } from "lucide-react";
+import { Music, Copy, Zap, RefreshCw, ChevronDown, ChevronUp, Undo2, Sparkles, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { DEITIES } from "@/lib/studioData";
@@ -85,6 +85,9 @@ export default function Step2Lyrics() {
   const [language,       setLanguage]       = useState<"telugu" | "english">("telugu");
   const [customPrompt,   setCustomPrompt]   = useState("");
 
+  // vision / prompt-generator inputs
+  const [visionInput,     setVisionInput]     = useState("");
+
   // iterate inputs
   const [iterateFeedback, setIterateFeedback] = useState("");
   const [showIterate,     setShowIterate]     = useState(false);
@@ -142,6 +145,18 @@ export default function Step2Lyrics() {
       setSunoFeedback("");
       setShowSunoRefine(false);
       toast.success("SUNO style updated!");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const promptGenMutation = trpc.generation.generateLyricsPrompt.useMutation({
+    onSuccess: (res) => {
+      if (!res.success || !res.data) {
+        toast.error(res.error ?? "Prompt generation failed");
+        return;
+      }
+      setCustomPrompt(res.data.prompt);
+      toast.success("Prompt generated — review it below, then click Generate Lyrics!");
     },
     onError: (err) => toast.error(err.message),
   });
@@ -344,6 +359,56 @@ export default function Step2Lyrics() {
             </button>
           )}
         </div>
+
+        {/* ── VISION PANEL — AI prompt generator ────────── */}
+        {project.deity && (
+          <div style={{ ...panel, marginBottom: "1.25rem", border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.04)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+              <Wand2 size={15} style={{ color: "#8b5cf6" }} />
+              <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#8b5cf6", margin: 0 }}>
+                Describe Your Song Idea
+              </p>
+              <span style={{ fontSize: "0.7rem", color: "rgba(139,92,246,0.6)", fontWeight: 400 }}>
+                — AI will craft a detailed lyrics directive from your description
+              </span>
+            </div>
+            <textarea
+              value={visionInput}
+              onChange={(e) => setVisionInput(e.target.value)}
+              rows={3}
+              placeholder={`Describe what you want in plain words. Examples:\n• "A song for Vinayaka Chavithi with modak offerings, include his vehicle Mushika, joyful mood"\n• "Peaceful Venkateswara bhajan about a devotee's first visit to Tirumala, include Alipiri"\n• "Powerful Durga stotram for Navaratri, lion vahana, demon slayer imagery"`}
+              style={{ ...inputStyle, fontSize: "0.875rem", lineHeight: "1.5", marginBottom: "0.75rem", border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.06)" }}
+            />
+            <button
+              onClick={() => {
+                if (!visionInput.trim()) { toast.error("Describe your idea first"); return; }
+                promptGenMutation.mutate({ deity: project.deity!, userIdea: visionInput, theme, language });
+              }}
+              disabled={promptGenMutation.isPending || !visionInput.trim()}
+              style={{
+                display: "flex", alignItems: "center", gap: "0.5rem",
+                padding: "0.625rem 1.25rem",
+                background: promptGenMutation.isPending ? "rgba(139,92,246,0.15)" : "linear-gradient(135deg, #8b5cf6, #6d28d9)",
+                color: promptGenMutation.isPending ? "rgba(139,92,246,0.5)" : "#fff",
+                border: "none", borderRadius: "0.5rem",
+                fontWeight: 600, fontSize: "0.875rem",
+                cursor: promptGenMutation.isPending || !visionInput.trim() ? "not-allowed" : "pointer",
+                opacity: !visionInput.trim() ? 0.5 : 1,
+                transition: "all 200ms",
+              }}
+            >
+              {promptGenMutation.isPending
+                ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Generating prompt…</>
+                : <><Wand2 size={14} /> Generate Prompt with AI</>
+              }
+            </button>
+            {customPrompt && (
+              <p style={{ marginTop: "0.6rem", fontSize: "0.75rem", color: "rgba(139,92,246,0.7)", fontStyle: "italic" }}>
+                ✓ Prompt applied to "Custom direction" below — review, edit if needed, then click Generate Lyrics.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* ── PROMPT PANEL ──────────────────────────────── */}
         <div style={{ ...panel, marginBottom: "1.25rem" }}>

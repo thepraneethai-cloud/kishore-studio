@@ -17,6 +17,7 @@ import {
 } from "../_core/replicate";
 import { analyzeSceneArc } from "../_core/sceneDirector";
 import { generateImagesWithOpenAI } from "../_core/openaiImages";
+import { invokeLLM } from "../_core/llm";
 
 // Per-unit cost estimates in USD
 const UNIT_COSTS = {
@@ -127,6 +128,58 @@ export const generationRouter = router({
         return {
           success: false,
           error: error instanceof Error ? error.message : "Failed to generate lyrics",
+        };
+      }
+    }),
+
+  // ============================================================
+  // LYRICS PROMPT GENERATOR — AI crafts a detailed directive
+  // ============================================================
+  generateLyricsPrompt: protectedProcedure
+    .input(
+      z.object({
+        deity: z.string(),
+        userIdea: z.string().min(3).max(600),
+        theme: z.string().optional(),
+        language: z.enum(["telugu", "english"]).optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        await assertBudgetAvailable(ctx.user.id);
+        const userSettings = await getUserSettings(ctx.user.id);
+        const lang = input.language ?? "telugu";
+
+        const result = await invokeLLM(
+          {
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are an expert Telugu devotional music consultant specialising in Carnatic classical compositions, bhajans, and stotrams for South Indian YouTube audiences. " +
+                  "Your task: take a user's rough idea and expand it into a precise, structured creative directive (150–200 words) that an AI lyrics generator can follow exactly. " +
+                  "Cover: emotional journey, specific imagery, song structure (Pallavi then Charanam lines), key Sanskrit/Telugu words or epithets to weave in, and the devotional mood. " +
+                  "Return ONLY the directive — no explanations, no headings, no markdown.",
+              },
+              {
+                role: "user",
+                content: `Deity / theme: ${input.deity}\nMy idea: ${input.userIdea}\nTheme: ${input.theme ?? "devotion"}\nLanguage: ${lang}\n\nWrite the directive now.`,
+              },
+            ],
+            maxTokens: 400,
+          },
+          userSettings?.geminiApiKey ? { apiKey: userSettings.geminiApiKey } : undefined
+        );
+
+        const prompt = (result.choices[0]?.message?.content ?? "").toString().trim();
+        if (!prompt) throw new Error("AI returned an empty prompt");
+
+        void recordCost(ctx.user.id, "lyrics", "gemini", UNIT_COSTS.lyrics);
+        return { success: true, data: { prompt } };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Failed to generate prompt",
         };
       }
     }),
