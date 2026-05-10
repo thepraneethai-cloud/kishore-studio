@@ -477,13 +477,8 @@ export async function invokeLLM(
   }
 
   payload.max_tokens = 32768;
-  // Gemini 2.5 flash: custom temperature and thinking are mutually exclusive.
-  // When temperature is set, disable thinking so the model uses the requested temperature.
   if (params.temperature !== undefined) {
     payload.temperature = params.temperature;
-    payload.thinking = { budget_tokens: 0 };
-  } else {
-    payload.thinking = { budget_tokens: 128 };
   }
 
   const normalizedResponseFormat = normalizeResponseFormat({
