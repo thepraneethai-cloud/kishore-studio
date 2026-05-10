@@ -13,6 +13,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 
 type ImageProvider = "flux" | "dalle";
+type FluxModel = "flux-dev" | "flux-schnell";
 type DalleModel = "dall-e-3" | "gpt-image-1";
 
 const STYLE_SUFFIXES = [
@@ -45,6 +46,7 @@ export default function Step6ImagePrompts() {
 
   // Provider selection
   const [provider, setProvider] = useState<ImageProvider>("flux");
+  const [fluxModel, setFluxModel] = useState<FluxModel>("flux-dev");
   const [dalleModel, setDalleModel] = useState<DalleModel>("dall-e-3");
   const [dalleQuality, setDalleQuality] = useState<"standard" | "hd">("standard");
   const [dalleStyle, setDalleStyle] = useState<"natural" | "vivid">("natural");
@@ -161,7 +163,7 @@ export default function Step6ImagePrompts() {
               prompts,
               provider: "flux" as const,
               replicateApiKey,
-              model: "flux-dev" as const,
+              model: fluxModel,
               width: 1024,
               height: 576,
               stylePrefix: project.characterPrefix || undefined,
@@ -191,7 +193,7 @@ export default function Step6ImagePrompts() {
       } else {
         setGenStatus("polling");
         setIsPolling(true);
-        toast.success(`Generating ${prompts.length} images via Flux Dev...`);
+        toast.success(`Generating ${prompts.length} images via ${fluxModel === "flux-schnell" ? "Flux Schnell" : "Flux Dev"}...`);
       }
     } catch (error) {
       setGenStatus("error");
@@ -456,8 +458,8 @@ export default function Step6ImagePrompts() {
         {/* Provider tabs */}
         <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: "oklch(0.16 0.014 52)" }}>
           {([
-            { id: "flux",  label: "Flux Dev",  sub: "Replicate · ~$0.01/img", icon: "⚡" },
-            { id: "dalle", label: "ChatGPT",   sub: "OpenAI · DALL-E 3",       icon: "✦" },
+            { id: "flux",  label: "Flux",    sub: "Replicate · ~$0.001–$0.01/img", icon: "⚡" },
+            { id: "dalle", label: "ChatGPT", sub: "OpenAI · DALL-E 3",             icon: "✦" },
           ] as { id: ImageProvider; label: string; sub: string; icon: string }[]).map((p) => (
             <button
               key={p.id}
@@ -475,6 +477,32 @@ export default function Step6ImagePrompts() {
             </button>
           ))}
         </div>
+
+        {/* Flux model options */}
+        {provider === "flux" && (
+          <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg" style={{ background: "oklch(0.18 0.016 52)", border: "1px solid oklch(0.25 0.020 55)" }}>
+            <span className="text-xs" style={{ color: "oklch(0.55 0.012 65)" }}>Model</span>
+            <div className="flex gap-1">
+              {([
+                { id: "flux-dev",     label: "Flux Dev",     sub: "~$0.01/img · best quality" },
+                { id: "flux-schnell", label: "Flux Schnell", sub: "~$0.001/img · 10× faster" },
+              ] as { id: FluxModel; label: string; sub: string }[]).map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setFluxModel(m.id)}
+                  className="text-xs px-2.5 py-1.5 rounded transition-all"
+                  style={{
+                    background: fluxModel === m.id ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.22 0.018 52)",
+                    color: fluxModel === m.id ? "oklch(0.80 0.12 78)" : "oklch(0.55 0.012 65)",
+                    border: `1px solid ${fluxModel === m.id ? "oklch(0.72 0.12 75 / 0.5)" : "oklch(0.28 0.025 58)"}`,
+                  }}
+                >
+                  {m.label} <span style={{ opacity: 0.6, fontWeight: 400 }}>— {m.sub}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* DALL-E specific options */}
         {provider === "dalle" && (

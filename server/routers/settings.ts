@@ -21,6 +21,8 @@ export const settingsRouter = router({
         midjourneyApiKey: z.string().optional(),
         grokApiKey: z.string().optional(),
         pikaApiKey: z.string().optional(),
+        groqApiKey: z.string().optional(),
+        mistralApiKey: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

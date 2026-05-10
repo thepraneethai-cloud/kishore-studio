@@ -558,6 +558,18 @@ export default function Step2Lyrics() {
                   <option value="gpt-4o-mini">GPT-4o Mini — fast · cheap</option>
                   <option value="gpt-4-turbo">GPT-4 Turbo</option>
                 </optgroup>
+                <optgroup label="Claude (own Anthropic key)">
+                  <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku — fast · excellent</option>
+                  <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet — best quality</option>
+                </optgroup>
+                <optgroup label="Groq / Llama (own Groq key — free)">
+                  <option value="llama-3.1-8b-instant">Llama 3.1 8B — ultra-fast · free</option>
+                  <option value="llama-3.3-70b-versatile">Llama 3.3 70B — quality · free</option>
+                  <option value="qwen-2.5-7b-instruct">Qwen 2.5 7B — multilingual · free</option>
+                </optgroup>
+                <optgroup label="Mistral (own Mistral key — free)">
+                  <option value="mistral-small-latest">Mistral Small — multilingual · free</option>
+                </optgroup>
               </select>
             </div>
           </div>

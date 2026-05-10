@@ -273,7 +273,14 @@ const normalizeResponseFormat = ({
 
 export async function invokeLLM(
   params: InvokeParams,
-  options?: { apiKey?: string; model?: string; openaiApiKey?: string }
+  options?: {
+    apiKey?: string;        // Gemini own key
+    model?: string;
+    openaiApiKey?: string;  // OpenAI key
+    claudeApiKey?: string;  // Anthropic key
+    groqApiKey?: string;    // Groq key (Llama, Qwen)
+    mistralApiKey?: string; // Mistral key
+  }
 ): Promise<InvokeResult> {
   const {
     messages,
@@ -287,7 +294,10 @@ export async function invokeLLM(
   } = params;
 
   const model = options?.model ?? (options?.apiKey ? "gemini-2.0-flash" : "gemini-2.5-flash");
-  const isOpenAI = /^(gpt-|o1|o3)/.test(model);
+  const isOpenAI   = /^(gpt-|o1-|o3-)/.test(model);
+  const isClaude   = model.startsWith("claude-");
+  const isGroq     = /^(llama-|qwen|gemma|mixtral)/.test(model);
+  const isMistral  = /^(mistral-|codestral-|open-mixtral-)/.test(model);
 
   // ── OpenAI path ───────────────────────────────────────────────
   if (isOpenAI) {
@@ -323,6 +333,126 @@ export async function invokeLLM(
       throw new Error(`LLM invoke failed: ${oaiResponse.status} ${oaiResponse.statusText} – ${errorText}`);
     }
     return (await oaiResponse.json()) as InvokeResult;
+  }
+
+  // ── Anthropic / Claude path ───────────────────────────────────
+  if (isClaude) {
+    const claudeKey = options?.claudeApiKey;
+    if (!claudeKey) {
+      throw new Error(`Anthropic API key required for model "${model}". Add it in Settings → API Keys.`);
+    }
+
+    // Anthropic separates system message from the messages array
+    const systemMsg = messages.find((m) => m.role === "system");
+    const nonSystemMsgs = messages.filter((m) => m.role !== "system");
+
+    const normalizedResponseFormat = normalizeResponseFormat({ responseFormat, response_format, outputSchema, output_schema });
+    let systemText = systemMsg
+      ? typeof systemMsg.content === "string" ? systemMsg.content : JSON.stringify(systemMsg.content)
+      : "";
+    // Anthropic doesn't support response_format; inject JSON instruction into system prompt instead
+    if (normalizedResponseFormat?.type === "json_schema" || normalizedResponseFormat?.type === "json_object") {
+      systemText += "\n\nRespond with valid JSON only. No markdown fences, no explanation.";
+    }
+
+    const claudePayload: Record<string, unknown> = {
+      model,
+      max_tokens: params.maxTokens ?? params.max_tokens ?? 4096,
+      messages: nonSystemMsgs.map(normalizeMessage),
+    };
+    if (systemText) claudePayload.system = systemText;
+    if (params.temperature !== undefined) claudePayload.temperature = params.temperature;
+
+    const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": claudeKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify(claudePayload),
+    });
+    if (!claudeResponse.ok) {
+      const errorText = await claudeResponse.text();
+      throw new Error(`LLM invoke failed: ${claudeResponse.status} ${claudeResponse.statusText} – ${errorText}`);
+    }
+    const claudeData = (await claudeResponse.json()) as {
+      id: string;
+      content: Array<{ type: string; text: string }>;
+      model: string;
+      usage?: { input_tokens: number; output_tokens: number };
+      stop_reason?: string;
+    };
+    const content = claudeData.content?.find((c) => c.type === "text")?.text ?? "";
+    return {
+      id: claudeData.id,
+      created: Math.floor(Date.now() / 1000),
+      model: claudeData.model,
+      choices: [{ index: 0, message: { role: "assistant", content }, finish_reason: claudeData.stop_reason ?? "stop" }],
+      usage: claudeData.usage ? {
+        prompt_tokens: claudeData.usage.input_tokens,
+        completion_tokens: claudeData.usage.output_tokens,
+        total_tokens: claudeData.usage.input_tokens + claudeData.usage.output_tokens,
+      } : undefined,
+    };
+  }
+
+  // ── Groq path (Llama, Qwen — OpenAI-compatible) ───────────────
+  if (isGroq) {
+    const groqKey = options?.groqApiKey;
+    if (!groqKey) {
+      throw new Error(`Groq API key required for model "${model}". Add it in Settings → API Keys.`);
+    }
+    const normalizedResponseFormat = normalizeResponseFormat({ responseFormat, response_format, outputSchema, output_schema });
+    const groqFormat = normalizedResponseFormat?.type === "json_schema"
+      ? { type: "json_object" as const }
+      : normalizedResponseFormat;
+    const groqPayload: Record<string, unknown> = {
+      model,
+      messages: messages.map(normalizeMessage),
+      max_tokens: params.maxTokens ?? params.max_tokens ?? 4096,
+    };
+    if (params.temperature !== undefined) groqPayload.temperature = params.temperature;
+    if (groqFormat) groqPayload.response_format = groqFormat;
+    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${groqKey}` },
+      body: JSON.stringify(groqPayload),
+    });
+    if (!groqResponse.ok) {
+      const errorText = await groqResponse.text();
+      throw new Error(`LLM invoke failed: ${groqResponse.status} ${groqResponse.statusText} – ${errorText}`);
+    }
+    return (await groqResponse.json()) as InvokeResult;
+  }
+
+  // ── Mistral path (OpenAI-compatible) ─────────────────────────
+  if (isMistral) {
+    const mistralKey = options?.mistralApiKey;
+    if (!mistralKey) {
+      throw new Error(`Mistral API key required for model "${model}". Add it in Settings → API Keys.`);
+    }
+    const normalizedResponseFormat = normalizeResponseFormat({ responseFormat, response_format, outputSchema, output_schema });
+    const mistralFormat = normalizedResponseFormat?.type === "json_schema"
+      ? { type: "json_object" as const }
+      : normalizedResponseFormat;
+    const mistralPayload: Record<string, unknown> = {
+      model,
+      messages: messages.map(normalizeMessage),
+      max_tokens: params.maxTokens ?? params.max_tokens ?? 4096,
+    };
+    if (params.temperature !== undefined) mistralPayload.temperature = params.temperature;
+    if (mistralFormat) mistralPayload.response_format = mistralFormat;
+    const mistralResponse = await fetch("https://api.mistral.ai/v1/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${mistralKey}` },
+      body: JSON.stringify(mistralPayload),
+    });
+    if (!mistralResponse.ok) {
+      const errorText = await mistralResponse.text();
+      throw new Error(`LLM invoke failed: ${mistralResponse.status} ${mistralResponse.statusText} – ${errorText}`);
+    }
+    return (await mistralResponse.json()) as InvokeResult;
   }
 
   // ── Gemini path ───────────────────────────────────────────────

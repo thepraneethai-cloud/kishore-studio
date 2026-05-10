@@ -125,6 +125,9 @@ export const generationRouter = router({
           llmApiKey: userSettings?.geminiApiKey || undefined,
           llmModel: input.llmModel || userSettings?.llmModel || undefined,
           openaiApiKey: userSettings?.openaiApiKey || undefined,
+          claudeApiKey: userSettings?.claudeApiKey || undefined,
+          groqApiKey: userSettings?.groqApiKey || undefined,
+          mistralApiKey: userSettings?.mistralApiKey || undefined,
         });
         // Record cost after success (non-blocking)
         void recordCost(ctx.user.id, "lyrics", "gemini", UNIT_COSTS.lyrics);
@@ -178,6 +181,9 @@ export const generationRouter = router({
             ...(userSettings?.geminiApiKey ? { apiKey: userSettings.geminiApiKey } : {}),
             model: input.llmModel || userSettings?.llmModel || undefined,
             ...(userSettings?.openaiApiKey ? { openaiApiKey: userSettings.openaiApiKey } : {}),
+            ...(userSettings?.claudeApiKey ? { claudeApiKey: userSettings.claudeApiKey } : {}),
+            ...(userSettings?.groqApiKey ? { groqApiKey: userSettings.groqApiKey } : {}),
+            ...(userSettings?.mistralApiKey ? { mistralApiKey: userSettings.mistralApiKey } : {}),
           }
         );
 
@@ -220,7 +226,10 @@ export const generationRouter = router({
           input.scenes,
           userSettings?.geminiApiKey || undefined,
           input.llmModel || userSettings?.llmModel || undefined,
-          userSettings?.openaiApiKey || undefined
+          userSettings?.openaiApiKey || undefined,
+          userSettings?.claudeApiKey || undefined,
+          userSettings?.groqApiKey || undefined,
+          userSettings?.mistralApiKey || undefined,
         );
         void recordCost(ctx.user.id, "lyrics", "gemini", UNIT_COSTS.lyrics * 3); // director analysis is ~3x a lyrics call
         return { success: true, data: result };

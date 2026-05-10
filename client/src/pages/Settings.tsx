@@ -13,12 +13,16 @@ export default function Settings() {
     claudeApiKey: "",
     geminiApiKey: "",
     replicateApiKey: "",
+    groqApiKey: "",
+    mistralApiKey: "",
   });
   const [showKeys, setShowKeys] = useState({
     openaiApiKey: false,
     claudeApiKey: false,
     geminiApiKey: false,
     replicateApiKey: false,
+    groqApiKey: false,
+    mistralApiKey: false,
   });
   const [providers, setProviders] = useState({
     lyricsProvider: "chatgpt",
@@ -46,6 +50,8 @@ export default function Settings() {
         claudeApiKey: settings.claudeApiKey || "",
         geminiApiKey: settings.geminiApiKey || "",
         replicateApiKey: settings.replicateApiKey || "",
+        groqApiKey: settings.groqApiKey || "",
+        mistralApiKey: settings.mistralApiKey || "",
       });
       setProviders({
         lyricsProvider: (settings.lyricsProvider as any) || "chatgpt",
@@ -233,27 +239,37 @@ export default function Settings() {
         {/* API Keys Tab */}
         {activeTab === "api-keys" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-            {(["openaiApiKey", "claudeApiKey", "geminiApiKey", "replicateApiKey"] as const).map((key) => {
+            {(["openaiApiKey", "claudeApiKey", "geminiApiKey", "replicateApiKey", "groqApiKey", "mistralApiKey"] as const).map((key) => {
               const meta: Record<string, { label: string; hint: string; placeholder: string }> = {
                 openaiApiKey: {
                   label: "OpenAI API Key",
-                  hint: "Powers ChatGPT lyrics (coming soon) + DALL-E 3 / GPT-image-1 image generation in Step 6. Get yours at platform.openai.com/api-keys",
+                  hint: "Powers GPT-4o lyrics + DALL-E 3 / GPT-image-1 image generation. Get yours at platform.openai.com/api-keys",
                   placeholder: "sk-...",
                 },
                 claudeApiKey: {
                   label: "Claude API Key (Anthropic)",
-                  hint: "Powers Claude lyrics generation (coming soon). Get yours at console.anthropic.com",
+                  hint: "Powers Claude 3.5 Haiku lyrics generation — fast and high quality. Get yours at console.anthropic.com",
                   placeholder: "sk-ant-...",
                 },
                 geminiApiKey: {
                   label: "Gemini API Key (Google)",
-                  hint: "Powers AI lyrics, scene analysis, and Director Agent when you bring your own key. Get yours at aistudio.google.com/apikey",
+                  hint: "Powers AI lyrics, scene analysis, and Director Agent with your own quota. Get yours at aistudio.google.com/apikey",
                   placeholder: "AIza...",
                 },
                 replicateApiKey: {
                   label: "Replicate API Key",
-                  hint: "Powers Flux Dev / Flux Pro image generation and MiniMax video generation in Step 6. Get yours at replicate.com/account/api-tokens",
+                  hint: "Powers Flux Dev / Schnell image generation and MiniMax video generation in Step 6. Get yours at replicate.com/account/api-tokens",
                   placeholder: "r8_...",
+                },
+                groqApiKey: {
+                  label: "Groq API Key",
+                  hint: "Powers Llama 3.1 8B and Qwen 2.5 lyrics — extremely fast and free tier available. Get yours at console.groq.com",
+                  placeholder: "gsk_...",
+                },
+                mistralApiKey: {
+                  label: "Mistral API Key",
+                  hint: "Powers Mistral Small lyrics — great multilingual quality. Get yours at console.mistral.ai",
+                  placeholder: "...",
                 },
               };
               const { label, hint, placeholder } = meta[key];
@@ -367,12 +383,32 @@ export default function Settings() {
                   <option value="gpt-4o-mini">GPT-4o Mini — fast · cheap</option>
                   <option value="gpt-4-turbo">GPT-4 Turbo</option>
                 </optgroup>
+                <optgroup label="Claude (requires own Anthropic API key)">
+                  <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku — fast · excellent quality</option>
+                  <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet — best quality</option>
+                </optgroup>
+                <optgroup label="Groq / Llama (requires own Groq API key — FREE tier)">
+                  <option value="llama-3.1-8b-instant">Llama 3.1 8B — ultra-fast · free</option>
+                  <option value="llama-3.3-70b-versatile">Llama 3.3 70B — high quality · free</option>
+                  <option value="qwen-2.5-7b-instruct">Qwen 2.5 7B — multilingual · free</option>
+                </optgroup>
+                <optgroup label="Mistral (requires own Mistral API key — FREE tier)">
+                  <option value="mistral-small-latest">Mistral Small — fast · multilingual · free</option>
+                </optgroup>
               </select>
               {providers.llmModel && providers.llmModel !== "gemini-2.5-flash" && (
                 <p style={{ fontSize: "0.72rem", color: "rgba(255,200,50,0.75)", marginTop: "0.4rem" }}>
-                  {["gemini-2.0-flash", "gemini-2.0-flash-thinking-exp", "gemini-1.5-pro", "gemini-1.5-flash"].includes(providers.llmModel)
-                    ? "This model routes to Google's endpoint — make sure your Gemini API key is saved in the API Keys tab."
-                    : "Non-default model selected — make sure it's available on your configured endpoint."}
+                  {["gemini-2.0-flash", "gemini-2.0-flash-thinking-exp", "gemini-1.5-pro"].includes(providers.llmModel)
+                    ? "Requires your Gemini API key (API Keys tab)."
+                    : providers.llmModel.startsWith("gpt-") || providers.llmModel.startsWith("o1-") || providers.llmModel.startsWith("o3-")
+                    ? "Requires your OpenAI API key (API Keys tab)."
+                    : providers.llmModel.startsWith("claude-")
+                    ? "Requires your Anthropic API key (API Keys tab)."
+                    : providers.llmModel.startsWith("llama-") || providers.llmModel.startsWith("qwen")
+                    ? "Requires your Groq API key (API Keys tab). Free tier available at console.groq.com."
+                    : providers.llmModel.startsWith("mistral-") || providers.llmModel.startsWith("codestral-")
+                    ? "Requires your Mistral API key (API Keys tab). Free tier available at console.mistral.ai."
+                    : "Make sure the API key for this model is saved in the API Keys tab."}
                 </p>
               )}
             </div>
@@ -386,11 +422,16 @@ export default function Settings() {
                   <span style={{ flex: 1, color: "#fff", fontSize: "0.875rem" }}>Gemini (Google) — model set above</span>
                   <span style={{ fontSize: "0.7rem", color: "#39ff14", fontWeight: "600" }}>ACTIVE</span>
                 </div>
-                {["ChatGPT (OpenAI)", "Claude (Anthropic)"].map((label) => (
-                  <div key={label} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.5rem", opacity: 0.5 }}>
-                    <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
-                    <span style={{ flex: 1, color: "rgba(255,255,255,0.6)", fontSize: "0.875rem" }}>{label}</span>
-                    <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.4)", fontWeight: "600" }}>COMING SOON</span>
+                {[
+                  "GPT-4o / GPT-4o Mini (OpenAI)",
+                  "Claude 3.5 Haiku (Anthropic)",
+                  "Llama 3.1 / Qwen 2.5 (Groq — free)",
+                  "Mistral Small (Mistral — free)",
+                ].map((label) => (
+                  <div key={label} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "rgba(57,255,20,0.04)", border: "1px solid rgba(57,255,20,0.2)", borderRadius: "0.5rem" }}>
+                    <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "rgba(57,255,20,0.5)", flexShrink: 0 }} />
+                    <span style={{ flex: 1, color: "rgba(255,255,255,0.8)", fontSize: "0.875rem" }}>{label}</span>
+                    <span style={{ fontSize: "0.7rem", color: "rgba(57,255,20,0.8)", fontWeight: "600" }}>SELECT ABOVE</span>
                   </div>
                 ))}
               </div>
