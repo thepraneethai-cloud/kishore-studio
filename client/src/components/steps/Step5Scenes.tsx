@@ -186,6 +186,7 @@ export default function Step5Scenes() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showDirectorNotes, setShowDirectorNotes] = useState(true);
   const [showStyleSheet, setShowStyleSheet] = useState(false);
+  const [llmModel, setLlmModel] = useState("gemini-2.5-flash");
   const deity = DEITIES.find((d) => d.key === project.deity);
 
   const directorMutation = trpc.generation.directorAnalysis.useMutation();
@@ -220,6 +221,7 @@ export default function Step5Scenes() {
           lyricLine: s.lyricLine,
           sceneDescription: s.sceneDescription,
         })),
+        llmModel,
       });
 
       if (!result.success || !result.data) {
@@ -393,6 +395,33 @@ export default function Step5Scenes() {
             Auto-generate from lyrics, then apply Director Analysis
           </p>
         </div>
+        <div className="flex items-center gap-2 mb-2">
+          <span style={{ fontSize: "0.7rem", fontWeight: 600, color: "oklch(0.55 0.012 65)", textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
+            LLM Model
+          </span>
+          <select
+            value={llmModel}
+            onChange={(e) => setLlmModel(e.target.value)}
+            style={{
+              padding: "0.3rem 0.6rem",
+              background: "oklch(0.18 0.015 52)",
+              border: "1px solid oklch(0.30 0.025 58)",
+              borderRadius: "0.375rem",
+              color: "oklch(0.72 0.12 75)",
+              fontSize: "0.78rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              outline: "none",
+            }}
+          >
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash (default)</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro (powerful)</option>
+            <option value="gemini-2.0-flash">Gemini 2.0 Flash (own key)</option>
+            <option value="gemini-2.0-flash-thinking-exp">Gemini 2.0 Flash Thinking (own key)</option>
+            <option value="gemini-1.5-pro">Gemini 1.5 Pro (own key)</option>
+          </select>
+        </div>
+
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={handleAutoGenerate}

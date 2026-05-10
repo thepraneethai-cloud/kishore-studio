@@ -108,6 +108,7 @@ export const generationRouter = router({
         theme: z.string().optional(),
         duration: z.number().min(1).max(10).optional(),
         language: z.enum(["telugu", "english"]).optional(),
+        llmModel: z.string().optional(), // inline override — takes precedence over saved settings
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -122,7 +123,7 @@ export const generationRouter = router({
           duration: input.duration || 4,
           language: input.language || "telugu",
           llmApiKey: userSettings?.geminiApiKey || undefined,
-          llmModel: userSettings?.llmModel || undefined,
+          llmModel: input.llmModel || userSettings?.llmModel || undefined,
         });
         // Record cost after success (non-blocking)
         void recordCost(ctx.user.id, "lyrics", "gemini", UNIT_COSTS.lyrics);
@@ -145,6 +146,7 @@ export const generationRouter = router({
         userIdea: z.string().min(3).max(600),
         theme: z.string().optional(),
         language: z.enum(["telugu", "english"]).optional(),
+        llmModel: z.string().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -173,7 +175,7 @@ export const generationRouter = router({
           },
           {
             ...(userSettings?.geminiApiKey ? { apiKey: userSettings.geminiApiKey } : {}),
-            ...(userSettings?.llmModel ? { model: userSettings.llmModel } : {}),
+            model: input.llmModel || userSettings?.llmModel || undefined,
           }
         );
 
@@ -204,6 +206,7 @@ export const generationRouter = router({
             sceneDescription: z.string(),
           })
         ).min(1).max(50),
+        llmModel: z.string().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -214,7 +217,7 @@ export const generationRouter = router({
           input.deity,
           input.scenes,
           userSettings?.geminiApiKey || undefined,
-          userSettings?.llmModel || undefined
+          input.llmModel || userSettings?.llmModel || undefined
         );
         void recordCost(ctx.user.id, "lyrics", "gemini", UNIT_COSTS.lyrics * 3); // director analysis is ~3x a lyrics call
         return { success: true, data: result };

@@ -87,6 +87,7 @@ export default function Step2Lyrics() {
   const [duration,       setDuration]       = useState(4);
   const [language,       setLanguage]       = useState<"telugu" | "english">("telugu");
   const [customPrompt,   setCustomPrompt]   = useState("");
+  const [llmModel,       setLlmModel]       = useState("gemini-2.5-flash");
 
   // vision / prompt-generator inputs
   const [visionInput,      setVisionInput]      = useState("");
@@ -193,6 +194,7 @@ export default function Step2Lyrics() {
       theme,
       duration,
       language,
+      llmModel,
       // Vision-generated brief → primary user message; manual text → appendix
       directivePrompt: isVisionDirective && trimmed ? trimmed : undefined,
       customPrompt:    !isVisionDirective && trimmed ? trimmed : undefined,
@@ -209,6 +211,7 @@ export default function Step2Lyrics() {
       theme,
       duration,
       language,
+      llmModel,
       customPrompt: `Current lyrics for reference:\n${project.lyrics}\n\nUser wants these changes: ${iterateFeedback}\n\nRegenerate the lyrics incorporating these changes while keeping devotional authenticity.`,
     });
     setIterateFeedback("");
@@ -462,7 +465,7 @@ export default function Step2Lyrics() {
               onClick={() => {
                 if (!visionInput.trim()) { toast.error("Describe your idea first"); return; }
                 if (!project.deity) handleSelectDeity(effectiveDeity);
-                promptGenMutation.mutate({ deity: effectiveDeity, userIdea: visionInput, theme, language });
+                promptGenMutation.mutate({ deity: effectiveDeity, userIdea: visionInput, theme, language, llmModel });
               }}
               disabled={promptGenMutation.isPending || !visionInput.trim()}
               style={{
@@ -497,29 +500,57 @@ export default function Step2Lyrics() {
             Generation Settings
           </p>
 
-          {/* Duration row — theme/language live in the Song Idea panel above */}
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={labelStyle}>Duration</label>
-            <select
-              value={duration}
-              onChange={(e) => setDuration(Number(e.target.value))}
-              style={{
-                padding: "0.5rem 0.75rem",
-                background: "rgba(0,0,0,0.35)",
-                border: "1px solid rgba(0,212,255,0.2)",
-                borderRadius: "0.375rem",
-                color: "#00d4ff",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                cursor: "pointer",
-                outline: "none",
-                minWidth: "180px",
-              }}
-            >
-              {DURATION_OPTIONS.map((d) => (
-                <option key={d.value} value={d.value}>{d.label}</option>
-              ))}
-            </select>
+          {/* Duration + LLM model row */}
+          <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+            <div>
+              <label style={labelStyle}>Duration</label>
+              <select
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value))}
+                style={{
+                  padding: "0.5rem 0.75rem",
+                  background: "rgba(0,0,0,0.35)",
+                  border: "1px solid rgba(0,212,255,0.2)",
+                  borderRadius: "0.375rem",
+                  color: "#00d4ff",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  outline: "none",
+                  minWidth: "170px",
+                }}
+              >
+                {DURATION_OPTIONS.map((d) => (
+                  <option key={d.value} value={d.value}>{d.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={labelStyle}>LLM Model</label>
+              <select
+                value={llmModel}
+                onChange={(e) => setLlmModel(e.target.value)}
+                style={{
+                  padding: "0.5rem 0.75rem",
+                  background: "rgba(0,0,0,0.35)",
+                  border: "1px solid rgba(0,212,255,0.2)",
+                  borderRadius: "0.375rem",
+                  color: "#00d4ff",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  outline: "none",
+                  minWidth: "230px",
+                }}
+              >
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash (default)</option>
+                <option value="gemini-2.5-pro">Gemini 2.5 Pro (powerful)</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash (own key)</option>
+                <option value="gemini-2.0-flash-thinking-exp">Gemini 2.0 Flash Thinking (own key)</option>
+                <option value="gemini-1.5-pro">Gemini 1.5 Pro (own key)</option>
+              </select>
+            </div>
           </div>
 
           {/* Custom prompt / vision directive */}
