@@ -14,7 +14,10 @@ export function registerOAuthRoutes(app: Express) {
   // Password-based login for Railway/self-hosted deployment
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     const { password } = req.body ?? {};
-    if (!password || !ENV.adminPassword || password !== ENV.adminPassword) {
+    const trimmedInput = (password ?? "").trim();
+    const trimmedStored = (ENV.adminPassword ?? "").trim();
+    console.log("[Auth] Login attempt, body keys:", Object.keys(req.body ?? {}), "stored length:", trimmedStored.length);
+    if (!trimmedInput || !trimmedStored || trimmedInput !== trimmedStored) {
       res.status(401).json({ error: "Invalid password" });
       return;
     }
