@@ -210,14 +210,14 @@ ${duration <= 2
   : "• Pallavi: 5 lines\n• charanam1: 10 lines\n• charanam2: 10 lines\n• charanam3: 10 lines\n• charanam4: 8 lines\n• outro: 4 lines"}
 
 OUTPUT FORMAT:
-Return a JSON object with this exact structure:
+Return a JSON object with this exact structure. CRITICAL: separate each song line with \\n inside the string — do NOT write multiple lines as one long sentence:
 {
-  "pallavi": "...",
-  "charanam1": "...",
-  "charanam2": "...",
-  "charanam3": "...",
-  "charanam4": "...",
-  "outro": "...",
+  "pallavi": "line one\\nline two\\nline three",
+  "charanam1": "line one\\nline two\\nline three\\nline four",
+  "charanam2": "line one\\nline two\\n...",
+  "charanam3": "",
+  "charanam4": "",
+  "outro": "",
   "notes": "Brief explanation of the lyrical theme and structure"
 }`;
 
@@ -304,6 +304,18 @@ Return a JSON object with this exact structure:
       console.error("[LyricsGeneration] Invalid JSON from LLM:", contentStr);
       throw new Error("LLM returned malformed JSON — please try generating again.");
     }
+
+    // Safety: some models output literal \n (two chars) instead of actual newlines.
+    // Normalise all section strings to use real newline characters.
+    const normalizeLines = (s?: string) =>
+      (s || "").replace(/\\n/g, "\n").trim();
+
+    parsed.pallavi   = normalizeLines(parsed.pallavi);
+    parsed.charanam1 = normalizeLines(parsed.charanam1);
+    parsed.charanam2 = normalizeLines(parsed.charanam2);
+    parsed.charanam3 = normalizeLines(parsed.charanam3);
+    parsed.charanam4 = normalizeLines(parsed.charanam4);
+    parsed.outro     = normalizeLines(parsed.outro);
 
     // Combine all sections into a single lyrics string
     const lyrics = [
