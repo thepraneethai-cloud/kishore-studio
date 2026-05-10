@@ -5,19 +5,18 @@
 // ============================================================
 import { useProject } from "@/contexts/ProjectContext";
 import {
-  Flame, Music, Mic2, Film, Sparkles, Video, Scissors,
+  Flame, Mic2, Film, Sparkles, Video, Scissors,
   Youtube, CheckCircle2, RotateCcw, X,
 } from "lucide-react";
 
 const STEPS = [
-  { id: 1, label: "Select Deity", icon: Flame, short: "Deity" },
-  { id: 2, label: "Write Lyrics", icon: Music, short: "Lyrics" },
-  { id: 3, label: "Audio", icon: Mic2, short: "Audio" },
-  { id: 4, label: "Scene Breakdown", icon: Film, short: "Scenes" },
-  { id: 5, label: "Image Prompts", icon: Sparkles, short: "Images" },
-  { id: 6, label: "Video Prompts", icon: Video, short: "Video" },
-  { id: 7, label: "CapCut Assembly", icon: Scissors, short: "Edit" },
-  { id: 8, label: "YouTube Export", icon: Youtube, short: "Export" },
+  { id: 1, label: "Deity & Lyrics", icon: Flame, short: "Lyrics" },
+  { id: 2, label: "Audio", icon: Mic2, short: "Audio" },
+  { id: 3, label: "Scene Breakdown", icon: Film, short: "Scenes" },
+  { id: 4, label: "Image Prompts", icon: Sparkles, short: "Images" },
+  { id: 5, label: "Video Prompts", icon: Video, short: "Video" },
+  { id: 6, label: "CapCut Assembly", icon: Scissors, short: "Edit" },
+  { id: 7, label: "YouTube Export", icon: Youtube, short: "Export" },
 ];
 
 interface SidebarProps {

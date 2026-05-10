@@ -194,7 +194,7 @@ export default function Step5Scenes() {
 
   const handleAutoGenerate = () => {
     if (!project.lyrics || !project.lyrics.trim()) {
-      toast.error("Please write lyrics in Step 2 first");
+      toast.error("Please write lyrics in Step 1 first");
       return;
     }
     setIsGenerating(true);
@@ -278,8 +278,8 @@ export default function Step5Scenes() {
       toast.error("Please generate or add at least one scene");
       return;
     }
-    markStepComplete(4);
-    setActiveStep(5);
+    markStepComplete(3);
+    setActiveStep(4);
   };
 
   const totalDuration = project.scenes.reduce((sum, s) => sum + s.duration, 0);
@@ -298,7 +298,7 @@ export default function Step5Scenes() {
       {/* Header */}
       <div>
         <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
-          Step 5
+          Step 3
         </p>
         <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
           Scene Breakdown

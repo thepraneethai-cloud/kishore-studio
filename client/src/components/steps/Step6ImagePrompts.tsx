@@ -267,8 +267,8 @@ export default function Step6ImagePrompts() {
   };
 
   const handleContinue = () => {
-    markStepComplete(5);
-    setActiveStep(6);
+    markStepComplete(4);
+    setActiveStep(5);
   };
 
   const pendingCount = imageJobs.filter((j) => j.status === "starting" || j.status === "processing").length;
@@ -294,7 +294,7 @@ export default function Step6ImagePrompts() {
       {/* Header */}
       <div>
         <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
-          Step 6
+          Step 4
         </p>
         <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
           Image Prompts — Bulk Generator

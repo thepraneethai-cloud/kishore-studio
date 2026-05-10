@@ -3,8 +3,8 @@
 // ============================================================
 
 import { useProject } from "@/contexts/ProjectContext";
-import { useState } from "react";
-import { Music, Copy, Zap, RefreshCw, ChevronDown, ChevronUp, Undo2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Music, Copy, Zap, RefreshCw, ChevronDown, ChevronUp, Undo2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { DEITIES } from "@/lib/studioData";
@@ -48,9 +48,36 @@ function sunoStyleText(style: Record<string, unknown>) {
     .join("\n");
 }
 
+const DEITY_SUGGESTIONS = [
+  "Venkateswara", "Ganesha", "Lakshmi", "Shiva", "Durga",
+  "Saraswati", "Hanuman", "Krishna", "Parvati", "Murugan",
+  "Ayyappa", "Brahma", "Vishnu", "Indra", "Govinda",
+  "Narayana", "Balaji", "Tirupati", "Srinivasa", "Jagannath",
+  "Kashi Vishwanath", "Meenakshi", "Vaishno Devi", "Chamundeshwari",
+  "Annapurna", "Kamakshi", "Tripura Sundari", "Subrahmanya",
+  "Divine Love", "Protection", "Prosperity", "Wisdom", "Devotion",
+  "Gratitude", "Meditation", "Celebration", "Healing", "Peace",
+  "Ramayana", "Mahabharata", "Bhagavad Gita", "Upanishads",
+];
+
+function normalizeDeityKey(name: string): string {
+  const map: Record<string, string> = {
+    venkateswara: "venkateswara",
+    ganesha: "ganesha",
+    lakshmi: "lakshmi",
+    shiva: "shiva",
+  };
+  return map[name.toLowerCase()] ?? name;
+}
+
 // ── component ────────────────────────────────────────────────
 export default function Step2Lyrics() {
-  const { project, setLyrics, setSunoStyle, setActiveStep, markStepComplete, undoLyrics, canUndoLyrics } = useProject();
+  const { project, setDeity, setTitle, setLyrics, setSunoStyle, setActiveStep, markStepComplete, undoLyrics, canUndoLyrics } = useProject();
+
+  // deity / title state
+  const [deityInput,     setDeityInput]     = useState(project.deity || "");
+  const [suggestions,    setSuggestions]    = useState<string[]>([]);
+  const [showSuggestions,setShowSuggestions]= useState(false);
 
   // prompt inputs
   const [theme,          setTheme]          = useState("devotion");
@@ -67,6 +94,23 @@ export default function Step2Lyrics() {
   const [showSunoRefine,  setShowSunoRefine]  = useState(false);
 
   const deity = DEITIES.find((d) => d.key === project.deity);
+
+  useEffect(() => {
+    if (deityInput.length < 2) { setSuggestions([]); return; }
+    const t = setTimeout(() => {
+      setSuggestions(
+        DEITY_SUGGESTIONS.filter((s) => s.toLowerCase().includes(deityInput.toLowerCase())).slice(0, 6)
+      );
+    }, 250);
+    return () => clearTimeout(t);
+  }, [deityInput]);
+
+  const handleSelectDeity = (name: string) => {
+    setDeityInput(name);
+    setDeity(normalizeDeityKey(name));
+    setShowSuggestions(false);
+    if (!project.title) setTitle(`${name} Devotional Song`);
+  };
 
   // ── tRPC mutations ────────────────────────────────────────
   const generateMutation = trpc.generation.generateLyrics.useMutation({
@@ -105,7 +149,7 @@ export default function Step2Lyrics() {
   // ── handlers ─────────────────────────────────────────────
   const handleGenerate = () => {
     if (!project.deity) {
-      toast.error("Please select a deity in Step 1 first");
+      toast.error("Please enter a deity or theme above first");
       return;
     }
     generateMutation.mutate({
@@ -223,16 +267,82 @@ export default function Step2Lyrics() {
         {/* Header */}
         <div style={{ marginBottom: "1.75rem" }}>
           <p style={{ fontSize: "0.7rem", fontWeight: 600, color: "rgba(0,212,255,0.7)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.4rem" }}>
-            Step 2
+            Step 1
           </p>
           <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#00d4ff", margin: "0 0 0.4rem" }}>
-            Write Lyrics
+            Deity & Lyrics
           </h1>
           <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)", margin: 0 }}>
-            Generate Telugu devotional lyrics for{" "}
-            <span style={{ color: "#00d4ff" }}>{deity?.name ?? project.deity ?? "your deity"}</span>
-            {" "}and get a ready-to-paste SUNO music style.
+            Choose your deity or theme, then generate Telugu devotional lyrics and a SUNO music style.
           </p>
+        </div>
+
+        {/* ── DEITY & TITLE PANEL ───────────────────────── */}
+        <div style={{ ...panel, marginBottom: "1.25rem" }}>
+          <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#00d4ff", marginBottom: "1rem" }}>
+            Deity / Theme
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+            {/* Deity input */}
+            <div style={{ position: "relative" }}>
+              <label style={labelStyle}>
+                <Sparkles size={11} style={{ display: "inline", marginRight: "0.3rem" }} />
+                Deity, Theme, or Mythology
+              </label>
+              <input
+                type="text"
+                value={deityInput}
+                onChange={(e) => { setDeityInput(e.target.value); setShowSuggestions(true); }}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                onFocus={() => deityInput.length >= 2 && setShowSuggestions(true)}
+                placeholder="e.g., Venkateswara, Ganesha, Divine Love…"
+                style={{ ...inputStyle, resize: undefined }}
+              />
+              {showSuggestions && suggestions.length > 0 && (
+                <div style={{
+                  position: "absolute", top: "100%", left: 0, right: 0, zIndex: 20,
+                  background: "#0d1230", border: "1px solid rgba(0,212,255,0.3)",
+                  borderRadius: "0.375rem", marginTop: "2px", overflow: "hidden",
+                }}>
+                  {suggestions.map((s) => (
+                    <button
+                      key={s}
+                      onMouseDown={() => handleSelectDeity(s)}
+                      style={{
+                        display: "block", width: "100%", textAlign: "left",
+                        padding: "0.5rem 0.75rem", background: "none",
+                        color: "rgba(255,255,255,0.75)", fontSize: "0.85rem",
+                        border: "none", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.05)",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,212,255,0.12)"; e.currentTarget.style.color = "#00d4ff"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "rgba(255,255,255,0.75)"; }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Song title */}
+            <div>
+              <label style={labelStyle}>Song Title</label>
+              <input
+                type="text"
+                value={project.title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={deityInput ? `${deityInput} Devotional Song` : "e.g., Venkateswara Devotional Song"}
+                style={{ ...inputStyle, resize: undefined }}
+              />
+            </div>
+          </div>
+          {deityInput && !project.deity && (
+            <button
+              onMouseDown={() => handleSelectDeity(deityInput)}
+              style={{ marginTop: "0.6rem", padding: "0.4rem 1rem", background: "rgba(0,212,255,0.15)", color: "#00d4ff", border: "1px solid rgba(0,212,255,0.35)", borderRadius: "0.375rem", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}
+            >
+              Use "{deityInput}"
+            </button>
+          )}
         </div>
 
         {/* ── PROMPT PANEL ──────────────────────────────── */}
@@ -493,7 +603,7 @@ export default function Step2Lyrics() {
         {/* Continue */}
         {project.lyrics && (
           <button
-            onClick={() => { markStepComplete(2); setActiveStep(3); }}
+            onClick={() => { markStepComplete(1); setActiveStep(2); }}
             style={{
               width: "100%",
               padding: "1rem",

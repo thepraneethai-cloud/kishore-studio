@@ -4,7 +4,6 @@
 import { useProject } from "@/contexts/ProjectContext";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
-import Step1Deity from "@/components/steps/Step1Deity";
 import Step2Lyrics from "@/components/steps/Step2Lyrics";
 import Step3Audio from "@/components/steps/Step3Audio";
 
@@ -17,21 +16,20 @@ import { useIsMobile } from "@/hooks/useMobile";
 import { useEffect, useState } from "react";
 
 const STEP_COMPONENTS: Record<number, React.ComponentType> = {
-  1: Step1Deity,
-  2: Step2Lyrics,
-  3: Step3Audio,
-  4: Step5Scenes,
-  5: Step6ImagePrompts,
-  6: Step7VideoPrompts,
-  7: Step8CapCut,
-  8: Step9YouTube,
+  1: Step2Lyrics,
+  2: Step3Audio,
+  3: Step5Scenes,
+  4: Step6ImagePrompts,
+  5: Step7VideoPrompts,
+  6: Step8CapCut,
+  7: Step9YouTube,
 };
 
 export default function Home() {
   const { activeStep } = useProject();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const StepComponent = STEP_COMPONENTS[activeStep] || Step1Deity;
+  const StepComponent = STEP_COMPONENTS[activeStep] || Step2Lyrics;
 
   // Close sidebar by default on mobile
   useEffect(() => {

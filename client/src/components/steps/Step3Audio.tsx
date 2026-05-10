@@ -69,8 +69,8 @@ export default function Step3Audio() {
 
         if (result.success) {
           toast.success("Audio uploaded successfully!");
-          markStepComplete(3);
-          setActiveStep(4);
+          markStepComplete(2);
+          setActiveStep(3);
         } else {
           toast.error(result.error || "Failed to upload audio");
         }
@@ -91,13 +91,13 @@ export default function Step3Audio() {
       {/* Header */}
       <div>
         <p style={{ fontSize: "0.75rem", fontWeight: "600", letterSpacing: "0.15em", marginBottom: "0.5rem", color: "#00d4ff", textTransform: "uppercase" }}>
-          Step 3
+          Step 2
         </p>
         <h2 style={{ fontSize: "1.875rem", fontWeight: "700", marginBottom: "0.5rem", fontFamily: "'Space Grotesk', sans-serif", color: "#00d4ff" }}>
           Upload Audio
         </h2>
         <p style={{ fontSize: "0.875rem", color: "rgba(255, 255, 255, 0.6)" }}>
-          Upload the audio file generated from SUNO AI using the lyrics and style from Step 2.
+          Upload the audio file generated from SUNO AI using the lyrics and style from Step 1.
         </p>
       </div>
 
@@ -211,8 +211,8 @@ export default function Step3Audio() {
             </p>
             <ol style={{ fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.6)", lineHeight: "1.8", listStylePosition: "inside", paddingLeft: "0.5rem" }}>
               <li>Go to <span style={{ color: "#00d4ff", fontWeight: "600" }}>SUNO.AI</span></li>
-              <li>Paste the lyrics from Step 2</li>
-              <li>Use the SUNO style settings from Step 2</li>
+              <li>Paste the lyrics from Step 1</li>
+              <li>Use the SUNO style settings from Step 1</li>
               <li>Generate the audio</li>
               <li>Download the MP3 file</li>
               <li>Upload it here</li>
