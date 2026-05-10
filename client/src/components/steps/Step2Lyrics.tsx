@@ -113,11 +113,24 @@ export default function Step2Lyrics() {
   }, [deityInput]);
 
   const handleSelectDeity = (name: string) => {
-    setDeityInput(name);
-    setDeity(normalizeDeityKey(name));
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setDeityInput(trimmed);
+    setDeity(normalizeDeityKey(trimmed));
     setShowSuggestions(false);
-    if (!project.title) setTitle(`${name} Devotional Song`);
+    if (!project.title) setTitle(`${trimmed} Devotional Song`);
   };
+
+  // Auto-commit whatever is typed when the input loses focus
+  const handleDeityBlur = () => {
+    setTimeout(() => setShowSuggestions(false), 150);
+    if (deityInput.trim() && !project.deity) {
+      handleSelectDeity(deityInput.trim());
+    }
+  };
+
+  // Effective deity for handlers — falls back to typed input if not yet committed
+  const effectiveDeity = project.deity || deityInput.trim();
 
   // ── tRPC mutations ────────────────────────────────────────
   const generateMutation = trpc.generation.generateLyrics.useMutation({
@@ -168,13 +181,15 @@ export default function Step2Lyrics() {
 
   // ── handlers ─────────────────────────────────────────────
   const handleGenerate = () => {
-    if (!project.deity) {
+    if (!effectiveDeity) {
       toast.error("Please enter a deity or theme above first");
       return;
     }
+    // Commit the typed deity to context if it wasn't yet
+    if (!project.deity) handleSelectDeity(effectiveDeity);
     const trimmed = customPrompt.trim();
     generateMutation.mutate({
-      deity:           project.deity,
+      deity:           effectiveDeity,
       theme,
       duration,
       language,
@@ -190,7 +205,7 @@ export default function Step2Lyrics() {
       return;
     }
     generateMutation.mutate({
-      deity:    project.deity!,
+      deity:    effectiveDeity || project.deity!,
       theme,
       duration,
       language,
@@ -316,7 +331,7 @@ export default function Step2Lyrics() {
                 type="text"
                 value={deityInput}
                 onChange={(e) => { setDeityInput(e.target.value); setShowSuggestions(true); }}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                onBlur={handleDeityBlur}
                 onFocus={() => deityInput.length >= 2 && setShowSuggestions(true)}
                 placeholder="e.g., Venkateswara, Ganesha, Divine Love…"
                 style={{ ...inputStyle, resize: undefined }}
@@ -369,7 +384,7 @@ export default function Step2Lyrics() {
         </div>
 
         {/* ── VISION PANEL — theme + language + idea → AI prompt ── */}
-        {project.deity && (
+        {effectiveDeity && (
           <div style={{ ...panel, marginBottom: "1.25rem", border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.04)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
               <Wand2 size={15} style={{ color: "#8b5cf6" }} />
@@ -446,7 +461,8 @@ export default function Step2Lyrics() {
             <button
               onClick={() => {
                 if (!visionInput.trim()) { toast.error("Describe your idea first"); return; }
-                promptGenMutation.mutate({ deity: project.deity!, userIdea: visionInput, theme, language });
+                if (!project.deity) handleSelectDeity(effectiveDeity);
+                promptGenMutation.mutate({ deity: effectiveDeity, userIdea: visionInput, theme, language });
               }}
               disabled={promptGenMutation.isPending || !visionInput.trim()}
               style={{
