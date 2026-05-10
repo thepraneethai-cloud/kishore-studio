@@ -86,7 +86,8 @@ export default function Step2Lyrics() {
   const [customPrompt,   setCustomPrompt]   = useState("");
 
   // vision / prompt-generator inputs
-  const [visionInput,     setVisionInput]     = useState("");
+  const [visionInput,      setVisionInput]      = useState("");
+  const [isVisionDirective, setIsVisionDirective] = useState(false); // true when customPrompt was AI-generated
 
   // iterate inputs
   const [iterateFeedback, setIterateFeedback] = useState("");
@@ -156,7 +157,8 @@ export default function Step2Lyrics() {
         return;
       }
       setCustomPrompt(res.data.prompt);
-      toast.success("Prompt generated — review it below, then click Generate Lyrics!");
+      setIsVisionDirective(true);
+      toast.success("Directive ready — review it below, then click Generate Lyrics!");
     },
     onError: (err) => toast.error(err.message),
   });
@@ -167,12 +169,15 @@ export default function Step2Lyrics() {
       toast.error("Please enter a deity or theme above first");
       return;
     }
+    const trimmed = customPrompt.trim();
     generateMutation.mutate({
-      deity:        project.deity,
+      deity:           project.deity,
       theme,
       duration,
       language,
-      customPrompt: customPrompt.trim() || undefined,
+      // Vision-generated brief → primary user message; manual text → appendix
+      directivePrompt: isVisionDirective && trimmed ? trimmed : undefined,
+      customPrompt:    !isVisionDirective && trimmed ? trimmed : undefined,
     });
   };
 
@@ -510,7 +515,7 @@ export default function Step2Lyrics() {
             </label>
             <textarea
               value={customPrompt}
-              onChange={(e) => setCustomPrompt(e.target.value)}
+              onChange={(e) => { setCustomPrompt(e.target.value); setIsVisionDirective(false); }}
               rows={3}
               placeholder={`Tell the AI what you want. Examples:\n• "Focus on Govinda's seven hills and Alipiri pilgrimage"\n• "Include the phrase 'Govinda Govinda' as the main refrain"\n• "Write in the style of Annamacharya, classical Telugu"`}
               style={{ ...inputStyle, lineHeight: "1.5", fontSize: "0.875rem" }}

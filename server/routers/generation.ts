@@ -103,7 +103,8 @@ export const generationRouter = router({
     .input(
       z.object({
         deity: z.string(), // Accept any custom deity name (Hanuman, Shiva, custom mythology, etc.)
-        customPrompt: z.string().optional(),
+        customPrompt: z.string().optional(),   // iterate feedback / manual direction (appendix)
+        directivePrompt: z.string().optional(), // AI-generated vision brief (primary user message)
         theme: z.string().optional(),
         duration: z.number().min(3).max(10).optional(),
         language: z.enum(["telugu", "english"]).optional(),
@@ -116,6 +117,7 @@ export const generationRouter = router({
         const lyrics = await generateDevotionalLyrics({
           deity: input.deity,
           customPrompt: input.customPrompt,
+          directivePrompt: input.directivePrompt,
           theme: input.theme,
           duration: input.duration || 4,
           language: input.language || "telugu",

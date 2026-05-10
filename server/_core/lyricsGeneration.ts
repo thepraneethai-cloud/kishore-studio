@@ -6,7 +6,8 @@ import { invokeLLM } from "./llm";
 
 export interface LyricsGenerationInput {
   deity: string;
-  customPrompt?: string;
+  customPrompt?: string;    // appended to system prompt (iterate feedback, manual direction)
+  directivePrompt?: string; // replaces the user message entirely (AI-generated vision brief)
   theme?: string;
   duration?: number;
   language?: "telugu" | "english";
@@ -183,10 +184,14 @@ Return a JSON object with this exact structure:
   "notes": "Brief explanation of the lyrical theme and structure"
 }`;
 
-  // When a vision-generated directive is provided, it becomes the PRIMARY creative brief.
-  // Without one, fall back to the generic theme-based request.
-  const userMessage = input.customPrompt
-    ? `${input.customPrompt}\n\n(Deity: ${input.deity}, Duration: ${duration} min, Language: ${input.language ?? "telugu"})`
+  // directivePrompt (from vision generator) becomes the primary creative brief.
+  // customPrompt (iterate feedback / manual direction) is appended to the system prompt.
+  if (input.customPrompt) {
+    systemPrompt += `\n\nUSER DIRECTION:\n${input.customPrompt}\n\nIncorporate this direction while maintaining devotional authenticity and the JSON structure above.`;
+  }
+
+  const userMessage = input.directivePrompt
+    ? `${input.directivePrompt}\n\n(Deity: ${input.deity}, Duration: ${duration} min, Language: ${input.language ?? "telugu"})`
     : `Create a ${duration}-minute devotional bhajan for ${input.deity.charAt(0).toUpperCase() + input.deity.slice(1)}${input.theme ? ` with the theme of "${input.theme}"` : ""}.`;
 
   try {
