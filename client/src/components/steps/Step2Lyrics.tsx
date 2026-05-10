@@ -235,6 +235,7 @@ export default function Step2Lyrics() {
 
   // Don't pre-fill from project.deity — let the user pick category first
   const [subjectInput,    setSubjectInput]    = useState("");
+  const [titleInput,      setTitleInput]      = useState(""); // Always fresh — never pre-filled from localStorage
   const [suggestions,     setSuggestions]     = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -263,6 +264,20 @@ export default function Step2Lyrics() {
     setShowSunoPanel(false);
   }, [category]);
 
+  // On mount: sanitize any stored lyrics and mark step 1 complete if lyrics exist
+  useEffect(() => {
+    if (project.lyrics) {
+      markStepComplete(1);
+      const cleaned = sanitizeLyrics(project.lyrics);
+      if (cleaned !== project.lyrics) setLyrics(cleaned);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-mark step 1 complete whenever lyrics appear (e.g. after generation)
+  useEffect(() => {
+    if (project.lyrics) markStepComplete(1);
+  }, [project.lyrics]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (subjectInput.length < 2) { setSuggestions([]); return; }
     const t = setTimeout(() => {
@@ -281,7 +296,11 @@ export default function Step2Lyrics() {
     setSubjectInput(trimmed);
     setDeity(normalizeSubjectKey(trimmed));
     setShowSuggestions(false);
-    if (!project.title) setTitle(`${trimmed} ${category === "devotional" ? "Devotional Song" : "Song"}`);
+    if (!titleInput) {
+      const autoTitle = `${trimmed} ${category === "devotional" ? "Devotional Song" : "Song"}`;
+      setTitleInput(autoTitle);
+      setTitle(autoTitle);
+    }
   };
 
   const handleSubjectBlur = () => {
@@ -481,7 +500,7 @@ export default function Step2Lyrics() {
             {SONG_CATEGORIES.map((cat) => (
               <button
                 key={cat.value}
-                onClick={() => { setCategory(cat.value); setSubjectInput(""); setDeity(""); setTitle(""); setShowSunoPanel(false); }}
+                onClick={() => { setCategory(cat.value); setSubjectInput(""); setTitleInput(""); setDeity(""); setTitle(""); setShowSunoPanel(false); }}
                 style={{
                   padding: "0.65rem 0.75rem",
                   borderRadius: "0.5rem",
@@ -551,8 +570,8 @@ export default function Step2Lyrics() {
               <label style={labelStyle}>Song title</label>
               <input
                 type="text"
-                value={project.title}
-                onChange={(e) => setTitle(e.target.value)}
+                value={titleInput}
+                onChange={(e) => { setTitleInput(e.target.value); setTitle(e.target.value); }}
                 placeholder={subjectInput ? `${subjectInput} Song` : "e.g., Venkateswara Devotional Song"}
                 style={{ ...inputStyle, resize: undefined }}
               />
