@@ -142,7 +142,9 @@ export default function Step6ImagePrompts() {
     setImageJobs([]);
 
     try {
-      const prompts = project.scenes.map((s) => buildImagePrompt(s.sceneDescription));
+      const prompts = project.scenes.map((s) =>
+        s.imagePrompt || buildImagePrompt(s.sceneDescription)
+      );
 
       const mutationInput =
         provider === "dalle"
@@ -200,7 +202,7 @@ export default function Step6ImagePrompts() {
   const handleRegenerateAll = () => {
     const updated = project.scenes.map((scene) => ({
       ...scene,
-      imagePrompt: buildImagePrompt(scene.sceneDescription),
+      imagePrompt: buildImagePrompt(scene.sceneDescription || scene.imagePrompt),
     }));
     setScenes(updated);
     toast.success("All image prompts regenerated with new style!");
@@ -673,7 +675,7 @@ export default function Step6ImagePrompts() {
                     </span>
                   )}
                   <button
-                    onClick={() => handleCopyOne(scene.id, buildImagePrompt(scene.sceneDescription))}
+                    onClick={() => handleCopyOne(scene.id, scene.imagePrompt || buildImagePrompt(scene.sceneDescription))}
                     className="flex items-center gap-1 text-xs px-2.5 py-1 rounded transition-colors"
                     style={{
                       background: copiedId === scene.id ? "oklch(0.72 0.12 75 / 0.15)" : "oklch(0.22 0.018 52)",
@@ -700,7 +702,7 @@ export default function Step6ImagePrompts() {
               )}
 
               <textarea
-                value={buildImagePrompt(scene.sceneDescription)}
+                value={scene.imagePrompt || buildImagePrompt(scene.sceneDescription)}
                 onChange={(e) => handleUpdatePrompt(scene.id, e.target.value)}
                 className="sanctum-input text-xs"
                 rows={2}
