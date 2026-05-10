@@ -2,6 +2,7 @@
 // DESIGN: Main workspace with truly collapsible sidebar
 // ============================================================
 import { useProject } from "@/contexts/ProjectContext";
+import { useAuth } from "@/_core/hooks/useAuth";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Step2Lyrics from "@/components/steps/Step2Lyrics";
@@ -26,6 +27,7 @@ const STEP_COMPONENTS: Record<number, React.ComponentType> = {
 };
 
 export default function Home() {
+  useAuth({ redirectOnUnauthenticated: true });
   const { activeStep } = useProject();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(true);

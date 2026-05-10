@@ -1,7 +1,13 @@
+import path from "path";
+import { fileURLToPath } from "url";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { migrate } from "drizzle-orm/mysql2/migrator";
 import { InsertUser, users, userSettings, UserSettings, InsertUserSettings } from "../drizzle/schema";
 import { ENV } from './_core/env';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -125,6 +131,23 @@ export async function upsertUserSettings(userId: number, settings: Partial<Inser
     return getUserSettings(userId);
   } catch (error) {
     console.error("[Database] Failed to upsert user settings:", error);
+    throw error;
+  }
+}
+
+export async function runMigrations(): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Skipping migrations: database not available");
+    return;
+  }
+  // __dirname in the esbuild bundle = dist/ → go up one level to project root
+  const migrationsFolder = path.resolve(__dirname, "../drizzle");
+  try {
+    await migrate(db, { migrationsFolder });
+    console.log("[Database] Migrations applied successfully");
+  } catch (error) {
+    console.error("[Database] Migration failed:", error);
     throw error;
   }
 }
