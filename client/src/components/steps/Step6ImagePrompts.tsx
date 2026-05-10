@@ -1,16 +1,19 @@
 // ============================================================
 // DESIGN: "Digital Sanctum" — Step 6: Bulk Image Prompts
-// Supports both copy-for-external-tools and in-app generation via Replicate
+// Providers: Flux Dev (Replicate) | DALL-E 3 / GPT-image-1 (OpenAI)
 // Character Consistency: shared style prefix + seed locking
 // ============================================================
 import { useState, useEffect, useCallback } from "react";
 import { useProject } from "@/contexts/ProjectContext";
 import { DEITIES, getDefaultCharacterPrefix } from "@/lib/studioData";
-import { ChevronRight, Copy, Check, Download, Sparkles, Image, Loader2, AlertCircle, Settings, Shuffle, Lock, Unlock } from "lucide-react";
+import { ChevronRight, Copy, Check, Download, Sparkles, Image, Loader2, AlertCircle, Settings, Shuffle, Lock, Unlock, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
+
+type ImageProvider = "flux" | "dalle";
+type DalleModel = "dall-e-3" | "gpt-image-1";
 
 const STYLE_SUFFIXES = [
   "Tanjore painting style, gold leaf details",
@@ -40,6 +43,12 @@ export default function Step6ImagePrompts() {
   const [showNegative, setShowNegative] = useState(false);
   const [seedLocked, setSeedLocked] = useState(project.imageSeed !== null);
 
+  // Provider selection
+  const [provider, setProvider] = useState<ImageProvider>("flux");
+  const [dalleModel, setDalleModel] = useState<DalleModel>("dall-e-3");
+  const [dalleQuality, setDalleQuality] = useState<"standard" | "hd">("standard");
+  const [dalleStyle, setDalleStyle] = useState<"natural" | "vivid">("natural");
+
   // Generation state
   const [imageJobs, setImageJobs] = useState<ImageJob[]>([]);
   const [genStatus, setGenStatus] = useState<"idle" | "submitting" | "polling" | "done" | "error">("idle");
@@ -55,11 +64,16 @@ export default function Step6ImagePrompts() {
     }
   }, [deity, project.characterPrefix, setCharacterPrefix]);
 
-  // Fetch user's Replicate API key from settings
+  // Fetch user settings (both Replicate and OpenAI keys)
   const { data: userSettings } = trpc.settings.getSettings.useQuery(undefined, {
     enabled: isAuthenticated,
   });
   const replicateApiKey = userSettings?.replicateApiKey || "";
+  const openaiApiKey = userSettings?.openaiApiKey || "";
+
+  // Derived: which key is needed for selected provider
+  const activeApiKey = provider === "dalle" ? openaiApiKey : replicateApiKey;
+  const missingKeyRoute = "/settings";
 
   const generateImagesMutation = trpc.generation.generateImages.useMutation();
 
@@ -115,8 +129,12 @@ export default function Step6ImagePrompts() {
   }, [isPolling, imageJobs, replicateApiKey, utils]);
 
   const handleGenerateImages = async () => {
-    if (!replicateApiKey) {
-      toast.error("Add your Replicate API key in Settings first");
+    if (!activeApiKey) {
+      toast.error(
+        provider === "dalle"
+          ? "Add your OpenAI API key in Settings first"
+          : "Add your Replicate API key in Settings first"
+      );
       return;
     }
 
@@ -125,15 +143,30 @@ export default function Step6ImagePrompts() {
 
     try {
       const prompts = project.scenes.map((s) => buildImagePrompt(s.sceneDescription));
-      const result = await generateImagesMutation.mutateAsync({
-        prompts,
-        replicateApiKey,
-        model: "flux-dev",
-        width: 1024,
-        height: 576,
-        stylePrefix: project.characterPrefix || undefined,
-        seed: project.imageSeed ?? undefined,
-      });
+
+      const mutationInput =
+        provider === "dalle"
+          ? {
+              prompts,
+              provider: "dalle" as const,
+              openaiApiKey,
+              dalleModel,
+              dalleQuality,
+              dalleStyle,
+              stylePrefix: project.characterPrefix || undefined,
+            }
+          : {
+              prompts,
+              provider: "flux" as const,
+              replicateApiKey,
+              model: "flux-dev" as const,
+              width: 1024,
+              height: 576,
+              stylePrefix: project.characterPrefix || undefined,
+              seed: project.imageSeed ?? undefined,
+            };
+
+      const result = await generateImagesMutation.mutateAsync(mutationInput);
 
       if (!result.success || !result.data) {
         throw new Error(result.error || "Generation failed to start");
@@ -147,9 +180,17 @@ export default function Step6ImagePrompts() {
       }));
 
       setImageJobs(jobs);
-      setGenStatus("polling");
-      setIsPolling(true);
-      toast.success(`Generating ${prompts.length} images via Flux Dev...`);
+
+      // DALL-E returns completed results immediately — no polling needed
+      if (provider === "dalle") {
+        setGenStatus("done");
+        const succeeded = jobs.filter((j) => j.status === "succeeded").length;
+        toast.success(`${succeeded}/${jobs.length} images generated via ${dalleModel}!`);
+      } else {
+        setGenStatus("polling");
+        setIsPolling(true);
+        toast.success(`Generating ${prompts.length} images via Flux Dev...`);
+      }
     } catch (error) {
       setGenStatus("error");
       toast.error(error instanceof Error ? error.message : "Failed to start generation");
@@ -410,28 +451,125 @@ export default function Step6ImagePrompts() {
 
       {/* In-app Generation Panel */}
       <div className="shrine-panel p-4 space-y-3">
+        {/* Provider tabs */}
+        <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: "oklch(0.16 0.014 52)" }}>
+          {([
+            { id: "flux",  label: "Flux Dev",  sub: "Replicate · ~$0.01/img", icon: "⚡" },
+            { id: "dalle", label: "ChatGPT",   sub: "OpenAI · DALL-E 3",       icon: "✦" },
+          ] as { id: ImageProvider; label: string; sub: string; icon: string }[]).map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setProvider(p.id)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-semibold transition-all"
+              style={{
+                background: provider === p.id ? "oklch(0.24 0.020 55)" : "transparent",
+                color: provider === p.id ? "oklch(0.88 0.12 78)" : "oklch(0.50 0.012 65)",
+                border: provider === p.id ? "1px solid oklch(0.35 0.030 58)" : "1px solid transparent",
+              }}
+            >
+              <span>{p.icon}</span>
+              <span>{p.label}</span>
+              <span style={{ opacity: 0.6, fontWeight: 400 }}>— {p.sub}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* DALL-E specific options */}
+        {provider === "dalle" && (
+          <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg" style={{ background: "oklch(0.18 0.016 52)", border: "1px solid oklch(0.25 0.020 55)" }}>
+            {/* Model */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs" style={{ color: "oklch(0.55 0.012 65)" }}>Model</span>
+              <div className="flex gap-1">
+                {(["dall-e-3", "gpt-image-1"] as DalleModel[]).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setDalleModel(m)}
+                    className="text-xs px-2 py-1 rounded transition-all"
+                    style={{
+                      background: dalleModel === m ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.22 0.018 52)",
+                      color: dalleModel === m ? "oklch(0.80 0.12 78)" : "oklch(0.55 0.012 65)",
+                      border: `1px solid ${dalleModel === m ? "oklch(0.72 0.12 75 / 0.5)" : "oklch(0.28 0.025 58)"}`,
+                    }}
+                  >
+                    {m === "dall-e-3" ? "DALL-E 3" : "GPT-image-1"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quality (DALL-E 3 only) */}
+            {dalleModel === "dall-e-3" && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs" style={{ color: "oklch(0.55 0.012 65)" }}>Quality</span>
+                <div className="flex gap-1">
+                  {(["standard", "hd"] as const).map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => setDalleQuality(q)}
+                      className="text-xs px-2 py-1 rounded transition-all"
+                      style={{
+                        background: dalleQuality === q ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.22 0.018 52)",
+                        color: dalleQuality === q ? "oklch(0.80 0.12 78)" : "oklch(0.55 0.012 65)",
+                        border: `1px solid ${dalleQuality === q ? "oklch(0.72 0.12 75 / 0.5)" : "oklch(0.28 0.025 58)"}`,
+                      }}
+                    >
+                      {q === "standard" ? "Standard ~$0.04" : "HD ~$0.08"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Style */}
+            {dalleModel === "dall-e-3" && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs" style={{ color: "oklch(0.55 0.012 65)" }}>Style</span>
+                <div className="flex gap-1">
+                  {(["natural", "vivid"] as const).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setDalleStyle(s)}
+                      className="text-xs px-2 py-1 rounded transition-all"
+                      style={{
+                        background: dalleStyle === s ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.22 0.018 52)",
+                        color: dalleStyle === s ? "oklch(0.80 0.12 78)" : "oklch(0.55 0.012 65)",
+                        border: `1px solid ${dalleStyle === s ? "oklch(0.72 0.12 75 / 0.5)" : "oklch(0.28 0.025 58)"}`,
+                      }}
+                    >
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <p className="w-full text-xs" style={{ color: "oklch(0.48 0.010 60)" }}>
+              Note: DALL-E generates at 1792×1024 (16:9). Results return immediately — no polling needed.
+              {dalleModel === "dall-e-3" && " Seed locking is not supported by DALL-E 3."}
+            </p>
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold" style={{ color: "oklch(0.80 0.12 78)", fontFamily: "'Cinzel', serif" }}>
               Generate in App
             </p>
             <p className="text-xs mt-0.5" style={{ color: "oklch(0.50 0.012 65)" }}>
-              Flux Dev via Replicate — ~$0.01/image
-              {project.imageSeed !== null && (
-                <span style={{ color: "oklch(0.72 0.12 145)", marginLeft: "0.5rem" }}>
-                  · seed {project.imageSeed}
-                </span>
-              )}
+              {provider === "dalle"
+                ? `${dalleModel === "dall-e-3" ? "DALL-E 3" : "GPT-image-1"} via OpenAI — results ready in ~${Math.ceil(project.scenes.length / 3) * 5}s`
+                : `Flux Dev via Replicate — ~$0.01/image${project.imageSeed !== null ? ` · seed ${project.imageSeed}` : ""}`}
             </p>
           </div>
-          {!replicateApiKey ? (
+          {!activeApiKey ? (
             <button
-              onClick={() => navigate("/settings")}
+              onClick={() => navigate(missingKeyRoute)}
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors"
               style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.10 65)", border: "1px solid oklch(0.35 0.07 65)" }}
             >
               <Settings size={11} />
-              Add Replicate Key
+              {provider === "dalle" ? "Add OpenAI Key" : "Add Replicate Key"}
             </button>
           ) : (
             <button
@@ -452,7 +590,7 @@ export default function Step6ImagePrompts() {
               }}
             >
               {genStatus === "submitting" ? (
-                <><Loader2 size={12} className="animate-spin" /> Starting...</>
+                <><Loader2 size={12} className="animate-spin" /> {provider === "dalle" ? "Generating…" : "Starting…"}</>
               ) : genStatus === "polling" ? (
                 <><Loader2 size={12} className="animate-spin" /> {doneCount}/{imageJobs.length} done</>
               ) : (

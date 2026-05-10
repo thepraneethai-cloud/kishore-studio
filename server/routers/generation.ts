@@ -16,12 +16,15 @@ import {
   pollGenerationJob,
 } from "../_core/replicate";
 import { analyzeSceneArc } from "../_core/sceneDirector";
+import { generateImagesWithOpenAI } from "../_core/openaiImages";
 
 // Per-unit cost estimates in USD
 const UNIT_COSTS = {
-  lyrics:  0.0001, // gemini-2.5-flash is extremely cheap
-  image:   0.0100, // flux-dev ~$0.01/image
-  video:   0.0500, // minimax video-01 ~$0.05/clip
+  lyrics:       0.0001, // gemini-2.5-flash is extremely cheap
+  image:        0.0100, // flux-dev ~$0.01/image
+  image_dalle3: 0.0400, // dall-e-3 standard ~$0.04/image, hd ~$0.08
+  image_gpt:    0.0167, // gpt-image-1 medium ~$0.0167/image
+  video:        0.0500, // minimax video-01 ~$0.05/clip
 };
 
 async function recordCost(
@@ -170,28 +173,66 @@ export const generationRouter = router({
     .input(
       z.object({
         prompts: z.array(z.string()).min(1).max(50),
-        replicateApiKey: z.string(),
+        // Replicate (Flux) options
+        replicateApiKey: z.string().optional(),
         model: z.enum(["flux-pro", "flux-dev", "flux-schnell"]).optional(),
         width: z.number().optional(),
         height: z.number().optional(),
         stylePrefix: z.string().optional(),
         seed: z.number().optional(),
+        // OpenAI (DALL-E) options
+        provider: z.enum(["flux", "dalle"]).optional(),
+        openaiApiKey: z.string().optional(),
+        dalleModel: z.enum(["dall-e-3", "gpt-image-1"]).optional(),
+        dalleQuality: z.enum(["standard", "hd"]).optional(),
+        dalleStyle: z.enum(["natural", "vivid"]).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       try {
         await assertBudgetAvailable(ctx.user.id);
+
         // Prepend character style prefix to every prompt if provided
         const resolvedPrompts = input.stylePrefix
           ? input.prompts.map((p) => `${input.stylePrefix} | ${p}`)
           : input.prompts;
+
+        // ── OpenAI / DALL-E path ──────────────────────────────
+        if (input.provider === "dalle") {
+          const apiKey = input.openaiApiKey;
+          if (!apiKey) throw new Error("OpenAI API key is required for DALL-E generation");
+
+          const dalleModel = input.dalleModel ?? "dall-e-3";
+          const openAIJobs = await generateImagesWithOpenAI(resolvedPrompts, apiKey, {
+            model: dalleModel,
+            quality: input.dalleQuality ?? "standard",
+            style: input.dalleStyle ?? "natural",
+          });
+
+          // Normalise to the same shape the client expects from Replicate
+          const jobs = openAIJobs.map((j) => ({
+            id: j.id,
+            status: j.status,
+            output: j.output,
+            error: j.error,
+            createdAt: j.createdAt,
+            completedAt: j.createdAt,
+          }));
+
+          const unitCost = dalleModel === "gpt-image-1" ? UNIT_COSTS.image_gpt : UNIT_COSTS.image_dalle3;
+          void recordCost(ctx.user.id, "image", dalleModel, unitCost, input.prompts.length);
+          return { success: true, data: jobs };
+        }
+
+        // ── Replicate / Flux path (default) ──────────────────
+        if (!input.replicateApiKey) throw new Error("Replicate API key is required for Flux generation");
+
         const jobs = await generateImageBatch(resolvedPrompts, input.replicateApiKey, {
           model: (input.model as "flux-pro" | "flux-dev" | "flux-schnell" | undefined) || "flux-dev",
           width: input.width,
           height: input.height,
           seed: input.seed,
         });
-        // Record one row per image submitted (jobs may still be pending)
         void recordCost(ctx.user.id, "image", "flux", UNIT_COSTS.image, input.prompts.length);
         return { success: true, data: jobs };
       } catch (error) {

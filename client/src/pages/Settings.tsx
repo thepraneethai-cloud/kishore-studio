@@ -230,23 +230,44 @@ export default function Settings() {
         {/* API Keys Tab */}
         {activeTab === "api-keys" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-            {(["openaiApiKey", "claudeApiKey", "geminiApiKey", "replicateApiKey"] as const).map((key) => (
+            {(["openaiApiKey", "claudeApiKey", "geminiApiKey", "replicateApiKey"] as const).map((key) => {
+              const meta: Record<string, { label: string; hint: string; placeholder: string }> = {
+                openaiApiKey: {
+                  label: "OpenAI API Key",
+                  hint: "Powers ChatGPT lyrics (coming soon) + DALL-E 3 / GPT-image-1 image generation in Step 6. Get yours at platform.openai.com/api-keys",
+                  placeholder: "sk-...",
+                },
+                claudeApiKey: {
+                  label: "Claude API Key (Anthropic)",
+                  hint: "Powers Claude lyrics generation (coming soon). Get yours at console.anthropic.com",
+                  placeholder: "sk-ant-...",
+                },
+                geminiApiKey: {
+                  label: "Gemini API Key (Google)",
+                  hint: "Powers AI lyrics, scene analysis, and Director Agent when you bring your own key. Get yours at aistudio.google.com/apikey",
+                  placeholder: "AIza...",
+                },
+                replicateApiKey: {
+                  label: "Replicate API Key",
+                  hint: "Powers Flux Dev / Flux Pro image generation and MiniMax video generation in Step 6. Get yours at replicate.com/account/api-tokens",
+                  placeholder: "r8_...",
+                },
+              };
+              const { label, hint, placeholder } = meta[key];
+              return (
               <div key={key}>
-                <label style={{ display: "block", marginBottom: "0.5rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>
-                  {key === "openaiApiKey"
-                    ? "OpenAI API Key (ChatGPT)"
-                    : key === "claudeApiKey"
-                      ? "Claude API Key"
-                      : key === "geminiApiKey"
-                        ? "Gemini API Key"
-                        : "Replicate API Key"}
+                <label style={{ display: "block", marginBottom: "0.25rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>
+                  {label}
                 </label>
+                <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.45)", marginBottom: "0.5rem" }}>
+                  {hint}
+                </p>
                 <div style={{ display: "flex", gap: "0.5rem" }}>
                   <input
                     type={showKeys[key] ? "text" : "password"}
                     value={apiKeys[key]}
                     onChange={(e) => setApiKeys({ ...apiKeys, [key]: e.target.value })}
-                    placeholder="Enter your API key"
+                    placeholder={placeholder}
                     style={{
                       flex: 1,
                       padding: "0.75rem",
@@ -272,7 +293,8 @@ export default function Settings() {
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
             <button
               onClick={handleSaveApiKeys}
               disabled={saving}
