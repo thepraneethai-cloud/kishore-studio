@@ -298,16 +298,28 @@ export default function Step5Scenes() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div>
-        <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
-          Step 3
-        </p>
-        <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
-          Scene Breakdown
-        </h2>
-        <p className="text-sm" style={{ color: "oklch(0.60 0.015 68)" }}>
-          Map each lyric line to a visual scene. Then run Director Analysis to apply professional shot vocabulary and emotional arc.
-        </p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
+            Step 3
+          </p>
+          <h2 className="text-2xl font-bold" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
+            Scene Breakdown
+          </h2>
+          <p className="text-sm mt-1" style={{ color: "oklch(0.60 0.015 68)" }}>
+            Each lyric line becomes one visual scene. Run Director Analysis to apply cinematic shot vocabulary.
+          </p>
+        </div>
+        {project.scenes.length > 0 && (
+          <div className="flex items-center gap-2 flex-shrink-0 mt-1">
+            <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "oklch(0.72 0.12 75 / 0.15)", color: "oklch(0.80 0.12 78)", border: "1px solid oklch(0.72 0.12 75 / 0.3)" }}>
+              {project.scenes.length} scenes
+            </span>
+            <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: "oklch(0.18 0.016 52)", color: "oklch(0.60 0.012 65)", border: "1px solid oklch(0.28 0.025 58)" }}>
+              ~{Math.floor(totalDuration / 60)}:{String(totalDuration % 60).padStart(2, "0")} total
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Cinematic Style Sheet — shown after Director Analysis */}
@@ -379,37 +391,24 @@ export default function Step5Scenes() {
         </div>
       )}
 
-      {/* Action bar */}
-      <div
-        className="flex items-center justify-between p-4 rounded-lg flex-wrap gap-3"
-        style={{
-          background: "linear-gradient(135deg, oklch(0.72 0.12 75 / 0.08), oklch(0.65 0.14 65 / 0.08))",
-          border: "1px solid oklch(0.72 0.12 75 / 0.25)",
-        }}
-      >
-        <div>
-          <p className="text-sm font-semibold" style={{ color: "oklch(0.80 0.12 78)", fontFamily: "'Cinzel', serif" }}>
-            Scene Generation
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: "oklch(0.55 0.012 65)" }}>
-            Auto-generate from lyrics, then apply Director Analysis
-          </p>
-        </div>
-        <div className="flex items-center gap-2 mb-2">
-          <span style={{ fontSize: "0.7rem", fontWeight: 600, color: "oklch(0.55 0.012 65)", textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
+      {/* Controls panel */}
+      <div className="rounded-xl space-y-3 p-4" style={{ background: "oklch(0.17 0.014 52)", border: "1px solid oklch(0.28 0.025 58)" }}>
+        {/* Row 1: LLM Model */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold flex-shrink-0" style={{ color: "oklch(0.55 0.012 65)", textTransform: "uppercase", letterSpacing: "0.06em", minWidth: "72px" }}>
             LLM Model
           </span>
           <select
             value={llmModel}
             onChange={(e) => setLlmModel(e.target.value)}
+            className="flex-1"
             style={{
-              padding: "0.3rem 0.6rem",
-              background: "oklch(0.18 0.015 52)",
+              padding: "0.4rem 0.75rem",
+              background: "oklch(0.13 0.012 52)",
               border: "1px solid oklch(0.30 0.025 58)",
-              borderRadius: "0.375rem",
-              color: "oklch(0.72 0.12 75)",
-              fontSize: "0.78rem",
-              fontWeight: 600,
+              borderRadius: "0.5rem",
+              color: "oklch(0.80 0.12 78)",
+              fontSize: "0.8rem",
               cursor: "pointer",
               outline: "none",
             }}
@@ -443,11 +442,16 @@ export default function Step5Scenes() {
           </select>
         </div>
 
-        <div className="flex gap-2 flex-wrap">
+        {/* Divider */}
+        <div style={{ height: "1px", background: "oklch(0.25 0.020 55)" }} />
+
+        {/* Row 2: Primary + secondary actions */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Primary actions */}
           <button
             onClick={handleAutoGenerate}
             disabled={isGenerating}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-60"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
             style={{
               background: "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
               color: "oklch(0.12 0.015 55)",
@@ -455,54 +459,46 @@ export default function Step5Scenes() {
             }}
           >
             <Wand2 size={14} className={isGenerating ? "animate-spin" : ""} />
-            {isGenerating ? "Generating..." : "Auto-Generate"}
+            {isGenerating ? "Generating…" : "Auto-Generate Scenes"}
           </button>
 
           {project.scenes.length > 0 && (
             <button
               onClick={handleDirectorAnalysis}
               disabled={isAnalyzing}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-60"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
               style={{
-                background: isAnalyzing
-                  ? "oklch(0.22 0.018 52)"
-                  : "linear-gradient(135deg, oklch(0.55 0.10 270), oklch(0.45 0.12 280))",
+                background: isAnalyzing ? "oklch(0.22 0.018 52)" : "linear-gradient(135deg, oklch(0.55 0.10 270), oklch(0.45 0.12 280))",
                 color: isAnalyzing ? "oklch(0.55 0.012 65)" : "#fff",
-                border: "none",
               }}
               title="Analyze emotional arc and apply professional shot vocabulary (WS/MS/CU/ECU)"
             >
               <Clapperboard size={14} className={isAnalyzing ? "animate-pulse" : ""} />
-              {isAnalyzing ? "Analyzing..." : hasDirectorData ? "Re-Analyze" : "Director Analysis"}
+              {isAnalyzing ? "Analyzing…" : hasDirectorData ? "Re-Analyze" : "Director Analysis"}
             </button>
           )}
 
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Secondary actions */}
           {canUndoScenes && (
             <button
               onClick={() => { undoScenes(); toast.success("Restored previous scenes"); }}
-              title="Undo — restore previous scenes"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all hover:opacity-80"
-              style={{
-                background: "oklch(0.20 0.04 35)",
-                color: "oklch(0.72 0.12 55)",
-                border: "1px solid oklch(0.35 0.07 45)",
-              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all hover:opacity-80"
+              style={{ background: "oklch(0.20 0.04 35)", color: "oklch(0.72 0.12 55)", border: "1px solid oklch(0.35 0.07 45)" }}
             >
-              <Undo2 size={14} />
+              <Undo2 size={13} />
               Undo
             </button>
           )}
           <button
             onClick={handleAddScene}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all hover:opacity-80"
-            style={{
-              background: "oklch(0.22 0.018 52)",
-              color: "oklch(0.65 0.015 68)",
-              border: "1px solid oklch(0.28 0.025 58)",
-            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all hover:opacity-80"
+            style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.28 0.025 58)" }}
           >
-            <Plus size={14} />
-            Add
+            <Plus size={13} />
+            Add Scene
           </button>
         </div>
       </div>

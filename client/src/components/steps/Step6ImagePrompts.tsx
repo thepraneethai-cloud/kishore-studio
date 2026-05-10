@@ -294,54 +294,110 @@ export default function Step6ImagePrompts() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div>
-        <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
-          Step 4
-        </p>
-        <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
-          Image Prompts — Bulk Generator
-        </h2>
-        <p className="text-sm" style={{ color: "oklch(0.60 0.015 68)" }}>
-          {project.scenes.length} image prompts ready. Generate in-app via Flux Dev or copy for Leonardo AI / Midjourney.
-        </p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
+            Step 4
+          </p>
+          <h2 className="text-2xl font-bold" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
+            Image Prompts
+          </h2>
+          <p className="text-sm mt-1" style={{ color: "oklch(0.60 0.015 68)" }}>
+            Generate images in-app or copy prompts for Leonardo AI / Midjourney.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0 mt-1">
+          <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "oklch(0.72 0.12 75 / 0.15)", color: "oklch(0.80 0.12 78)", border: "1px solid oklch(0.72 0.12 75 / 0.3)" }}>
+            {project.scenes.length} scenes
+          </span>
+        </div>
       </div>
 
-      {/* Character Consistency Panel */}
-      <div className="shrine-panel p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold" style={{ color: "oklch(0.80 0.12 78)", fontFamily: "'Cinzel', serif" }}>
+      {/* Controls card — Style + Seed + Actions */}
+      <div className="rounded-xl space-y-4 p-4" style={{ background: "oklch(0.17 0.014 52)", border: "1px solid oklch(0.28 0.025 58)" }}>
+
+        {/* Style Lock */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "oklch(0.55 0.012 65)" }}>
               Style Lock
-            </p>
-            <p className="text-xs mt-0.5" style={{ color: "oklch(0.50 0.012 65)" }}>
-              Prepended to every prompt — keeps all images visually consistent
-            </p>
+            </span>
+            {deity && (
+              <button
+                onClick={() => setCharacterPrefix(getDefaultCharacterPrefix(deity))}
+                className="flex items-center gap-1 text-xs px-2.5 py-1 rounded transition-colors"
+                style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.28 0.025 58)" }}
+              >
+                <Sparkles size={9} />
+                Reset to {deity.name} default
+              </button>
+            )}
           </div>
-          {deity && (
+          <textarea
+            value={project.characterPrefix}
+            onChange={(e) => setCharacterPrefix(e.target.value)}
+            placeholder="Tanjore painting style, gold leaf, South Indian temple art, consistent character design…"
+            rows={2}
+            style={{
+              width: "100%",
+              padding: "0.5rem 0.625rem",
+              background: "oklch(0.13 0.012 52)",
+              border: "1px solid oklch(0.30 0.025 58)",
+              borderRadius: "0.5rem",
+              color: "#fff",
+              fontSize: "0.78rem",
+              lineHeight: "1.5",
+              resize: "vertical",
+              outline: "none",
+            }}
+          />
+        </div>
+
+        <div style={{ height: "1px", background: "oklch(0.25 0.020 55)" }} />
+
+        {/* Art Style pills + Scene Style label */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "oklch(0.55 0.012 65)" }}>
+              Art Style
+            </span>
             <button
-              onClick={() => setCharacterPrefix(getDefaultCharacterPrefix(deity))}
-              className="text-xs px-2.5 py-1.5 rounded transition-colors flex items-center gap-1"
-              style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.28 0.025 58)" }}
+              onClick={() => setShowNegative(!showNegative)}
+              className="text-xs"
+              style={{ color: "oklch(0.45 0.010 60)" }}
             >
-              <Sparkles size={10} />
-              Reset to {deity.name} default
+              {showNegative ? "▲" : "▼"} Negative prompt
             </button>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {STYLE_SUFFIXES.map((style, i) => (
+              <button
+                key={i}
+                onClick={() => setSelectedStyle(i)}
+                className="text-xs px-3 py-1.5 rounded-full transition-all"
+                style={{
+                  background: selectedStyle === i ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.20 0.016 52)",
+                  border: selectedStyle === i ? "1px solid oklch(0.72 0.12 75 / 0.6)" : "1px solid oklch(0.25 0.020 55)",
+                  color: selectedStyle === i ? "oklch(0.80 0.12 78)" : "oklch(0.55 0.012 65)",
+                  fontWeight: selectedStyle === i ? 600 : 400,
+                }}
+              >
+                {style.split(",")[0]}
+              </button>
+            ))}
+          </div>
+          {showNegative && (
+            <p className="text-xs leading-relaxed" style={{ color: "oklch(0.45 0.010 60)", fontStyle: "italic" }}>
+              {NEGATIVE_PROMPT}
+            </p>
           )}
         </div>
-        <textarea
-          value={project.characterPrefix}
-          onChange={(e) => setCharacterPrefix(e.target.value)}
-          placeholder="Tanjore painting style, gold leaf, South Indian temple art, consistent character design..."
-          className="sanctum-input text-xs w-full"
-          rows={3}
-          style={{ padding: "0.5rem 0.625rem", resize: "vertical" }}
-        />
 
-        {/* Seed control */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold" style={{ color: "oklch(0.60 0.012 65)" }}>
-            Seed
-          </span>
+        <div style={{ height: "1px", background: "oklch(0.25 0.020 55)" }} />
+
+        {/* Seed + Actions row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-semibold" style={{ color: "oklch(0.55 0.012 65)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Seed</span>
           <input
             type="number"
             value={project.imageSeed ?? ""}
@@ -350,9 +406,17 @@ export default function Step6ImagePrompts() {
               setImageSeed(v === "" ? null : Number(v));
               setSeedLocked(v !== "");
             }}
-            placeholder="none (random)"
-            className="sanctum-input text-xs"
-            style={{ padding: "0.375rem 0.625rem", width: "140px" }}
+            placeholder="random"
+            style={{
+              padding: "0.3rem 0.5rem",
+              background: "oklch(0.13 0.012 52)",
+              border: "1px solid oklch(0.30 0.025 58)",
+              borderRadius: "0.375rem",
+              color: "#fff",
+              fontSize: "0.78rem",
+              outline: "none",
+              width: "100px",
+            }}
           />
           <button
             onClick={handleRandomSeed}
@@ -371,86 +435,46 @@ export default function Step6ImagePrompts() {
               color: seedLocked ? "oklch(0.72 0.12 145)" : "oklch(0.50 0.012 65)",
               border: `1px solid ${seedLocked ? "oklch(0.50 0.12 145 / 0.5)" : "oklch(0.28 0.025 58)"}`,
             }}
-            title={seedLocked ? "Unlock seed (use random each time)" : "Lock seed (same look for all images)"}
+            title={seedLocked ? "Unlock seed" : "Lock seed"}
           >
             {seedLocked ? <Lock size={10} /> : <Unlock size={10} />}
             {seedLocked ? "Locked" : "Unlocked"}
           </button>
+          <div className="flex-1" />
+          <button
+            onClick={handleRegenerateAll}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
+            style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.28 0.025 58)" }}
+          >
+            <Sparkles size={11} />
+            Restyle All
+          </button>
+          <button
+            onClick={handleCopyAll}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
+            style={{
+              background: copiedAll ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.22 0.018 52)",
+              color: copiedAll ? "oklch(0.72 0.12 75)" : "oklch(0.65 0.015 68)",
+              border: `1px solid ${copiedAll ? "oklch(0.72 0.12 75 / 0.5)" : "oklch(0.28 0.025 58)"}`,
+            }}
+          >
+            {copiedAll ? <Check size={11} /> : <Copy size={11} />}
+            {copiedAll ? "Copied!" : "Copy All"}
+          </button>
+          <button
+            onClick={handleDownloadCSV}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
+            style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.28 0.025 58)" }}
+          >
+            <Download size={11} />
+            CSV
+          </button>
         </div>
         {seedLocked && project.imageSeed !== null && (
-          <p className="text-xs" style={{ color: "oklch(0.55 0.012 65)" }}>
-            All {project.scenes.length} images will use seed <span style={{ color: "oklch(0.72 0.12 145)", fontFamily: "monospace" }}>{project.imageSeed}</span> — consistent look guaranteed.
+          <p className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>
+            Seed <span style={{ color: "oklch(0.72 0.12 145)", fontFamily: "monospace" }}>{project.imageSeed}</span> locked — all {project.scenes.length} images will share the same visual style.
           </p>
         )}
-      </div>
-
-      {/* Style selector + actions */}
-      <div className="shrine-panel p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
-            Scene Style
-          </p>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={handleRegenerateAll}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors"
-              style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.28 0.025 58)" }}
-            >
-              <Sparkles size={11} />
-              Restyle All
-            </button>
-            <button
-              onClick={handleCopyAll}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors"
-              style={{
-                background: copiedAll ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.22 0.018 52)",
-                color: copiedAll ? "oklch(0.72 0.12 75)" : "oklch(0.65 0.015 68)",
-                border: `1px solid ${copiedAll ? "oklch(0.72 0.12 75 / 0.5)" : "oklch(0.28 0.025 58)"}`,
-              }}
-            >
-              {copiedAll ? <Check size={11} /> : <Copy size={11} />}
-              {copiedAll ? "Copied All!" : "Copy All"}
-            </button>
-            <button
-              onClick={handleDownloadCSV}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors"
-              style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.28 0.025 58)" }}
-            >
-              <Download size={11} />
-              CSV
-            </button>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {STYLE_SUFFIXES.map((style, i) => (
-            <button
-              key={i}
-              onClick={() => setSelectedStyle(i)}
-              className="text-xs px-2.5 py-1.5 rounded transition-all"
-              style={{
-                background: selectedStyle === i ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.20 0.016 52)",
-                border: selectedStyle === i ? "1px solid oklch(0.72 0.12 75 / 0.6)" : "1px solid oklch(0.25 0.020 55)",
-                color: selectedStyle === i ? "oklch(0.80 0.12 78)" : "oklch(0.55 0.012 65)",
-              }}
-            >
-              {style.split(",")[0]}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowNegative(!showNegative)}
-            className="text-xs"
-            style={{ color: "oklch(0.50 0.012 65)" }}
-          >
-            {showNegative ? "▼" : "▶"} Negative prompt
-          </button>
-          {showNegative && (
-            <span className="text-xs" style={{ color: "oklch(0.45 0.010 60)" }}>
-              {NEGATIVE_PROMPT}
-            </span>
-          )}
-        </div>
       </div>
 
       {/* In-app Generation Panel */}

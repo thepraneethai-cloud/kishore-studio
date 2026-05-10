@@ -88,66 +88,91 @@ export default function Step7VideoPrompts() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div>
-        <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
-          Step 5
-        </p>
-        <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
-          Video Motion Prompts
-        </h2>
-        <p className="text-sm" style={{ color: "oklch(0.60 0.015 68)" }}>
-          Generate motion prompts for Grok Photo→Video, Runway, or similar tools. {project.scenes.length} scenes · ~{Math.floor(totalDuration / 60)}:{String(totalDuration % 60).padStart(2, "0")} total.
-        </p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
+            Step 7
+          </p>
+          <h2 className="text-2xl font-bold mb-1" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
+            Video Motion Prompts
+          </h2>
+          <p className="text-sm" style={{ color: "oklch(0.55 0.012 65)" }}>
+            Generate motion prompts for Runway, Pika, Kling, or similar tools.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span
+            className="text-xs font-semibold px-3 py-1.5 rounded-full"
+            style={{ background: "oklch(0.65 0.14 65 / 0.15)", color: "oklch(0.72 0.14 68)", border: "1px solid oklch(0.65 0.14 65 / 0.3)" }}
+          >
+            {project.scenes.length} scenes
+          </span>
+          <span
+            className="text-xs font-semibold px-3 py-1.5 rounded-full"
+            style={{ background: "oklch(0.55 0.10 250 / 0.15)", color: "oklch(0.70 0.10 250)", border: "1px solid oklch(0.55 0.10 250 / 0.3)" }}
+          >
+            ~{Math.floor(totalDuration / 60)}:{String(totalDuration % 60).padStart(2, "0")} total
+          </span>
+        </div>
       </div>
 
-      {/* Motion type selector */}
-      <div className="shrine-panel p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+      {/* Controls card */}
+      <div className="rounded-xl space-y-3 p-4" style={{ background: "oklch(0.17 0.014 52)", border: "1px solid oklch(0.28 0.025 58)" }}>
+        {/* Motion type */}
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "oklch(0.55 0.012 65)" }}>
             Motion Type
           </p>
-          <div className="flex gap-2">
-            <button
-              onClick={handleCopyAll}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors"
-              style={{
-                background: copiedAll ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.22 0.018 52)",
-                color: copiedAll ? "oklch(0.72 0.12 75)" : "oklch(0.65 0.015 68)",
-                border: `1px solid ${copiedAll ? "oklch(0.72 0.12 75 / 0.5)" : "oklch(0.28 0.025 58)"}`,
-              }}
-            >
-              {copiedAll ? <Check size={11} /> : <Copy size={11} />}
-              {copiedAll ? "Copied All!" : "Copy All"}
-            </button>
-            <button
-              onClick={handleDownloadCSV}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors"
-              style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.28 0.025 58)" }}
-            >
-              <Download size={11} />
-              CSV
-            </button>
+          <div className="flex flex-wrap gap-2">
+            {MOTION_TYPES.map((mt, i) => (
+              <button
+                key={mt.id}
+                onClick={() => setSelectedMotion(i)}
+                className="text-xs px-3 py-1.5 rounded-full transition-all"
+                style={{
+                  background: selectedMotion === i ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.20 0.016 52)",
+                  border: selectedMotion === i ? "1px solid oklch(0.72 0.12 75 / 0.6)" : "1px solid oklch(0.25 0.020 55)",
+                  color: selectedMotion === i ? "oklch(0.82 0.12 78)" : "oklch(0.55 0.012 65)",
+                }}
+              >
+                {mt.label}
+              </button>
+            ))}
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {MOTION_TYPES.map((mt, i) => (
-            <button
-              key={mt.id}
-              onClick={() => setSelectedMotion(i)}
-              className="text-xs px-3 py-1.5 rounded transition-all"
-              style={{
-                background: selectedMotion === i ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.20 0.016 52)",
-                border: selectedMotion === i ? "1px solid oklch(0.72 0.12 75 / 0.6)" : "1px solid oklch(0.25 0.020 55)",
-                color: selectedMotion === i ? "oklch(0.80 0.12 78)" : "oklch(0.55 0.012 65)",
-              }}
-            >
-              {mt.label}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs" style={{ color: "oklch(0.45 0.010 60)" }}>
-          Template: {MOTION_TYPES[selectedMotion].template.replace("{scene}", "[scene description]")}
+
+        {/* Template preview */}
+        <p className="text-xs leading-relaxed px-3 py-2 rounded-lg" style={{ color: "oklch(0.50 0.010 62)", background: "oklch(0.14 0.012 50)", border: "1px solid oklch(0.22 0.018 52)" }}>
+          <span style={{ color: "oklch(0.45 0.008 60)" }}>Template: </span>
+          {MOTION_TYPES[selectedMotion].template.replace("{scene}", "[scene description]")}
         </p>
+
+        {/* Divider */}
+        <div style={{ height: "1px", background: "oklch(0.25 0.020 55)" }} />
+
+        {/* Actions row */}
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={handleCopyAll}
+            className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-colors"
+            style={{
+              background: copiedAll ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.22 0.018 52)",
+              color: copiedAll ? "oklch(0.82 0.12 78)" : "oklch(0.65 0.015 68)",
+              border: `1px solid ${copiedAll ? "oklch(0.72 0.12 75 / 0.5)" : "oklch(0.30 0.025 58)"}`,
+            }}
+          >
+            {copiedAll ? <Check size={12} /> : <Copy size={12} />}
+            {copiedAll ? "Copied!" : "Copy All"}
+          </button>
+          <button
+            onClick={handleDownloadCSV}
+            className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-colors"
+            style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.30 0.025 58)" }}
+          >
+            <Download size={12} />
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Prompt list */}
