@@ -29,6 +29,8 @@ export interface GeneratedLyrics {
     pallavi: string;
     charanam1: string;
     charanam2?: string;
+    charanam3?: string;
+    charanam4?: string;
     outro?: string;
   };
   metadata: {
@@ -165,14 +167,24 @@ ${deityContext}
 
 REQUIREMENTS:
 - Write in ${input.language === "english" ? "English (transliterated Telugu names)" : "Telugu script"}
-- Structure: Pallavi (chorus, 2-4 lines) + Charanam 1 (verse, 4-6 lines) + Charanam 2 (optional, 4-6 lines) + Outro (optional, 2-3 lines)
-- Estimated duration: ${duration} minutes (adjust line count accordingly)
-- Each line should be singable (8-12 syllables)
+- Each line should be singable (8-12 syllables, ~4-5 seconds when performed)
+- In a bhajan the Pallavi repeats between each Charanam, so total sung time = (Pallavi × (N+1)) + sum of Charanams + Outro
 - Include specific references to the deity's attributes, stories, or sacred sites
 - Use poetic devices: metaphor, repetition, call-and-response
 - Emotional arc: Build from reverence → devotion → surrender → blessing
 - Avoid clichés; be specific and vivid
 - Include at least one reference to a sacred location or ritual
+
+SECTION COUNT FOR ${duration}-MINUTE TARGET (follow exactly):
+${duration <= 2
+  ? "• Pallavi: 3 lines\n• charanam1: 5 lines\n• charanam2, charanam3, charanam4, outro: leave empty strings"
+  : duration <= 4
+  ? "• Pallavi: 4 lines\n• charanam1: 6 lines\n• charanam2: 6 lines\n• charanam3, charanam4: leave empty strings\n• outro: 2 lines"
+  : duration <= 6
+  ? "• Pallavi: 4 lines\n• charanam1: 8 lines\n• charanam2: 8 lines\n• charanam3: 6 lines\n• charanam4: leave empty string\n• outro: 3 lines"
+  : duration <= 8
+  ? "• Pallavi: 4 lines\n• charanam1: 8 lines\n• charanam2: 8 lines\n• charanam3: 8 lines\n• charanam4: 6 lines\n• outro: 3 lines"
+  : "• Pallavi: 5 lines\n• charanam1: 10 lines\n• charanam2: 10 lines\n• charanam3: 10 lines\n• charanam4: 8 lines\n• outro: 4 lines"}
 
 OUTPUT FORMAT:
 Return a JSON object with this exact structure:
@@ -180,6 +192,8 @@ Return a JSON object with this exact structure:
   "pallavi": "...",
   "charanam1": "...",
   "charanam2": "...",
+  "charanam3": "...",
+  "charanam4": "...",
   "outro": "...",
   "notes": "Brief explanation of the lyrical theme and structure"
 }`;
@@ -225,7 +239,15 @@ Return a JSON object with this exact structure:
               },
               charanam2: {
                 type: "string",
-                description: "Second verse (4-6 lines, optional)",
+                description: "Second verse (optional)",
+              },
+              charanam3: {
+                type: "string",
+                description: "Third verse (optional, for 5+ min songs)",
+              },
+              charanam4: {
+                type: "string",
+                description: "Fourth verse (optional, for 7+ min songs)",
               },
               outro: {
                 type: "string",
@@ -252,7 +274,7 @@ Return a JSON object with this exact structure:
     // Strip markdown code fences — some models wrap JSON in ```json ... ``` despite json_schema format
     const jsonStr = contentStr.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
-    let parsed: { pallavi: string; charanam1: string; charanam2?: string; outro?: string; notes: string };
+    let parsed: { pallavi: string; charanam1: string; charanam2?: string; charanam3?: string; charanam4?: string; outro?: string; notes: string };
     try {
       parsed = JSON.parse(jsonStr);
     } catch {
@@ -265,6 +287,8 @@ Return a JSON object with this exact structure:
       `[Pallavi]\n${parsed.pallavi}`,
       `\n[Charanam 1]\n${parsed.charanam1}`,
       parsed.charanam2 ? `\n[Charanam 2]\n${parsed.charanam2}` : "",
+      parsed.charanam3 ? `\n[Charanam 3]\n${parsed.charanam3}` : "",
+      parsed.charanam4 ? `\n[Charanam 4]\n${parsed.charanam4}` : "",
       parsed.outro ? `\n[Outro]\n${parsed.outro}` : "",
     ]
       .filter(Boolean)
@@ -280,6 +304,8 @@ Return a JSON object with this exact structure:
         pallavi: parsed.pallavi,
         charanam1: parsed.charanam1,
         charanam2: parsed.charanam2 || "",
+        charanam3: parsed.charanam3 || "",
+        charanam4: parsed.charanam4 || "",
         outro: parsed.outro || "",
       },
       metadata: {

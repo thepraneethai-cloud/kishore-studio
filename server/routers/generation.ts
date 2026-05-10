@@ -106,7 +106,7 @@ export const generationRouter = router({
         customPrompt: z.string().optional(),   // iterate feedback / manual direction (appendix)
         directivePrompt: z.string().optional(), // AI-generated vision brief (primary user message)
         theme: z.string().optional(),
-        duration: z.number().min(3).max(10).optional(),
+        duration: z.number().min(1).max(10).optional(),
         language: z.enum(["telugu", "english"]).optional(),
       })
     )

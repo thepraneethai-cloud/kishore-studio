@@ -18,12 +18,15 @@ const THEME_OPTIONS = [
   { value: "meditation",   label: "Meditation & Peace" },
 ];
 
-const DURATION_OPTIONS = [
-  { value: 3, label: "3 min (short)" },
-  { value: 4, label: "4 min (standard)" },
-  { value: 5, label: "5 min (full)" },
-  { value: 7, label: "7 min (extended)" },
-];
+const DURATION_OPTIONS = Array.from({ length: 10 }, (_, i) => {
+  const mins = i + 1;
+  const label =
+    mins <= 2 ? `${mins} min (short)` :
+    mins <= 4 ? `${mins} min (standard)` :
+    mins <= 6 ? `${mins} min (full)` :
+    `${mins} min (extended)`;
+  return { value: mins, label };
+});
 
 // ── helpers ──────────────────────────────────────────────────
 function copyToClipboard(text: string, label: string) {
@@ -481,27 +484,26 @@ export default function Step2Lyrics() {
           {/* Duration row — theme/language live in the Song Idea panel above */}
           <div style={{ marginBottom: "1rem" }}>
             <label style={labelStyle}>Duration</label>
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            <select
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+              style={{
+                padding: "0.5rem 0.75rem",
+                background: "rgba(0,0,0,0.35)",
+                border: "1px solid rgba(0,212,255,0.2)",
+                borderRadius: "0.375rem",
+                color: "#00d4ff",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                outline: "none",
+                minWidth: "180px",
+              }}
+            >
               {DURATION_OPTIONS.map((d) => (
-                <button
-                  key={d.value}
-                  onClick={() => setDuration(d.value)}
-                  style={{
-                    padding: "0.45rem 1rem",
-                    borderRadius: "999px",
-                    fontSize: "0.8rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    transition: "all 150ms",
-                    background: duration === d.value ? "rgba(0,212,255,0.2)" : "rgba(0,0,0,0.3)",
-                    color: duration === d.value ? "#00d4ff" : "rgba(255,255,255,0.45)",
-                    border: `1px solid ${duration === d.value ? "rgba(0,212,255,0.5)" : "rgba(255,255,255,0.1)"}`,
-                  }}
-                >
-                  {d.label}
-                </button>
+                <option key={d.value} value={d.value}>{d.label}</option>
               ))}
-            </div>
+            </select>
           </div>
 
           {/* Custom prompt / vision directive */}
