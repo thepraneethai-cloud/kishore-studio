@@ -1,4 +1,7 @@
 import "dotenv/config";
+import { webcrypto } from "node:crypto";
+// Polyfill for Node.js 18: jose needs globalThis.crypto
+if (!globalThis.crypto) (globalThis as unknown as Record<string, unknown>).crypto = webcrypto;
 import express from "express";
 import { createServer } from "http";
 import net from "net";
