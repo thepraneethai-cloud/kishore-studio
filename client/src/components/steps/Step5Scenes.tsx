@@ -392,7 +392,7 @@ export default function Step5Scenes() {
       )}
 
       {/* Controls panel */}
-      <div className="rounded-xl space-y-3 p-4" style={{ background: "oklch(0.17 0.014 52)", border: "1px solid oklch(0.28 0.025 58)" }}>
+      <div className="rounded-xl p-4" style={{ background: "oklch(0.17 0.014 52)", border: "1px solid oklch(0.28 0.025 58)", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
         {/* Row 1: LLM Model */}
         <div className="flex items-center gap-3">
           <span className="text-xs font-semibold flex-shrink-0" style={{ color: "oklch(0.55 0.012 65)", textTransform: "uppercase", letterSpacing: "0.06em", minWidth: "72px" }}>
