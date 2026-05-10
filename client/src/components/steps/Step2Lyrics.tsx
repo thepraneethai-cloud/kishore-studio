@@ -518,7 +518,7 @@ export default function Step2Lyrics() {
             {SONG_CATEGORIES.map((cat) => (
               <button
                 key={cat.value}
-                onClick={() => { setCategory(cat.value); setHasPicked(true); setSubjectInput(""); setTitleInput(""); setDeity(""); setTitle(""); setShowSunoPanel(false); }}
+                onClick={() => { setCategory(cat.value); setHasPicked(true); setSubjectInput(""); setTitleInput(""); setDeity(""); setTitle(""); setLyrics(""); setShowSunoPanel(false); }}
                 style={{
                   padding: "0.65rem 0.75rem",
                   borderRadius: "0.5rem",
@@ -671,24 +671,41 @@ export default function Step2Lyrics() {
               value={visionInput}
               onChange={(e) => setVisionInput(e.target.value)}
               rows={3}
-              placeholder="e.g., Hero standing in rain, crowd behind him, powerful entry — drums build up slowly, then explode."
+              placeholder="Describe the setting, mood, and key imagery for your song…"
               style={{ ...inputStyle, fontSize: "0.875rem", lineHeight: "1.5", marginBottom: "0.5rem", border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.06)" }}
             />
 
-            {/* Examples — mixed until category is explicitly picked */}
+            {/* Examples — mixed until category is explicitly picked; click to use */}
             <div style={examplesBox}>
               <p style={{ fontSize: "0.68rem", fontWeight: 600, color: "rgba(139,92,246,0.45)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                {hasPicked ? `${SONG_CATEGORIES.find(c => c.value === category)?.label} examples` : "Examples · pick a category to filter"}
+                {hasPicked ? `${SONG_CATEGORIES.find(c => c.value === category)?.label} examples` : "Examples · pick a category to filter"}{" "}
+                <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.7 }}>· click to use</span>
               </p>
               <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
                 {hasPicked
                   ? VISION_EXAMPLES[category].map((ex) => (
-                      <li key={ex} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", marginBottom: "0.2rem" }}>• {ex}</li>
+                      <li key={ex}>
+                        <button
+                          onClick={() => setVisionInput(ex)}
+                          style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: "0.15rem 0", fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", lineHeight: "1.4", width: "100%", marginBottom: "0.15rem" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(139,92,246,0.85)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.35)"; }}
+                        >
+                          • {ex}
+                        </button>
+                      </li>
                     ))
                   : MIXED_STARTER_EXAMPLES.map((ex) => (
-                      <li key={ex.text} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", marginBottom: "0.2rem", display: "flex", gap: "0.4rem" }}>
-                        <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "rgba(139,92,246,0.5)", textTransform: "uppercase", flexShrink: 0, paddingTop: "1px" }}>[{ex.cat}]</span>
-                        {ex.text}
+                      <li key={ex.text}>
+                        <button
+                          onClick={() => setVisionInput(ex.text)}
+                          style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: "0.15rem 0", fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", lineHeight: "1.4", width: "100%", marginBottom: "0.15rem", display: "flex", gap: "0.4rem" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(139,92,246,0.85)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.35)"; }}
+                        >
+                          <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "rgba(139,92,246,0.5)", textTransform: "uppercase", flexShrink: 0, paddingTop: "1px" }}>[{ex.cat}]</span>
+                          {ex.text}
+                        </button>
                       </li>
                     ))
                 }
@@ -750,10 +767,19 @@ export default function Step2Lyrics() {
               ))}
             </div>
             <p style={helperStyle}>
-              {outputType === "lyrics_suno"  && "Generates lyrics + a ready-to-paste SUNO music style block (tempo, instruments, mood, vocals)."}
-              {outputType === "lyrics_only"  && "Generates lyrics only. No SUNO block — useful if you're scoring the music separately."}
-              {outputType === "lyrics_scene" && "Generates lyrics plus a visual scene note for each section (Pallavi, Charanam) — describes mood, shot type, and setting. Feeds directly into Step 3 Scene Breakdown."}
+              {outputType === "lyrics_suno"  && "After generating you'll receive lyrics plus a SUNO music style block (tempo, instruments, mood, vocals) ready to paste directly into Suno."}
+              {outputType === "lyrics_only"  && "Generates lyrics only — no SUNO block. Use this if you're scoring or recording the music separately."}
+              {outputType === "lyrics_scene" && "Generates lyrics plus a visual scene note per section (Pallavi, Charanam) describing mood, shot type, and setting. Feeds directly into Step 3 Scene Breakdown."}
             </p>
+            {/* If there's a saved SUNO style from a previous generation, offer to restore it */}
+            {!showSunoPanel && sunoStyle && outputType !== "lyrics_only" && (
+              <button
+                onClick={() => setShowSunoPanel(true)}
+                style={{ marginTop: "0.4rem", background: "none", border: "none", padding: 0, fontSize: "0.7rem", color: "rgba(255,0,110,0.6)", cursor: "pointer", fontWeight: 600, textDecoration: "underline" }}
+              >
+                Show SUNO style from previous generation →
+              </button>
+            )}
           </div>
 
           {/* Duration + LLM model row */}
@@ -845,23 +871,40 @@ export default function Step2Lyrics() {
             value={customPrompt}
             onChange={(e) => { setCustomPrompt(e.target.value); setIsVisionDirective(false); }}
             rows={3}
-            placeholder="e.g., Focus on Alipiri steps and Govinda chanting. Use Annamacharya-style classical Telugu. Keep each line under 8 syllables."
+            placeholder="Add specific style or structure instructions here…"
             style={{ ...inputStyle, lineHeight: "1.5", fontSize: "0.875rem", marginBottom: "0.5rem" }}
           />
 
           <div style={examplesBox}>
             <p style={{ fontSize: "0.68rem", fontWeight: 600, color: "rgba(255,255,255,0.22)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-              {hasPicked ? `${SONG_CATEGORIES.find(c => c.value === category)?.label} examples` : "Examples · pick a category to filter"}
+              {hasPicked ? `${SONG_CATEGORIES.find(c => c.value === category)?.label} examples` : "Examples · pick a category to filter"}{" "}
+              <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.7 }}>· click to use</span>
             </p>
             <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
               {hasPicked
                 ? DIRECTION_EXAMPLES[category].map((ex) => (
-                    <li key={ex} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", marginBottom: "0.2rem" }}>• {ex}</li>
+                    <li key={ex}>
+                      <button
+                        onClick={() => { setCustomPrompt(ex); setIsVisionDirective(false); }}
+                        style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: "0.15rem 0", fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", lineHeight: "1.4", width: "100%", marginBottom: "0.15rem" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(0,212,255,0.75)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}
+                      >
+                        • {ex}
+                      </button>
+                    </li>
                   ))
                 : MIXED_STARTER_DIRECTION.map((ex) => (
-                    <li key={ex.text} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", marginBottom: "0.2rem", display: "flex", gap: "0.4rem" }}>
-                      <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", flexShrink: 0, paddingTop: "1px" }}>[{ex.cat}]</span>
-                      {ex.text}
+                    <li key={ex.text}>
+                      <button
+                        onClick={() => { setCustomPrompt(ex.text); setIsVisionDirective(false); }}
+                        style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: "0.15rem 0", fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", lineHeight: "1.4", width: "100%", marginBottom: "0.15rem", display: "flex", gap: "0.4rem" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(0,212,255,0.75)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}
+                      >
+                        <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", flexShrink: 0, paddingTop: "1px" }}>[{ex.cat}]</span>
+                        {ex.text}
+                      </button>
                     </li>
                   ))
               }
@@ -901,13 +944,13 @@ export default function Step2Lyrics() {
                 Edit freely — changes save automatically.
               </p>
               <textarea
-                value={project.lyrics}
+                value={sanitizeLyrics(project.lyrics)}
                 onChange={(e) => setLyrics(e.target.value)}
                 rows={14}
                 style={{ ...inputStyle, color: "#a8d8ea", fontFamily: "monospace", fontSize: "0.875rem", lineHeight: "1.7", minHeight: "260px" }}
               />
               {/* Action row — below the content so the flow is: read → act */}
-              <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
+              <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.85rem", paddingTop: "0.75rem", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                 {canUndoLyrics && (
                   <button
                     onClick={() => { undoLyrics(); toast.success("Restored previous lyrics"); }}
@@ -917,7 +960,7 @@ export default function Step2Lyrics() {
                   </button>
                 )}
                 <button
-                  onClick={() => copyToClipboard(project.lyrics, "Lyrics")}
+                  onClick={() => copyToClipboard(sanitizeLyrics(project.lyrics), "Lyrics")}
                   style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.5rem 0.9rem", background: "rgba(0,212,255,0.12)", color: "#00d4ff", border: "1px solid rgba(0,212,255,0.35)", borderRadius: "0.375rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}
                 >
                   <Copy size={13} /> Copy lyrics
@@ -1025,9 +1068,10 @@ export default function Step2Lyrics() {
           </div>
         )}
 
-        {/* Continue */}
+        {/* Continue — full-width, visually separated from the iterate/SUNO sections */}
         {project.lyrics && (
-          <div>
+          <div style={{ paddingTop: "0.5rem" }}>
+            <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", marginBottom: "1.5rem" }} />
             <button
               onClick={() => { if (!canContinue) return; markStepComplete(1); setActiveStep(2); }}
               disabled={!canContinue}
@@ -1045,7 +1089,7 @@ export default function Step2Lyrics() {
             </button>
             {!canContinue && (
               <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.32)", textAlign: "center", marginTop: "0.5rem" }}>
-                Fill in subject, song title, and generate lyrics to continue.
+                {!project.title.trim() ? "Add a song title above to continue." : "Generate lyrics first, then continue."}
               </p>
             )}
           </div>

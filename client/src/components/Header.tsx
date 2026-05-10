@@ -104,7 +104,7 @@ export default function Header({ sidebarOpen, onToggleSidebar, activeStep }: Hea
             flexShrink: 0,
           }}
         >
-          Step {activeStep} of 8
+          Step {activeStep} of 7
         </div>
       )}
 
