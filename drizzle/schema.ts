@@ -105,6 +105,7 @@ export const userSettings = mysqlTable("userSettings", {
   midjourneyApiKey: text("midjourneyApiKey"),
   grokApiKey: text("grokApiKey"),
   pikaApiKey: text("pikaApiKey"),
+  llmModel: text("llm_model").default("gemini-2.5-flash"),
   monthlyBudgetUSD: decimal("monthlyBudgetUSD", { precision: 10, scale: 2 }).default("50.00"),
   budgetResetDay: int("budgetResetDay").default(1),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

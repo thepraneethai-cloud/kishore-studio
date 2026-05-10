@@ -24,6 +24,7 @@ export default function Settings() {
     lyricsProvider: "chatgpt",
     imageProvider: "flux",
     videoProvider: "runway",
+    llmModel: "gemini-2.5-flash",
   });
   const [budget, setBudget] = useState({
     monthlyBudgetUSD: 50,
@@ -50,6 +51,7 @@ export default function Settings() {
         lyricsProvider: (settings.lyricsProvider as any) || "chatgpt",
         imageProvider: (settings.imageProvider as any) || "flux",
         videoProvider: (settings.videoProvider as any) || "runway",
+        llmModel: settings.llmModel || "gemini-2.5-flash",
       });
       setBudget({
         monthlyBudgetUSD: Number(settings.monthlyBudgetUSD) || 50,
@@ -83,6 +85,7 @@ export default function Settings() {
         lyricsProvider: providers.lyricsProvider as "chatgpt" | "claude" | "gemini",
         imageProvider: providers.imageProvider as "flux" | "dalle" | "midjourney",
         videoProvider: providers.videoProvider as "runway" | "grok" | "pika",
+        llmModel: providers.llmModel,
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -327,13 +330,56 @@ export default function Settings() {
               <strong style={{ color: "#00d4ff" }}>Active providers</strong> are highlighted. Add your own API key in the API Keys tab to use your own quota — otherwise the platform key is used.
             </div>
 
+            {/* ── LLM Model selector ── */}
+            <div>
+              <label style={{ display: "block", marginBottom: "0.25rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>
+                LLM Model
+              </label>
+              <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.45)", marginBottom: "0.6rem" }}>
+                Used for lyrics generation, prompt crafting, and director analysis. Models marked "own key" require a Gemini API key in the API Keys tab.
+              </p>
+              <select
+                value={providers.llmModel}
+                onChange={(e) => setProviders({ ...providers, llmModel: e.target.value })}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem",
+                  background: "rgba(0, 212, 255, 0.05)",
+                  border: "1px solid rgba(0, 212, 255, 0.3)",
+                  borderRadius: "0.5rem",
+                  color: "#fff",
+                  fontSize: "0.875rem",
+                  cursor: "pointer",
+                  outline: "none",
+                }}
+              >
+                <optgroup label="Forge (platform key — no own key needed)">
+                  <option value="gemini-2.5-flash">Gemini 2.5 Flash — fast · smart · default</option>
+                  <option value="gemini-2.5-pro">Gemini 2.5 Pro — most capable · slower</option>
+                </optgroup>
+                <optgroup label="Google direct (requires own Gemini API key)">
+                  <option value="gemini-2.0-flash">Gemini 2.0 Flash — fast · stable</option>
+                  <option value="gemini-2.0-flash-thinking-exp">Gemini 2.0 Flash Thinking — step-by-step reasoning</option>
+                  <option value="gemini-1.5-pro">Gemini 1.5 Pro — proven · long context</option>
+                  <option value="gemini-1.5-flash">Gemini 1.5 Flash — lightweight · fast</option>
+                </optgroup>
+              </select>
+              {providers.llmModel && providers.llmModel !== "gemini-2.5-flash" && (
+                <p style={{ fontSize: "0.72rem", color: "rgba(255,200,50,0.75)", marginTop: "0.4rem" }}>
+                  {["gemini-2.0-flash", "gemini-2.0-flash-thinking-exp", "gemini-1.5-pro", "gemini-1.5-flash"].includes(providers.llmModel)
+                    ? "This model routes to Google's endpoint — make sure your Gemini API key is saved in the API Keys tab."
+                    : "Non-default model selected — make sure it's available on your configured endpoint."}
+                </p>
+              )}
+            </div>
+
             {/* Lyrics */}
             <div>
               <label style={{ display: "block", marginBottom: "0.5rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>Lyrics Provider</label>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "rgba(57,255,20,0.07)", border: "1px solid rgba(57,255,20,0.4)", borderRadius: "0.5rem" }}>
                   <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#39ff14", flexShrink: 0 }} />
-                  <span style={{ flex: 1, color: "#fff", fontSize: "0.875rem" }}>Gemini 2.5 Flash (Google)</span>
+                  <span style={{ flex: 1, color: "#fff", fontSize: "0.875rem" }}>Gemini (Google) — model set above</span>
                   <span style={{ fontSize: "0.7rem", color: "#39ff14", fontWeight: "600" }}>ACTIVE</span>
                 </div>
                 {["ChatGPT (OpenAI)", "Claude (Anthropic)"].map((label) => (
@@ -383,6 +429,29 @@ export default function Settings() {
                 ))}
               </div>
             </div>
+
+            {/* Save button */}
+            <button
+              onClick={handleSaveProviders}
+              disabled={saving}
+              style={{
+                padding: "0.75rem 1.5rem",
+                background: "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)",
+                border: "none",
+                borderRadius: "0.5rem",
+                color: "#000",
+                fontWeight: "600",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.5rem",
+                opacity: saving ? 0.7 : 1,
+              }}
+            >
+              {saving ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
+              Save Providers
+            </button>
           </div>
         )}
 

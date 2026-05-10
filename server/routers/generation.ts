@@ -122,6 +122,7 @@ export const generationRouter = router({
           duration: input.duration || 4,
           language: input.language || "telugu",
           llmApiKey: userSettings?.geminiApiKey || undefined,
+          llmModel: userSettings?.llmModel || undefined,
         });
         // Record cost after success (non-blocking)
         void recordCost(ctx.user.id, "lyrics", "gemini", UNIT_COSTS.lyrics);
@@ -170,7 +171,10 @@ export const generationRouter = router({
             ],
             maxTokens: 400,
           },
-          userSettings?.geminiApiKey ? { apiKey: userSettings.geminiApiKey } : undefined
+          {
+            ...(userSettings?.geminiApiKey ? { apiKey: userSettings.geminiApiKey } : {}),
+            ...(userSettings?.llmModel ? { model: userSettings.llmModel } : {}),
+          }
         );
 
         const prompt = (result.choices[0]?.message?.content ?? "").toString().trim();
@@ -209,7 +213,8 @@ export const generationRouter = router({
         const result = await analyzeSceneArc(
           input.deity,
           input.scenes,
-          userSettings?.geminiApiKey || undefined
+          userSettings?.geminiApiKey || undefined,
+          userSettings?.llmModel || undefined
         );
         void recordCost(ctx.user.id, "lyrics", "gemini", UNIT_COSTS.lyrics * 3); // director analysis is ~3x a lyrics call
         return { success: true, data: result };

@@ -28,13 +28,14 @@ export const settingsRouter = router({
       return updated || null;
     }),
 
-  // Save provider preferences
+  // Save provider preferences + LLM model selection
   saveProviders: protectedProcedure
     .input(
       z.object({
         lyricsProvider: z.enum(["chatgpt", "claude", "gemini"]).optional(),
         imageProvider: z.enum(["flux", "dalle", "midjourney"]).optional(),
         videoProvider: z.enum(["runway", "grok", "pika"]).optional(),
+        llmModel: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

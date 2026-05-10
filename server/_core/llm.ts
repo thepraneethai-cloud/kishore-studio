@@ -273,7 +273,7 @@ const normalizeResponseFormat = ({
 
 export async function invokeLLM(
   params: InvokeParams,
-  options?: { apiKey?: string }
+  options?: { apiKey?: string; model?: string }
 ): Promise<InvokeResult> {
   const resolvedApiKey = options?.apiKey || ENV.forgeApiKey;
   assertApiKey(resolvedApiKey);
@@ -289,8 +289,8 @@ export async function invokeLLM(
     response_format,
   } = params;
 
-  // Use gemini-2.0-flash on Google's OpenAI-compat endpoint (gemini-2.5-flash isn't available there yet)
-  const model = options?.apiKey ? "gemini-2.0-flash" : "gemini-2.5-flash";
+  // Caller can override the model; otherwise pick a sensible default per endpoint
+  const model = options?.model ?? (options?.apiKey ? "gemini-2.0-flash" : "gemini-2.5-flash");
 
   const payload: Record<string, unknown> = {
     model,
