@@ -1,22 +1,30 @@
 // ============================================================
-// Telugu Devotional Lyrics Generation using LLM
+// Telugu Song Lyrics Generation using LLM
 // ============================================================
 
 import { invokeLLM } from "./llm";
 
+export type SongCategory = "devotional" | "cinematic" | "folk" | "romantic" | "emotional" | "festival" | "mass";
+export type LanguageStyle = "pure_telugu" | "colloquial" | "poetic" | "mixed";
+export type OutputType    = "lyrics_only" | "lyrics_suno" | "lyrics_scene";
+
 export interface LyricsGenerationInput {
-  deity: string;
-  customPrompt?: string;    // appended to system prompt (iterate feedback, manual direction)
-  directivePrompt?: string; // replaces the user message entirely (AI-generated vision brief)
+  deity: string;             // subject/topic (deity name for devotional, subject for others)
+  category?: SongCategory;
+  mood?: string;
+  languageStyle?: LanguageStyle;
+  outputType?: OutputType;
+  customPrompt?: string;     // appended to system prompt (iterate feedback, manual direction)
+  directivePrompt?: string;  // replaces the user message entirely (AI-generated vision brief)
   theme?: string;
   duration?: number;
   language?: "telugu" | "english";
-  llmApiKey?: string;     // User's own Gemini key; falls back to server Forge key when absent
-  llmModel?: string;      // Model override; falls back to endpoint default when absent
-  openaiApiKey?: string;  // Required when llmModel is a GPT model
-  claudeApiKey?: string;  // Required when llmModel is a Claude model
-  groqApiKey?: string;    // Required when llmModel is a Groq model (Llama, Qwen)
-  mistralApiKey?: string; // Required when llmModel is a Mistral model
+  llmApiKey?: string;
+  llmModel?: string;
+  openaiApiKey?: string;
+  claudeApiKey?: string;
+  groqApiKey?: string;
+  mistralApiKey?: string;
 }
 
 export interface SunoStyle {
@@ -30,6 +38,7 @@ export interface SunoStyle {
 export interface GeneratedLyrics {
   lyrics: string;
   sunoStyle?: SunoStyle;
+  sceneNotes?: string;
   structure: {
     pallavi: string;
     charanam1: string;
@@ -41,11 +50,66 @@ export interface GeneratedLyrics {
   metadata: {
     deity: string;
     theme?: string;
+    category?: string;
     estimatedDuration: number;
     generatedAt: string;
   };
 }
 
+// ── Category-aware SUNO presets ──────────────────────────────
+const SUNO_PRESETS: Record<SongCategory, SunoStyle> = {
+  devotional: {
+    tempo: "slow-medium",
+    style: "Telugu devotional bhajan, Carnatic classical",
+    mood: "Meditative, spiritual, peaceful",
+    instruments: ["Harmonium", "Tabla", "Flute", "Mridangam", "Veena"],
+    vocals: "Male devotional tenor, traditional",
+  },
+  cinematic: {
+    tempo: "variable",
+    style: "Telugu cinematic score, orchestral",
+    mood: "Epic, cinematic, dramatic",
+    instruments: ["Orchestral strings", "Brass", "Piano", "Drums", "Synth"],
+    vocals: "Playback singer, cinematic style",
+  },
+  folk: {
+    tempo: "medium-upbeat",
+    style: "Telugu folk (Janapada), village folk",
+    mood: "Earthy, festive, rustic, raw",
+    instruments: ["Dappu", "Flute", "Dotara", "Harmonium", "Nadaswaram"],
+    vocals: "Folk vocal style, group chorus",
+  },
+  romantic: {
+    tempo: "slow-medium",
+    style: "Telugu melody, romantic pop",
+    mood: "Romantic, dreamy, gentle, longing",
+    instruments: ["Guitar", "Piano", "Violin", "Light percussion", "Synth pads"],
+    vocals: "Soft male or female playback vocals",
+  },
+  emotional: {
+    tempo: "slow",
+    style: "Telugu emotional ballad",
+    mood: "Melancholic, heartfelt, raw emotion",
+    instruments: ["Piano", "Violin", "Cello", "Ambient pads"],
+    vocals: "Emotional playback vocalist, expressive",
+  },
+  festival: {
+    tempo: "fast",
+    style: "Telugu festival celebration song",
+    mood: "Joyful, energetic, celebratory",
+    instruments: ["Dhol", "Brass", "Synth", "Dappu", "Percussion"],
+    vocals: "Energetic male vocals, group chorus",
+  },
+  mass: {
+    tempo: "fast",
+    style: "Telugu mass anthem, commercial mass",
+    mood: "Power, swagger, raw aggression, mass appeal",
+    instruments: ["Heavy bass", "Drums", "Brass", "Rock guitar", "Synth"],
+    vocals: "Powerful male vocals, punch delivery",
+  },
+};
+
+// ── Devotional deity context (keeps all existing data) ───────
 const DEITY_CONTEXT: Record<string, string> = {
   venkateswara: `Venkateswara (Balaji/Srinivasa) is the supreme deity of Tirupati, embodying divine grace and eternal protection.
     Common themes: pilgrimage to Tirumala, Alipiri steps, Govinda chanting, seven hills, Pushkarini lake, divine darshan, blessings.
@@ -100,7 +164,6 @@ const DEITY_CONTEXT: Record<string, string> = {
     Instruments: Nadaswaram, Flute, Mridangam. Mood: Youthful, victorious, radiant devotion.`,
 };
 
-// Runtime cache for dynamically-generated deity contexts (avoids re-generating each request)
 const deityContextCache = new Map<string, string>();
 
 function buildLLMOptions(
@@ -112,105 +175,199 @@ function buildLLMOptions(
   mistralApiKey?: string,
 ) {
   return {
-    ...(llmApiKey ? { apiKey: llmApiKey } : {}),
-    ...(llmModel ? { model: llmModel } : {}),
-    ...(openaiApiKey ? { openaiApiKey } : {}),
-    ...(claudeApiKey ? { claudeApiKey } : {}),
-    ...(groqApiKey ? { groqApiKey } : {}),
-    ...(mistralApiKey ? { mistralApiKey } : {}),
+    ...(llmApiKey    ? { apiKey: llmApiKey } : {}),
+    ...(llmModel     ? { model: llmModel }   : {}),
+    ...(openaiApiKey ? { openaiApiKey }      : {}),
+    ...(claudeApiKey ? { claudeApiKey }      : {}),
+    ...(groqApiKey   ? { groqApiKey }        : {}),
+    ...(mistralApiKey ? { mistralApiKey }    : {}),
   };
 }
 
-async function getDeityContext(deity: string, llmApiKey?: string, llmModel?: string, openaiApiKey?: string, claudeApiKey?: string, groqApiKey?: string, mistralApiKey?: string): Promise<string> {
-  const key = deity.toLowerCase().trim();
+// ── Subject/deity context ────────────────────────────────────
+async function getSubjectContext(
+  subject: string,
+  category: SongCategory,
+  llmApiKey?: string,
+  llmModel?: string,
+  openaiApiKey?: string,
+  claudeApiKey?: string,
+  groqApiKey?: string,
+  mistralApiKey?: string,
+): Promise<string> {
+  // For devotional, use the existing deity context map
+  if (category === "devotional") {
+    const key = subject.toLowerCase().trim();
+    const hardcoded = DEITY_CONTEXT[key];
+    if (hardcoded) return hardcoded;
 
-  // Check hardcoded map first (covers all known deities instantly)
-  const hardcoded = DEITY_CONTEXT[key];
-  if (hardcoded) return hardcoded;
+    const aliases: Record<string, string> = {
+      balaji: "venkateswara", srinivasa: "venkateswara", govinda: "venkateswara",
+      ganapati: "ganesha", vinayaka: "ganesha", vighneshwara: "ganesha",
+      mahalakshmi: "lakshmi", dhanalakshmi: "lakshmi",
+      mahadeva: "shiva", shankar: "shiva", shankaraa: "shiva",
+      govind: "krishna", madhava: "krishna", radha: "krishna",
+      anjaneya: "hanuman", maruti: "hanuman",
+      raghava: "rama", ramachandra: "rama",
+      sharada: "saraswati", vageeshwari: "saraswati",
+      shakti: "durga", bhavani: "durga", durgamba: "durga",
+      kartikeya: "murugan", skanda: "murugan",
+      nrusimha: "narasimha", ugra: "narasimha",
+      sastha: "ayyappa", dharmasastha: "ayyappa",
+    };
+    const aliasTarget = aliases[key];
+    if (aliasTarget && DEITY_CONTEXT[aliasTarget]) return DEITY_CONTEXT[aliasTarget];
+  }
 
-  // Check aliases
-  const aliases: Record<string, string> = {
-    balaji: "venkateswara", srinivasa: "venkateswara", govinda: "venkateswara",
-    ganapati: "ganesha", vinayaka: "ganesha", vighneshwara: "ganesha",
-    mahalakshmi: "lakshmi", dhanalakshmi: "lakshmi",
-    mahadeva: "shiva", shankar: "shiva", shankaraa: "shiva",
-    govind: "krishna", madhava: "krishna", radha: "krishna",
-    anjaneya: "hanuman", maruti: "hanuman",
-    raghava: "rama", ramachandra: "rama",
-    sharada: "saraswati", vageeshwari: "saraswati",
-    shakti: "durga", bhavani: "durga", durgamba: "durga",
-    kartikeya: "murugan", skanda: "murugan",
-    nrusimha: "narasimha", ugra: "narasimha",
-    sastha: "ayyappa", dharmasastha: "ayyappa",
+  const cacheKey = `${category}:${subject.toLowerCase().trim()}`;
+  if (deityContextCache.has(cacheKey)) return deityContextCache.get(cacheKey)!;
+
+  // For non-devotional categories, generate a short context via LLM
+  const categoryDescriptions: Record<SongCategory, string> = {
+    devotional: "Telugu devotional bhajan",
+    cinematic:  "Telugu film cinematic song",
+    folk:       "Telugu folk (Janapada) song",
+    romantic:   "Telugu romantic melody",
+    emotional:  "Telugu emotional ballad",
+    festival:   "Telugu festival celebration song",
+    mass:       "Telugu mass hero anthem",
   };
-  const aliasTarget = aliases[key];
-  if (aliasTarget && DEITY_CONTEXT[aliasTarget]) return DEITY_CONTEXT[aliasTarget];
 
-  // Check runtime cache for previously-generated contexts
-  if (deityContextCache.has(key)) return deityContextCache.get(key)!;
-
-  // Generate context dynamically via LLM for any other deity
   try {
     const response = await invokeLLM({
       messages: [{
         role: "user",
-        content: `In 3-4 sentences, describe "${deity}" as a Hindu deity for writing Telugu devotional songs (bhajans). Include: who they are and their divine role, the most common devotional themes and sacred places associated with them, traditional instruments used in their worship music, and the typical emotional mood of their bhajans. Be specific and concise.`,
+        content: `In 2-3 sentences, describe the subject "${subject}" for writing a ${categoryDescriptions[category]}. Include: the key emotions, imagery, setting, and any culturally specific references a Telugu lyricist should know. Be concise and specific.`,
       }],
     }, buildLLMOptions(llmApiKey, llmModel, openaiApiKey, claudeApiKey, groqApiKey, mistralApiKey));
 
     const content = response.choices[0]?.message.content;
     const context = typeof content === "string" && content.trim()
       ? content.trim()
-      : `${deity} is a revered Hindu deity with a rich devotional tradition in Telugu worship.`;
+      : `A ${categoryDescriptions[category]} about "${subject}".`;
 
-    deityContextCache.set(key, context);
+    deityContextCache.set(cacheKey, context);
     return context;
   } catch {
-    // Never block lyrics generation due to context failure
-    return `${deity} is a revered Hindu deity. Create authentic devotional content that honors traditional bhajan conventions for this deity.`;
+    return `A ${categoryDescriptions[category]} about "${subject}". Capture the essence with authentic Telugu cultural references.`;
   }
 }
 
-/**
- * Generate Telugu devotional lyrics using Claude/GPT
- * Supports custom prompts for user-directed generation
- */
-export async function generateDevotionalLyrics(
-  input: LyricsGenerationInput
-): Promise<GeneratedLyrics> {
+// ── Category-aware system prompt builder ─────────────────────
+function buildSystemPrompt(input: LyricsGenerationInput, subjectContext: string): string {
+  const category = input.category || "devotional";
+  const mood     = input.mood || "";
   const duration = input.duration || 4;
 
-  // Fetches hardcoded context instantly, or generates via LLM for unlisted deities
-  const deityContext = await getDeityContext(input.deity, input.llmApiKey, input.llmModel, input.openaiApiKey, input.claudeApiKey, input.groqApiKey, input.mistralApiKey);
+  const languageInstructions: Record<LanguageStyle, string> = {
+    pure_telugu: "Write in pure, classical Telugu script with traditional vocabulary. Avoid Hindi or English words.",
+    colloquial:  "Write in colloquial spoken Telugu — natural, everyday speech patterns. Regional flavour (Hyderabadi/Andhra) is welcome.",
+    poetic:      "Write in rich poetic Telugu — classical metaphors, alankara (figures of speech), lyrical flow. Avoid mundane phrasing.",
+    mixed:       "Write in mixed Telugu-English (Tenglish) — Telugu as the primary language, English words for contemporary concepts and hook lines.",
+  };
+  const langInstruction = input.languageStyle
+    ? languageInstructions[input.languageStyle]
+    : input.language === "english"
+    ? "Write in English with transliterated Telugu deity/place names."
+    : "Write in Telugu script.";
 
-  let systemPrompt = `You are an expert Telugu devotional songwriter. Your task is to create authentic, emotionally resonant devotional lyrics (bhajans) that honor the deity and resonate with devotees.
+  const categoryInstructions: Record<SongCategory, string> = {
+    devotional: `You are an expert Telugu devotional songwriter specialising in bhajans, keertanas, and stotrams.
+SUBJECT CONTEXT:
+${subjectContext}
+STYLE RULES:
+- Devotional reverence throughout; the singer speaks to or about the deity
+- Include specific attributes, sacred locations, or mythological stories
+- Use poetic devices: repetition, epithets, call-and-response
+- Emotional arc: reverence → devotion → surrender → blessing`,
 
-DEITY CONTEXT:
-${deityContext}
+    cinematic: `You are an expert Telugu film lyricist (like Sirivennela, Ananta Sriram, Chandrabose).
+SUBJECT CONTEXT:
+${subjectContext}
+STYLE RULES:
+- Write for a specific cinematic moment (intro, romance, emotional, mass)
+- Use strong visual imagery — every line should paint a film frame
+- Mix classical Telugu references with contemporary relatable language
+- Hook lines (mukhda) must be instantly memorable and repeatable
+- Mass/intro songs: attitude, power, aggression; romantic: longing and beauty`,
 
-REQUIREMENTS:
-- Write in ${input.language === "english" ? "English (transliterated Telugu names)" : "Telugu script"}
-- Each line should be singable (8-12 syllables, ~4-5 seconds when performed)
-- In a bhajan the Pallavi repeats between each Charanam, so total sung time = (Pallavi × (N+1)) + sum of Charanams + Outro
-- Include specific references to the deity's attributes, stories, or sacred sites
-- Use poetic devices: metaphor, repetition, call-and-response
-- Emotional arc: Build from reverence → devotion → surrender → blessing
-- Avoid clichés; be specific and vivid
-- Include at least one reference to a sacred location or ritual
+    folk: `You are an expert Telugu folk (Janapada) lyricist.
+SUBJECT CONTEXT:
+${subjectContext}
+STYLE RULES:
+- Use rustic, village-life Telugu — simple, earthy, rhythmically percussive
+- Reference nature: rivers, trees, seasons, animals, farming, village life
+- Call-and-response structure works well (one line leads, next echoes)
+- Avoid Sanskrit-heavy vocabulary; prefer spoken rural Telugu
+- Rhythm should feel like it belongs to a Dappu beat`,
+
+    romantic: `You are an expert Telugu romantic melody lyricist.
+SUBJECT CONTEXT:
+${subjectContext}
+STYLE RULES:
+- Write with soft, flowing language — every line evokes feeling, not just description
+- Use nature metaphors: moon, rain, flowers, breeze, rivers
+- First-person emotional perspective — the singer is in love, longing, or lost
+- Avoid clichés; find fresh, specific images (a particular college, street, season)
+- Mukhda should be instantly singable with the tune`,
+
+    emotional: `You are an expert Telugu emotional ballad lyricist.
+SUBJECT CONTEXT:
+${subjectContext}
+STYLE RULES:
+- Write raw, honest emotion — no pretence, no decoration
+- Ground every feeling in a specific concrete moment (a hand, a photo, a smell)
+- Restraint is powerful — sometimes one simple line is more moving than ten
+- Avoid melodrama; let the situation carry the weight
+- Structure should allow the emotion to build slowly, then release`,
+
+    festival: `You are an expert Telugu festival and celebration song lyricist.
+SUBJECT CONTEXT:
+${subjectContext}
+STYLE RULES:
+- High energy, celebratory, inclusive — everyone should want to join in
+- Name specific festival customs, foods, clothing, rituals, and community moments
+- Repeating hook / chorus that crowds can shout together
+- Joy, colour, community, tradition — these are the anchors
+- Rhythm should feel like it could drive a group dance`,
+
+    mass: `You are an expert Telugu mass entertainer lyricist (mass hero anthem style).
+SUBJECT CONTEXT:
+${subjectContext}
+STYLE RULES:
+- Swagger, attitude, raw power — the hero (or concept) is larger than life
+- Short, punchy lines with maximum impact; avoid long sentences
+- Rhetorical questions and declarations work well ("Who dares face me?")
+- Mix Telugu with occasional English for punch words
+- Reference strength, loyalty, fear of enemies, pride of identity
+- Every line should land like a film mass dialogue`,
+  };
+
+  const moodLine = mood ? `\nMOOD TARGET: ${mood}. Let this mood colour every line — word choice, rhythm, and imagery should all serve it.\n` : "";
+
+  const sectionCounts = duration <= 2
+    ? "• Pallavi: 3 lines\n• charanam1: 5 lines\n• charanam2, charanam3, charanam4, outro: leave empty strings"
+    : duration <= 4
+    ? "• Pallavi: 4 lines\n• charanam1: 6 lines\n• charanam2: 6 lines\n• charanam3, charanam4: leave empty strings\n• outro: 2 lines"
+    : duration <= 6
+    ? "• Pallavi: 4 lines\n• charanam1: 8 lines\n• charanam2: 8 lines\n• charanam3: 6 lines\n• charanam4: leave empty string\n• outro: 3 lines"
+    : duration <= 8
+    ? "• Pallavi: 4 lines\n• charanam1: 8 lines\n• charanam2: 8 lines\n• charanam3: 8 lines\n• charanam4: 6 lines\n• outro: 3 lines"
+    : "• Pallavi: 5 lines\n• charanam1: 10 lines\n• charanam2: 10 lines\n• charanam3: 10 lines\n• charanam4: 8 lines\n• outro: 4 lines";
+
+  const includeSceneNotes = input.outputType === "lyrics_scene";
+
+  return `${categoryInstructions[category]}
+${moodLine}
+LANGUAGE: ${langInstruction}
 
 SECTION COUNT FOR ${duration}-MINUTE TARGET (follow exactly):
-${duration <= 2
-  ? "• Pallavi: 3 lines\n• charanam1: 5 lines\n• charanam2, charanam3, charanam4, outro: leave empty strings"
-  : duration <= 4
-  ? "• Pallavi: 4 lines\n• charanam1: 6 lines\n• charanam2: 6 lines\n• charanam3, charanam4: leave empty strings\n• outro: 2 lines"
-  : duration <= 6
-  ? "• Pallavi: 4 lines\n• charanam1: 8 lines\n• charanam2: 8 lines\n• charanam3: 6 lines\n• charanam4: leave empty string\n• outro: 3 lines"
-  : duration <= 8
-  ? "• Pallavi: 4 lines\n• charanam1: 8 lines\n• charanam2: 8 lines\n• charanam3: 8 lines\n• charanam4: 6 lines\n• outro: 3 lines"
-  : "• Pallavi: 5 lines\n• charanam1: 10 lines\n• charanam2: 10 lines\n• charanam3: 10 lines\n• charanam4: 8 lines\n• outro: 4 lines"}
+${sectionCounts}
+
+SONG STRUCTURE NOTE: Pallavi = chorus (repeats between each Charanam). Each line: 8–12 syllables, singable at ~4–5 seconds per line.
 
 OUTPUT FORMAT:
-Return a JSON object with this exact structure. CRITICAL: separate each song line with \\n inside the string — do NOT write multiple lines as one long sentence:
+Return a JSON object. CRITICAL: separate each song line with \\n inside the string — do NOT write multiple lines as one long sentence:
 {
   "pallavi": "line one\\nline two\\nline three",
   "charanam1": "line one\\nline two\\nline three\\nline four",
@@ -218,68 +375,105 @@ Return a JSON object with this exact structure. CRITICAL: separate each song lin
   "charanam3": "",
   "charanam4": "",
   "outro": "",
-  "notes": "Brief explanation of the lyrical theme and structure"
+  "notes": "Brief explanation of the lyrical theme and structure"${includeSceneNotes ? `,\n  "sceneNotes": "Brief notes on visual direction for each section (2-3 sentences per section)"` : ""}
 }`;
+}
 
-  // directivePrompt (from vision generator) becomes the primary creative brief.
-  // customPrompt (iterate feedback / manual direction) is appended to the system prompt.
-  if (input.customPrompt) {
-    systemPrompt += `\n\nUSER DIRECTION:\n${input.customPrompt}\n\nIncorporate this direction while maintaining devotional authenticity. REMINDER: output valid JSON where every song line is separated by \\n inside the string value — never join lines into one sentence.`;
+// ── Category-aware SUNO style ────────────────────────────────
+function generateSunoStyle(deity: string, category: SongCategory = "devotional", _theme?: string): SunoStyle {
+  const preset = SUNO_PRESETS[category];
+
+  // For devotional, refine by specific deity
+  if (category === "devotional") {
+    const key = deity.toLowerCase().trim();
+    const deityOverrides: Record<string, Partial<SunoStyle>> = {
+      venkateswara: { style: "Slow devotional bhajan, Nadaswaram-led", mood: "Divine & Majestic", instruments: ["Veena", "Mridangam", "Nadaswaram", "Flute"] },
+      ganesha:      { style: "Energetic devotional keertana", mood: "Joyful & Celebratory", instruments: ["Tabla", "Dholak", "Flute", "Harmonium"], tempo: "energetic" },
+      lakshmi:      { style: "Serene devotional bhajan", mood: "Graceful & Peaceful", instruments: ["Veena", "Sitar", "Flute", "Santoor"], vocals: "Female classical soprano", tempo: "slow" },
+      shiva:        { style: "Carnatic classical keertana with Damaru rhythm", mood: "Meditative & Mystical", instruments: ["Damaru", "Veena", "Mridangam", "Flute"] },
+      krishna:      { style: "Playful devotional bhajan, flute-led", mood: "Joyful & Longing", instruments: ["Flute", "Tabla", "Harmonium", "Mridangam"] },
+      hanuman:      { style: "Heroic devotional bhajan", mood: "Heroic & Devotional", instruments: ["Mridangam", "Dholak", "Nadaswaram", "Veena"], vocals: "Powerful male devotional baritone" },
+      durga:        { style: "Powerful Shakti bhajan with drumbeats", mood: "Powerful & Fierce", instruments: ["Dappu", "Nadaswaram", "Tabla", "Bells"], tempo: "energetic" },
+      saraswati:    { style: "Pure Carnatic devotional, Veena-led", mood: "Serene & Graceful", instruments: ["Veena", "Flute", "Bells", "Violin"], vocals: "Female classical vocalist, gentle", tempo: "slow" },
+      murugan:      { style: "South Indian devotional, Nadaswaram-led", mood: "Radiant & Devotional", instruments: ["Nadaswaram", "Mridangam", "Veena", "Flute"] },
+      ayyappa:      { style: "Pilgrim bhajan, forest-sacred atmosphere", mood: "Austere & Devotional", instruments: ["Flute", "Mridangam", "Chenda", "Bells"], vocals: "Male group bhajan with call and response" },
+    };
+    const aliases: Record<string, string> = {
+      balaji: "venkateswara", srinivasa: "venkateswara", govinda: "venkateswara",
+      ganapati: "ganesha", vinayaka: "ganesha",
+      mahalakshmi: "lakshmi",
+      mahadeva: "shiva", shankar: "shiva",
+      madhava: "krishna", radha: "krishna",
+      anjaneya: "hanuman", maruti: "hanuman",
+      shakti: "durga", bhavani: "durga",
+      sharada: "saraswati",
+      kartikeya: "murugan", skanda: "murugan",
+      sastha: "ayyappa",
+    };
+    const resolvedKey = aliases[key] || key;
+    const overrides = deityOverrides[resolvedKey] || {};
+    return { ...preset, ...overrides };
   }
 
+  return preset;
+}
+
+/**
+ * Generate Telugu song lyrics using an LLM
+ */
+export async function generateDevotionalLyrics(
+  input: LyricsGenerationInput
+): Promise<GeneratedLyrics> {
+  const duration = input.duration || 4;
+  const category = input.category || "devotional";
+
+  const subjectContext = await getSubjectContext(
+    input.deity,
+    category,
+    input.llmApiKey,
+    input.llmModel,
+    input.openaiApiKey,
+    input.claudeApiKey,
+    input.groqApiKey,
+    input.mistralApiKey,
+  );
+
+  let systemPrompt = buildSystemPrompt(input, subjectContext);
+
+  if (input.customPrompt) {
+    systemPrompt += `\n\nUSER DIRECTION:\n${input.customPrompt}\n\nIncorporate this direction. REMINDER: output valid JSON where every song line is separated by \\n inside the string value — never join lines into one sentence.`;
+  }
+
+  const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1);
   const userMessage = input.directivePrompt
-    ? `${input.directivePrompt}\n\n(Deity: ${input.deity}, Duration: ${duration} min, Language: ${input.language ?? "telugu"})`
-    : `Create a ${duration}-minute devotional bhajan for ${input.deity.charAt(0).toUpperCase() + input.deity.slice(1)}${input.theme ? ` with the theme of "${input.theme}"` : ""}.`;
+    ? `${input.directivePrompt}\n\n(Subject: ${input.deity}, Category: ${categoryLabel}, Duration: ${duration} min, Language: ${input.languageStyle || input.language || "telugu"})`
+    : `Create a ${duration}-minute ${categoryLabel} song about "${input.deity}"${input.mood ? ` with a ${input.mood} mood` : ""}${input.theme ? ` — theme: "${input.theme}"` : ""}.`;
+
+  const includeSceneNotes = input.outputType === "lyrics_scene";
 
   try {
     const response = await invokeLLM({
       messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: userMessage,
-        },
+        { role: "system", content: systemPrompt },
+        { role: "user",   content: userMessage },
       ],
       temperature: 1.2,
       response_format: {
         type: "json_schema",
         json_schema: {
-          name: "devotional_lyrics",
+          name: "song_lyrics",
           strict: true,
           schema: {
             type: "object",
             properties: {
-              pallavi: {
-                type: "string",
-                description: "Chorus section (2-4 lines)",
-              },
-              charanam1: {
-                type: "string",
-                description: "First verse (4-6 lines)",
-              },
-              charanam2: {
-                type: "string",
-                description: "Second verse (optional)",
-              },
-              charanam3: {
-                type: "string",
-                description: "Third verse (optional, for 5+ min songs)",
-              },
-              charanam4: {
-                type: "string",
-                description: "Fourth verse (optional, for 7+ min songs)",
-              },
-              outro: {
-                type: "string",
-                description: "Closing section (2-3 lines, optional)",
-              },
-              notes: {
-                type: "string",
-                description: "Brief explanation of the lyrical theme",
-              },
+              pallavi:    { type: "string", description: "Chorus / mukhda (2-5 lines)" },
+              charanam1:  { type: "string", description: "First verse (4-10 lines)" },
+              charanam2:  { type: "string", description: "Second verse (optional)" },
+              charanam3:  { type: "string", description: "Third verse (optional, 5+ min)" },
+              charanam4:  { type: "string", description: "Fourth verse (optional, 7+ min)" },
+              outro:      { type: "string", description: "Closing section (optional)" },
+              notes:      { type: "string", description: "Brief explanation of the lyrical theme" },
+              ...(includeSceneNotes ? { sceneNotes: { type: "string", description: "Visual direction notes per section" } } : {}),
             },
             required: ["pallavi", "charanam1", "notes"],
             additionalProperties: false,
@@ -289,15 +483,16 @@ Return a JSON object with this exact structure. CRITICAL: separate each song lin
     }, buildLLMOptions(input.llmApiKey, input.llmModel, input.openaiApiKey, input.claudeApiKey, input.groqApiKey, input.mistralApiKey));
 
     const content = response.choices[0]?.message.content;
-    if (!content) {
-      throw new Error("No response from LLM");
-    }
+    if (!content) throw new Error("No response from LLM");
 
     const contentStr = typeof content === "string" ? content : JSON.stringify(content);
-    // Strip markdown code fences — some models wrap JSON in ```json ... ``` despite json_schema format
     const jsonStr = contentStr.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
-    let parsed: { pallavi: string; charanam1: string; charanam2?: string; charanam3?: string; charanam4?: string; outro?: string; notes: string };
+    let parsed: {
+      pallavi: string; charanam1: string;
+      charanam2?: string; charanam3?: string; charanam4?: string;
+      outro?: string; notes: string; sceneNotes?: string;
+    };
     try {
       parsed = JSON.parse(jsonStr);
     } catch {
@@ -305,10 +500,7 @@ Return a JSON object with this exact structure. CRITICAL: separate each song lin
       throw new Error("LLM returned malformed JSON — please try generating again.");
     }
 
-    // Safety: some models output literal \n (two chars) instead of actual newlines.
-    // Normalise all section strings to use real newline characters.
-    const normalizeLines = (s?: string) =>
-      (s || "").replace(/\\n/g, "\n").trim();
+    const normalizeLines = (s?: string) => (s || "").replace(/\\n/g, "\n").trim();
 
     parsed.pallavi   = normalizeLines(parsed.pallavi);
     parsed.charanam1 = normalizeLines(parsed.charanam1);
@@ -317,7 +509,6 @@ Return a JSON object with this exact structure. CRITICAL: separate each song lin
     parsed.charanam4 = normalizeLines(parsed.charanam4);
     parsed.outro     = normalizeLines(parsed.outro);
 
-    // Combine all sections into a single lyrics string
     const lyrics = [
       `[Pallavi]\n${parsed.pallavi}`,
       `\n[Charanam 1]\n${parsed.charanam1}`,
@@ -325,27 +516,28 @@ Return a JSON object with this exact structure. CRITICAL: separate each song lin
       parsed.charanam3 ? `\n[Charanam 3]\n${parsed.charanam3}` : "",
       parsed.charanam4 ? `\n[Charanam 4]\n${parsed.charanam4}` : "",
       parsed.outro ? `\n[Outro]\n${parsed.outro}` : "",
-    ]
-      .filter(Boolean)
-      .join("");
+    ].filter(Boolean).join("");
 
-    // Generate SUNO style based on deity and theme
-    const sunoStyle = generateSunoStyleForDeity(input.deity, input.theme);
+    const sunoStyle = input.outputType === "lyrics_only"
+      ? undefined
+      : generateSunoStyle(input.deity, category, input.theme);
 
     return {
       lyrics,
       sunoStyle,
+      sceneNotes: parsed.sceneNotes,
       structure: {
-        pallavi: parsed.pallavi,
+        pallavi:   parsed.pallavi,
         charanam1: parsed.charanam1,
         charanam2: parsed.charanam2 || "",
         charanam3: parsed.charanam3 || "",
         charanam4: parsed.charanam4 || "",
-        outro: parsed.outro || "",
+        outro:     parsed.outro || "",
       },
       metadata: {
         deity: input.deity,
         theme: input.theme,
+        category,
         estimatedDuration: duration,
         generatedAt: new Date().toISOString(),
       },
@@ -356,136 +548,6 @@ Return a JSON object with this exact structure. CRITICAL: separate each song lin
   }
 }
 
-/**
- * Generate SUNO style based on deity and theme
- */
-function generateSunoStyleForDeity(deity: string, _theme?: string): SunoStyle {
-  const key = deity.toLowerCase().trim();
-
-  const sunoStyles: Record<string, SunoStyle> = {
-    venkateswara: {
-      tempo: "medium",
-      style: "Slow devotional bhajan, Nadaswaram-led",
-      mood: "Divine & Majestic",
-      instruments: ["Veena", "Mridangam", "Nadaswaram", "Flute"],
-      vocals: "Male devotional tenor, classical training",
-    },
-    ganesha: {
-      tempo: "energetic",
-      style: "Energetic devotional keertana",
-      mood: "Joyful & Celebratory",
-      instruments: ["Tabla", "Dholak", "Flute", "Harmonium"],
-      vocals: "Male baritone bhajan with chorus",
-    },
-    lakshmi: {
-      tempo: "slow",
-      style: "Serene devotional bhajan",
-      mood: "Graceful & Peaceful",
-      instruments: ["Veena", "Sitar", "Flute", "Santoor"],
-      vocals: "Female classical soprano",
-    },
-    shiva: {
-      tempo: "classical",
-      style: "Carnatic classical keertana with Damaru rhythm",
-      mood: "Meditative & Mystical",
-      instruments: ["Damaru", "Veena", "Mridangam", "Flute"],
-      vocals: "Male Carnatic classical tenor",
-    },
-    krishna: {
-      tempo: "medium",
-      style: "Playful devotional bhajan, flute-led",
-      mood: "Joyful & Longing",
-      instruments: ["Flute", "Tabla", "Harmonium", "Mridangam"],
-      vocals: "Soft male devotional voice, melodic",
-    },
-    hanuman: {
-      tempo: "medium",
-      style: "Heroic devotional bhajan",
-      mood: "Heroic & Devotional",
-      instruments: ["Mridangam", "Dholak", "Nadaswaram", "Veena"],
-      vocals: "Powerful male devotional baritone",
-    },
-    rama: {
-      tempo: "medium",
-      style: "Majestic devotional keertana",
-      mood: "Majestic & Virtuous",
-      instruments: ["Veena", "Nadaswaram", "Flute", "Mridangam"],
-      vocals: "Male devotional tenor, dignified",
-    },
-    saraswati: {
-      tempo: "slow",
-      style: "Pure Carnatic devotional, Veena-led",
-      mood: "Serene & Graceful",
-      instruments: ["Veena", "Flute", "Bells", "Violin"],
-      vocals: "Female classical vocalist, gentle",
-    },
-    durga: {
-      tempo: "energetic",
-      style: "Powerful Shakti bhajan with drumbeats",
-      mood: "Powerful & Fierce",
-      instruments: ["Dappu", "Nadaswaram", "Tabla", "Bells"],
-      vocals: "Powerful female or male devotional voice",
-    },
-    murugan: {
-      tempo: "medium",
-      style: "South Indian devotional, Nadaswaram-led",
-      mood: "Radiant & Devotional",
-      instruments: ["Nadaswaram", "Mridangam", "Veena", "Flute"],
-      vocals: "Male devotional tenor, youthful",
-    },
-    narasimha: {
-      tempo: "medium",
-      style: "Powerful Vaishnava keertana",
-      mood: "Fierce & Devotional",
-      instruments: ["Nadaswaram", "Mridangam", "Veena", "Bells"],
-      vocals: "Powerful male devotional baritone",
-    },
-    ayyappa: {
-      tempo: "medium",
-      style: "Pilgrim bhajan, forest-sacred atmosphere",
-      mood: "Austere & Devotional",
-      instruments: ["Flute", "Mridangam", "Chenda", "Bells"],
-      vocals: "Male group bhajan with call and response",
-    },
-    subramanya: {
-      tempo: "medium",
-      style: "South Indian devotional, Nadaswaram-led",
-      mood: "Radiant & Victorious",
-      instruments: ["Nadaswaram", "Mridangam", "Flute"],
-      vocals: "Male devotional tenor, youthful",
-    },
-  };
-
-  // Check aliases
-  const aliases: Record<string, string> = {
-    balaji: "venkateswara", srinivasa: "venkateswara",
-    ganapati: "ganesha", vinayaka: "ganesha",
-    mahalakshmi: "lakshmi",
-    mahadeva: "shiva", shankar: "shiva",
-    govinda: "krishna", madhava: "krishna",
-    anjaneya: "hanuman", maruti: "hanuman",
-    raghava: "rama", ramachandra: "rama",
-    sharada: "saraswati",
-    shakti: "durga", bhavani: "durga",
-    kartikeya: "murugan", skanda: "murugan",
-    nrusimha: "narasimha",
-    sastha: "ayyappa",
-  };
-
-  return sunoStyles[key] || sunoStyles[aliases[key]] || {
-    tempo: "medium",
-    style: "Devotional bhajan",
-    mood: "Meditative & Peaceful",
-    instruments: ["Harmonium", "Tabla", "Flute", "Mridangam"],
-    vocals: "Male devotional tenor",
-  };
-}
-
-/**
- * Regenerate lyrics with a different theme or custom direction
- */
-export async function regenerateLyrics(
-  input: LyricsGenerationInput
-): Promise<GeneratedLyrics> {
+export async function regenerateLyrics(input: LyricsGenerationInput): Promise<GeneratedLyrics> {
   return generateDevotionalLyrics(input);
 }

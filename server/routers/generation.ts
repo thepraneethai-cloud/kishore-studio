@@ -102,13 +102,17 @@ export const generationRouter = router({
   generateLyrics: protectedProcedure
     .input(
       z.object({
-        deity: z.string(), // Accept any custom deity name (Hanuman, Shiva, custom mythology, etc.)
-        customPrompt: z.string().optional(),   // iterate feedback / manual direction (appendix)
-        directivePrompt: z.string().optional(), // AI-generated vision brief (primary user message)
+        deity: z.string(),
+        category: z.enum(["devotional", "cinematic", "folk", "romantic", "emotional", "festival", "mass"]).optional(),
+        mood: z.string().optional(),
+        languageStyle: z.enum(["pure_telugu", "colloquial", "poetic", "mixed"]).optional(),
+        outputType: z.enum(["lyrics_only", "lyrics_suno", "lyrics_scene"]).optional(),
+        customPrompt: z.string().optional(),
+        directivePrompt: z.string().optional(),
         theme: z.string().optional(),
         duration: z.number().min(1).max(10).optional(),
         language: z.enum(["telugu", "english"]).optional(),
-        llmModel: z.string().optional(), // inline override — takes precedence over saved settings
+        llmModel: z.string().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -117,6 +121,10 @@ export const generationRouter = router({
         const userSettings = await getUserSettings(ctx.user.id);
         const lyrics = await generateDevotionalLyrics({
           deity: input.deity,
+          category: input.category,
+          mood: input.mood,
+          languageStyle: input.languageStyle,
+          outputType: input.outputType,
           customPrompt: input.customPrompt,
           directivePrompt: input.directivePrompt,
           theme: input.theme,
@@ -148,6 +156,8 @@ export const generationRouter = router({
       z.object({
         deity: z.string(),
         userIdea: z.string().min(3).max(600),
+        category: z.enum(["devotional", "cinematic", "folk", "romantic", "emotional", "festival", "mass"]).optional(),
+        mood: z.string().optional(),
         theme: z.string().optional(),
         language: z.enum(["telugu", "english"]).optional(),
         llmModel: z.string().optional(),
@@ -158,6 +168,17 @@ export const generationRouter = router({
         await assertBudgetAvailable(ctx.user.id);
         const userSettings = await getUserSettings(ctx.user.id);
         const lang = input.language ?? "telugu";
+        const category = input.category ?? "devotional";
+
+        const categoryConsultant: Record<string, string> = {
+          devotional: "Telugu devotional music consultant specialising in bhajans, keertanas, and stotrams",
+          cinematic:  "Telugu film lyricist consultant (in the style of Sirivennela, Chandrabose, Ananta Sriram)",
+          folk:       "Telugu folk (Janapada) song consultant with deep knowledge of rural Andhra traditions",
+          romantic:   "Telugu romantic melody lyricist consultant",
+          emotional:  "Telugu emotional ballad lyricist consultant",
+          festival:   "Telugu festival and celebration song lyricist consultant",
+          mass:       "Telugu mass entertainer lyricist consultant (commercial hero anthem style)",
+        };
 
         const result = await invokeLLM(
           {
@@ -165,14 +186,14 @@ export const generationRouter = router({
               {
                 role: "system",
                 content:
-                  "You are an expert Telugu devotional music consultant specialising in Carnatic classical compositions, bhajans, and stotrams for South Indian YouTube audiences. " +
+                  `You are an expert ${categoryConsultant[category] ?? categoryConsultant.devotional} for South Indian YouTube audiences. ` +
                   "Your task: take a user's rough idea and expand it into a precise, structured creative directive (150–200 words) that an AI lyrics generator can follow exactly. " +
-                  "Cover: emotional journey, specific imagery, song structure (Pallavi then Charanam lines), key Sanskrit/Telugu words or epithets to weave in, and the devotional mood. " +
+                  "Cover: emotional journey, specific imagery, song structure (Pallavi then Charanam lines), key Telugu words, cultural references, and the target mood. " +
                   "Return ONLY the directive — no explanations, no headings, no markdown.",
               },
               {
                 role: "user",
-                content: `Deity / theme: ${input.deity}\nMy idea: ${input.userIdea}\nTheme: ${input.theme ?? "devotion"}\nLanguage: ${lang}\n\nWrite the directive now.`,
+                content: `Subject / topic: ${input.deity}\nCategory: ${category}\nMood: ${input.mood ?? "not specified"}\nMy idea: ${input.userIdea}\nLanguage: ${lang}\n\nWrite the directive now.`,
               },
             ],
             maxTokens: 400,
