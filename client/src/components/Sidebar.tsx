@@ -24,7 +24,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ onClose }: SidebarProps) {
-  const { activeStep, setActiveStep, completedSteps, project, resetProject } = useProject();
+  const { activeStep, setActiveStep, completedSteps, project, resetProject, sessionTitle } = useProject();
 
   const handleStepClick = (stepId: number) => {
     setActiveStep(stepId);
@@ -93,7 +93,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
           }}>
             Kishore's Studio
           </p>
-          {project.lyrics && (
+          {sessionTitle && (
             <p
               style={{
                 fontSize: "0.75rem",
@@ -106,7 +106,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 fontWeight: "500",
               }}
             >
-              {project.title || "Untitled Song"}
+              {sessionTitle}
             </p>
           )}
         </div>
@@ -188,7 +188,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.4)" }}>
-                  STEP {step.id} OF 8
+                  STEP {step.id} OF 7
                 </div>
                 <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {step.label}
@@ -206,7 +206,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             PROGRESS
           </span>
           <span style={{ fontSize: "0.75rem", fontWeight: "600", color: "#00d4ff" }}>
-            {completedSteps.size}/8
+            {completedSteps.size}/7
           </span>
         </div>
         <div style={{
@@ -219,7 +219,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             style={{
               height: "100%",
               background: "linear-gradient(90deg, #00d4ff, #ff006e)",
-              width: `${(completedSteps.size / 8) * 100}%`,
+              width: `${(completedSteps.size / 7) * 100}%`,
               transition: "width 300ms ease-out",
             }}
           />

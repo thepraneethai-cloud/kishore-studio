@@ -18,6 +18,7 @@ interface ProjectContextType {
   setActiveStep: (step: number) => void;
   setDeity: (deity: DeityKey) => void;
   setTitle: (title: string) => void;
+  sessionTitle: string | null; // set only in current browser session, never from localStorage
   setLyrics: (lyrics: string) => void;
   setSunoStyle: (style: Partial<SunoStyle>) => void;
   setScenes: (scenes: Scene[]) => void;
@@ -53,6 +54,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   });
 
   const [activeStep, setActiveStep] = useState(1);
+  const [sessionTitle, setSessionTitle] = useState<string | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // History stacks — kept in memory only, not persisted (volatile undo)
@@ -120,6 +122,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
 
   const setTitle = useCallback((title: string) => {
     setProject((p) => ({ ...p, title }));
+    setSessionTitle(title.trim() || null);
   }, []);
 
   const setLyrics = useCallback((lyrics: string) => {
@@ -192,6 +195,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     setProject(createEmptyProject());
     setCompletedSteps(new Set());
     setActiveStep(1);
+    setSessionTitle(null);
     lyricsHistoryRef.current = [];
     scenesHistoryRef.current = [];
     setCanUndoLyrics(false);
@@ -211,6 +215,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         setActiveStep,
         setDeity,
         setTitle,
+        sessionTitle,
         setLyrics,
         setSunoStyle,
         setScenes,

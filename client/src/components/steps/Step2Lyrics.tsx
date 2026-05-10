@@ -499,13 +499,13 @@ export default function Step2Lyrics() {
         {/* Header */}
         <div style={{ marginBottom: "1.75rem" }}>
           <p style={{ fontSize: "0.7rem", fontWeight: 600, color: "rgba(0,212,255,0.7)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.4rem" }}>
-            Step 1 · Song brief & lyrics
+            Step 1 · Concept & Lyrics
           </p>
           <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#00d4ff", margin: "0 0 0.4rem" }}>
             Concept & Lyrics
           </h1>
           <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)", margin: 0 }}>
-            Choose a genre, describe your song, and generate Telugu lyrics with a matching SUNO style.
+            Pick a category, describe your vision — get full Telugu lyrics, a SUNO music style, and scene notes ready for production.
           </p>
         </div>
 
@@ -637,20 +637,32 @@ export default function Step2Lyrics() {
             <div style={{ marginBottom: "0.85rem" }}>
               <label style={{ ...labelStyle, color: "rgba(139,92,246,0.7)" }}>Language style</label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
-                {LANGUAGE_STYLES.map((ls) => (
-                  <button
-                    key={ls.value}
-                    onClick={() => setLanguageStyle(ls.value)}
-                    title={ls.hint}
-                    style={chip(languageStyle === ls.value, "rgba(139,92,246")}
-                  >
-                    {ls.label}
-                  </button>
-                ))}
+                {LANGUAGE_STYLES.map((ls) => {
+                  const active = languageStyle === ls.value;
+                  return (
+                    <button
+                      key={ls.value}
+                      onClick={() => setLanguageStyle(ls.value)}
+                      style={{
+                        display: "flex", flexDirection: "column", alignItems: "flex-start",
+                        padding: "0.4rem 0.75rem",
+                        borderRadius: "0.5rem",
+                        fontSize: "0.78rem", fontWeight: 600,
+                        cursor: "pointer", transition: "all 150ms",
+                        background: active ? "rgba(139,92,246,0.25)" : "rgba(139,92,246,0.06)",
+                        color: active ? "rgba(139,92,246,1)" : "rgba(139,92,246,0.5)",
+                        border: `1px solid ${active ? "rgba(139,92,246,0.55)" : "rgba(139,92,246,0.18)"}`,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {ls.label}
+                      <span style={{ fontSize: "0.62rem", fontWeight: 400, opacity: 0.75, marginTop: "0.1rem" }}>
+                        {ls.hint}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-              <p style={helperStyle}>
-                {LANGUAGE_STYLES.find((ls) => ls.value === languageStyle)?.hint}
-              </p>
             </div>
 
             {/* Vision textarea */}
@@ -731,7 +743,6 @@ export default function Step2Lyrics() {
                 <button
                   key={ot.value}
                   onClick={() => setOutputType(ot.value)}
-                  title={ot.hint}
                   style={chip(outputType === ot.value)}
                 >
                   {ot.label}
@@ -739,7 +750,9 @@ export default function Step2Lyrics() {
               ))}
             </div>
             <p style={helperStyle}>
-              {OUTPUT_TYPES.find((ot) => ot.value === outputType)?.hint}
+              {outputType === "lyrics_suno"  && "Generates lyrics + a ready-to-paste SUNO music style block (tempo, instruments, mood, vocals)."}
+              {outputType === "lyrics_only"  && "Generates lyrics only. No SUNO block — useful if you're scoring the music separately."}
+              {outputType === "lyrics_scene" && "Generates lyrics plus a visual scene note for each section (Pallavi, Charanam) — describes mood, shot type, and setting. Feeds directly into Step 3 Scene Breakdown."}
             </p>
           </div>
 
@@ -798,7 +811,17 @@ export default function Step2Lyrics() {
                   <option value="mistral-small-latest">Mistral Small — multilingual · free</option>
                 </optgroup>
               </select>
-              <p style={helperStyle}>Gemini 2.5 Flash is fast and great for most songs. Pro and GPT models require your own API keys — add them in Settings.</p>
+              <div style={{ marginTop: "0.5rem", padding: "0.5rem 0.75rem", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "0.375rem" }}>
+                <p style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.45)", margin: "0 0 0.2rem" }}>
+                  <span style={{ color: "#39ff14", marginRight: "0.35rem" }}>●</span>
+                  <strong>Ready now:</strong> Gemini 2.5 Flash &amp; Pro (platform key — no setup)
+                </p>
+                <p style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.45)", margin: 0 }}>
+                  <span style={{ color: "#ff9632", marginRight: "0.35rem" }}>●</span>
+                  <strong>Needs API key:</strong> Gemini 2.0, GPT-4o, Claude, Llama, Mistral — add keys in{" "}
+                  <span style={{ color: "rgba(0,212,255,0.7)", fontWeight: 600 }}>Settings</span>
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -871,57 +894,57 @@ export default function Step2Lyrics() {
 
         {/* ── GENERATED LYRICS ─────────────────────────── */}
         {project.lyrics && (
-          <div style={{ ...panel, marginBottom: "1.25rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
-              <div>
-                <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#00d4ff", margin: "0 0 0.2rem" }}>Generated lyrics</p>
-                <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", margin: 0 }}>
-                  Review and adjust as needed. Use iterate if something is off.
-                </p>
-              </div>
-              <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0, marginLeft: "0.75rem" }}>
+          <>
+            <div style={{ ...panel, marginBottom: "0.75rem" }}>
+              <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#00d4ff", margin: "0 0 0.25rem" }}>Generated lyrics</p>
+              <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", margin: "0 0 0.75rem" }}>
+                Edit freely — changes save automatically.
+              </p>
+              <textarea
+                value={project.lyrics}
+                onChange={(e) => setLyrics(e.target.value)}
+                rows={14}
+                style={{ ...inputStyle, color: "#a8d8ea", fontFamily: "monospace", fontSize: "0.875rem", lineHeight: "1.7", minHeight: "260px" }}
+              />
+              {/* Action row — below the content so the flow is: read → act */}
+              <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
                 {canUndoLyrics && (
                   <button
                     onClick={() => { undoLyrics(); toast.success("Restored previous lyrics"); }}
-                    style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.4rem 0.75rem", background: "rgba(255,150,50,0.12)", color: "#ff9632", border: "1px solid rgba(255,150,50,0.35)", borderRadius: "0.375rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}
+                    style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.5rem 0.9rem", background: "rgba(255,150,50,0.12)", color: "#ff9632", border: "1px solid rgba(255,150,50,0.35)", borderRadius: "0.375rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}
                   >
-                    <Undo2 size={12} /> Undo
+                    <Undo2 size={13} /> Undo last change
                   </button>
                 )}
                 <button
                   onClick={() => copyToClipboard(project.lyrics, "Lyrics")}
-                  style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.4rem 0.75rem", background: "rgba(0,212,255,0.1)", color: "#00d4ff", border: "1px solid rgba(0,212,255,0.3)", borderRadius: "0.375rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}
+                  style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.5rem 0.9rem", background: "rgba(0,212,255,0.12)", color: "#00d4ff", border: "1px solid rgba(0,212,255,0.35)", borderRadius: "0.375rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}
                 >
-                  <Copy size={12} /> Copy lyrics
+                  <Copy size={13} /> Copy lyrics
                 </button>
               </div>
             </div>
-            <textarea
-              value={project.lyrics}
-              onChange={(e) => setLyrics(e.target.value)}
-              rows={14}
-              style={{ ...inputStyle, color: "#a8d8ea", fontFamily: "monospace", fontSize: "0.875rem", lineHeight: "1.7", minHeight: "260px", marginTop: "0.75rem" }}
-            />
 
-            {/* Iterate */}
-            <div style={{ marginTop: "1rem", borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "1rem" }}>
+            {/* Iterate — separate card so it reads as a distinct action */}
+            <div style={{ ...panel, marginBottom: "1.25rem", border: "1px solid rgba(255,255,255,0.08)" }}>
               <button
                 onClick={() => setShowIterate(!showIterate)}
-                style={{ display: "flex", alignItems: "center", gap: "0.4rem", background: "none", border: "none", color: "rgba(255,255,255,0.55)", fontSize: "0.8rem", cursor: "pointer", fontWeight: 600, padding: 0 }}
+                style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "none", border: "none", color: showIterate ? "#00d4ff" : "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer", fontWeight: 700, padding: 0, width: "100%", textAlign: "left" }}
               >
-                {showIterate ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                {showIterate ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
                 Iterate with feedback
               </button>
-              <p style={{ ...helperStyle, marginTop: "0.25rem" }}>Tell the AI what to change; we'll keep the same subject and category.</p>
 
               {showIterate && (
-                <div style={{ marginTop: "0.75rem" }}>
-                  <label style={{ ...labelStyle, marginBottom: "0.5rem" }}>What would you like to change?</label>
+                <div style={{ marginTop: "0.85rem" }}>
+                  <p style={{ ...helperStyle, marginBottom: "0.6rem" }}>
+                    Describe what to change — the AI keeps your subject, category, and mood and rewrites accordingly.
+                  </p>
                   <textarea
                     value={iterateFeedback}
                     onChange={(e) => setIterateFeedback(e.target.value)}
                     rows={3}
-                    placeholder={`Describe what to change. Examples:\n• "Make the Pallavi shorter and more catchy"\n• "The Charanam feels too long — trim it"\n• "Add more specific cultural imagery"`}
+                    placeholder={`e.g., "Make the Pallavi shorter and more catchy"\ne.g., "The Charanam feels too long — trim it to 4 lines"\ne.g., "Add more cultural imagery — include the temple bells"`}
                     style={{ ...inputStyle, fontSize: "0.875rem", lineHeight: "1.5", marginBottom: "0.75rem" }}
                   />
                   <button
@@ -934,10 +957,13 @@ export default function Step2Lyrics() {
                       : <><RefreshCw size={14} /> Apply changes</>
                     }
                   </button>
+                  {!iterateFeedback.trim() && (
+                    <p style={{ ...helperStyle, marginTop: "0.4rem" }}>Type what to change above, then click Apply.</p>
+                  )}
                 </div>
               )}
             </div>
-          </div>
+          </>
         )}
 
         {/* ── SUNO STYLE ───────────────────────────────── */}
