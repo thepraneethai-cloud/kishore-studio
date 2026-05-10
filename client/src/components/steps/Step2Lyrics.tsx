@@ -169,6 +169,21 @@ const DIRECTION_EXAMPLES: Record<SongCategory, string[]> = {
   ],
 };
 
+// ── Mixed starter examples (shown before a category is explicitly picked) ────
+const MIXED_STARTER_EXAMPLES = [
+  { cat: "Devotional", text: "Vinayaka Chavithi song with modak offerings and joyful bhajan feel." },
+  { cat: "Cinematic",  text: "Hero intro song with attitude, drums, village crowd energy, and whistle moments." },
+  { cat: "Folk",       text: "Rustic Telangana village song with dappu rhythm and harvest festival imagery." },
+  { cat: "Emotional",  text: "Mother tribute with intimate lyrics, reflective tone, and soft strings." },
+];
+
+const MIXED_STARTER_DIRECTION = [
+  { cat: "Cinematic",  text: "Every line should feel like a film frame — visual, punchy, cinematic." },
+  { cat: "Devotional", text: "Include the main refrain in the opening pallavi and repeat it across all charanams." },
+  { cat: "Folk",       text: "Reference nature: river, mango tree, bullock cart, monsoon clouds." },
+  { cat: "Mass",       text: "Short punchy lines — maximum impact, minimum words." },
+];
+
 // ── Helpers ───────────────────────────────────────────────────
 function copyToClipboard(text: string, label: string) {
   navigator.clipboard.writeText(text).then(
@@ -192,21 +207,26 @@ function sunoStyleText(style: Record<string, unknown>) {
 
 function sanitizeLyrics(raw: string): string {
   let cleaned = raw
-    .replace(/&lt;br&gt;/gi, "\n")
-    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/\r\n/g, "\n")           // Windows line endings
+    .replace(/\r/g, "\n")             // Old Mac line endings
+    .replace(/\\n/g, "\n")            // Literal \n strings from LLM output
+    .replace(/&lt;br\s*\/?&gt;/gi, "\n") // HTML-escaped <br>
+    .replace(/&lt;br&gt;/gi, "\n")    // HTML-escaped <br>
+    .replace(/<br\s*\/?>/gi, "\n")    // Raw <br> tags
     .trim();
 
-  // Strip trailing lines that are pure English with no Telugu characters —
-  // these are LLM artifacts (e.g. "Happy Mothers Day Amma", sycophantic closings).
+  // Strip trailing lines that are pure English/Latin with no Telugu characters.
+  // Also catches common LLM sycophantic closings (blessings, happy wishes, notes).
   const teluguRange = /[ఀ-౿]/;
+  const lLMArtifactPattern = /^(note[:\s]|this is|here is|happy|feel free|i hope|blessings?|warm|regards|enjoy|loving|generated|written by|composed by|—\s*\w)/i;
   const lines = cleaned.split("\n");
   while (lines.length > 0) {
     const last = lines[lines.length - 1].trim();
-    // Remove: empty lines or Latin-only lines that don't look like section headers
     if (!last) { lines.pop(); continue; }
-    const isLatinOnly = !teluguRange.test(last) && /^[a-zA-Z0-9\s,.'!?\-–—()]+$/.test(last);
-    const isSectionHeader = /^\[(Pallavi|Charanam|Outro|Verse|Chorus|Bridge)/i.test(last);
-    if (isLatinOnly && !isSectionHeader) { lines.pop(); } else { break; }
+    const isLatinOnly = !teluguRange.test(last) && /^[a-zA-Z0-9\s,.'!?\-–—()\[\]]+$/.test(last);
+    const isSectionHeader = /^\[(Pallavi|Charanam|Outro|Verse|Chorus|Bridge|Intro)/i.test(last);
+    const isArtifact = lLMArtifactPattern.test(last);
+    if ((isLatinOnly && !isSectionHeader) || isArtifact) { lines.pop(); } else { break; }
   }
   return lines.join("\n").trim();
 }
@@ -256,6 +276,8 @@ export default function Step2Lyrics() {
   const [showSunoRefine,  setShowSunoRefine]  = useState(false);
   // Only show SUNO panel after a successful generation in the current session
   const [showSunoPanel,   setShowSunoPanel]   = useState(false);
+  // Track whether user has explicitly clicked a category (shows mixed examples before that)
+  const [hasPicked,       setHasPicked]       = useState(false);
 
   // Reset suggestions + SUNO panel when category changes
   useEffect(() => {
@@ -398,11 +420,7 @@ export default function Step2Lyrics() {
   const sunoStyle      = project.sunoStyle as unknown as Record<string, unknown> | null;
   const canContinue    = !!effectiveSubject && !!project.title.trim() && !!project.lyrics;
 
-  const generateLabel = project.lyrics && customPrompt.trim()
-    ? "Regenerate using this direction"
-    : project.lyrics
-    ? "Regenerate from scratch"
-    : "Generate lyrics";
+  const generateLabel = project.lyrics ? "Regenerate lyrics" : "Generate lyrics";
 
   // ── Styles ────────────────────────────────────────────────
   const panel = {
@@ -500,7 +518,7 @@ export default function Step2Lyrics() {
             {SONG_CATEGORIES.map((cat) => (
               <button
                 key={cat.value}
-                onClick={() => { setCategory(cat.value); setSubjectInput(""); setTitleInput(""); setDeity(""); setTitle(""); setShowSunoPanel(false); }}
+                onClick={() => { setCategory(cat.value); setHasPicked(true); setSubjectInput(""); setTitleInput(""); setDeity(""); setTitle(""); setShowSunoPanel(false); }}
                 style={{
                   padding: "0.65rem 0.75rem",
                   borderRadius: "0.5rem",
@@ -641,17 +659,27 @@ export default function Step2Lyrics() {
               value={visionInput}
               onChange={(e) => setVisionInput(e.target.value)}
               rows={3}
-              placeholder="Describe the setting, mood, key imagery, and any specific phrases to include."
+              placeholder="e.g., Hero standing in rain, crowd behind him, powerful entry — drums build up slowly, then explode."
               style={{ ...inputStyle, fontSize: "0.875rem", lineHeight: "1.5", marginBottom: "0.5rem", border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.06)" }}
             />
 
-            {/* Static examples */}
+            {/* Examples — mixed until category is explicitly picked */}
             <div style={examplesBox}>
-              <p style={{ fontSize: "0.68rem", fontWeight: 600, color: "rgba(139,92,246,0.45)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>Examples</p>
+              <p style={{ fontSize: "0.68rem", fontWeight: 600, color: "rgba(139,92,246,0.45)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                {hasPicked ? `${SONG_CATEGORIES.find(c => c.value === category)?.label} examples` : "Examples · pick a category to filter"}
+              </p>
               <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                {VISION_EXAMPLES[category].map((ex) => (
-                  <li key={ex} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", marginBottom: "0.2rem" }}>• {ex}</li>
-                ))}
+                {hasPicked
+                  ? VISION_EXAMPLES[category].map((ex) => (
+                      <li key={ex} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", marginBottom: "0.2rem" }}>• {ex}</li>
+                    ))
+                  : MIXED_STARTER_EXAMPLES.map((ex) => (
+                      <li key={ex.text} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", marginBottom: "0.2rem", display: "flex", gap: "0.4rem" }}>
+                        <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "rgba(139,92,246,0.5)", textTransform: "uppercase", flexShrink: 0, paddingTop: "1px" }}>[{ex.cat}]</span>
+                        {ex.text}
+                      </li>
+                    ))
+                }
               </ul>
             </div>
 
@@ -794,35 +822,33 @@ export default function Step2Lyrics() {
             value={customPrompt}
             onChange={(e) => { setCustomPrompt(e.target.value); setIsVisionDirective(false); }}
             rows={3}
-            placeholder="Tell the AI exactly what to focus on, style, or phrases to use."
+            placeholder="e.g., Focus on Alipiri steps and Govinda chanting. Use Annamacharya-style classical Telugu. Keep each line under 8 syllables."
             style={{ ...inputStyle, lineHeight: "1.5", fontSize: "0.875rem", marginBottom: "0.5rem" }}
           />
 
           <div style={examplesBox}>
-            <p style={{ fontSize: "0.68rem", fontWeight: 600, color: "rgba(255,255,255,0.22)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>Examples</p>
+            <p style={{ fontSize: "0.68rem", fontWeight: 600, color: "rgba(255,255,255,0.22)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              {hasPicked ? `${SONG_CATEGORIES.find(c => c.value === category)?.label} examples` : "Examples · pick a category to filter"}
+            </p>
             <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-              {DIRECTION_EXAMPLES[category].map((ex) => (
-                <li key={ex} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", marginBottom: "0.2rem" }}>• {ex}</li>
-              ))}
+              {hasPicked
+                ? DIRECTION_EXAMPLES[category].map((ex) => (
+                    <li key={ex} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", marginBottom: "0.2rem" }}>• {ex}</li>
+                  ))
+                : MIXED_STARTER_DIRECTION.map((ex) => (
+                    <li key={ex.text} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", marginBottom: "0.2rem", display: "flex", gap: "0.4rem" }}>
+                      <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", flexShrink: 0, paddingTop: "1px" }}>[{ex.cat}]</span>
+                      {ex.text}
+                    </li>
+                  ))
+              }
             </ul>
           </div>
 
-          {project.lyrics && (
-            <div style={{ marginTop: "0.85rem" }}>
-              <button
-                onClick={handleGenerate}
-                disabled={isGenerating || !customPrompt.trim()}
-                style={secondaryBtn(isGenerating || !customPrompt.trim())}
-              >
-                {isGenerating
-                  ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Regenerating…</>
-                  : <><RefreshCw size={14} /> Regenerate using this direction</>
-                }
-              </button>
-              {!customPrompt.trim() && (
-                <p style={{ ...helperStyle, marginTop: "0.4rem" }}>Add some direction above to enable regeneration.</p>
-              )}
-            </div>
+          {project.lyrics && customPrompt.trim() && (
+            <p style={{ ...helperStyle, marginTop: "0.5rem" }}>
+              Direction saved — click <strong style={{ color: "rgba(0,212,255,0.7)" }}>Regenerate lyrics</strong> above to apply it.
+            </p>
           )}
         </div>
 
@@ -830,13 +856,18 @@ export default function Step2Lyrics() {
         <button
           onClick={handleGenerate}
           disabled={isGenerating || !effectiveSubject}
-          style={{ ...primaryBtn(isGenerating || !effectiveSubject), width: "100%", marginBottom: "1.75rem" }}
+          style={{ ...primaryBtn(isGenerating || !effectiveSubject), width: "100%", marginBottom: !effectiveSubject ? "0.5rem" : "1.75rem" }}
         >
           {isGenerating
             ? <><RefreshCw size={18} style={{ animation: "spin 1s linear infinite" }} /> Generating lyrics…</>
             : <><Zap size={18} /> {generateLabel}</>
           }
         </button>
+        {!effectiveSubject && !isGenerating && (
+          <p style={{ textAlign: "center", fontSize: "0.72rem", color: "rgba(255,255,255,0.32)", marginBottom: "1.75rem" }}>
+            Enter a subject or topic above to enable generation.
+          </p>
+        )}
 
         {/* ── GENERATED LYRICS ─────────────────────────── */}
         {project.lyrics && (

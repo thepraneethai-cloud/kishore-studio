@@ -93,7 +93,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
           }}>
             Kishore's Studio
           </p>
-          {project.deity && (
+          {project.lyrics && (
             <p
               style={{
                 fontSize: "0.75rem",
@@ -106,7 +106,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 fontWeight: "500",
               }}
             >
-              {project.title || "New Project"}
+              {project.title || "Untitled Song"}
             </p>
           )}
         </div>
