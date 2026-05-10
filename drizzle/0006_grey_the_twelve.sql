@@ -1,0 +1,1 @@
+ALTER TABLE `userSettings` ADD `llm_model` text DEFAULT ('gemini-2.5-flash');
