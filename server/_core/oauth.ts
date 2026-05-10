@@ -15,9 +15,11 @@ export function registerOAuthRoutes(app: Express) {
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     const { password } = req.body ?? {};
     const trimmedInput = (password ?? "").trim();
-    const trimmedStored = (ENV.adminPassword ?? "").trim();
-    console.log("[Auth] Login attempt, body keys:", Object.keys(req.body ?? {}), "stored length:", trimmedStored.length);
-    if (!trimmedInput || !trimmedStored || trimmedInput !== trimmedStored) {
+    // Read directly from process.env at request time (bypasses module-load caching)
+    const storedPassword = (process.env.ADMIN_PASSWORD ?? ENV.adminPassword ?? "").trim();
+    console.log("[Auth] Login attempt, ENV keys with value:", Object.keys(process.env).filter(k => k.startsWith("ADMIN") || k.startsWith("JWT") || k.startsWith("NODE")));
+    console.log("[Auth] stored length:", storedPassword.length);
+    if (!trimmedInput || !storedPassword || trimmedInput !== storedPassword) {
       res.status(401).json({ error: "Invalid password" });
       return;
     }
