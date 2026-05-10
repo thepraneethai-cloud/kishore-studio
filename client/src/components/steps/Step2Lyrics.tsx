@@ -360,25 +360,81 @@ export default function Step2Lyrics() {
           )}
         </div>
 
-        {/* ── VISION PANEL — AI prompt generator ────────── */}
+        {/* ── VISION PANEL — theme + language + idea → AI prompt ── */}
         {project.deity && (
           <div style={{ ...panel, marginBottom: "1.25rem", border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.04)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
               <Wand2 size={15} style={{ color: "#8b5cf6" }} />
               <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#8b5cf6", margin: 0 }}>
-                Describe Your Song Idea
+                Song Idea
               </p>
-              <span style={{ fontSize: "0.7rem", color: "rgba(139,92,246,0.6)", fontWeight: 400 }}>
-                — AI will craft a detailed lyrics directive from your description
+              <span style={{ fontSize: "0.7rem", color: "rgba(139,92,246,0.55)", fontWeight: 400 }}>
+                — pick a theme, describe your vision, and AI writes a detailed lyrics directive
               </span>
             </div>
+
+            {/* Theme pills */}
+            <div style={{ marginBottom: "0.75rem" }}>
+              <label style={{ ...labelStyle, color: "rgba(139,92,246,0.7)" }}>Theme</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                {THEME_OPTIONS.map((t) => (
+                  <button
+                    key={t.value}
+                    onClick={() => setTheme(t.value)}
+                    style={{
+                      padding: "0.35rem 0.85rem",
+                      borderRadius: "999px",
+                      fontSize: "0.78rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 150ms",
+                      background: theme === t.value ? "rgba(139,92,246,0.3)" : "rgba(139,92,246,0.07)",
+                      color: theme === t.value ? "#c4b5fd" : "rgba(139,92,246,0.55)",
+                      border: `1px solid ${theme === t.value ? "rgba(139,92,246,0.6)" : "rgba(139,92,246,0.2)"}`,
+                    }}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Language toggle */}
+            <div style={{ marginBottom: "0.75rem" }}>
+              <label style={{ ...labelStyle, color: "rgba(139,92,246,0.7)" }}>Language</label>
+              <div style={{ display: "flex", gap: "0.4rem" }}>
+                {(["telugu", "english"] as const).map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => setLanguage(lang)}
+                    style={{
+                      padding: "0.35rem 1rem",
+                      borderRadius: "999px",
+                      fontSize: "0.78rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 150ms",
+                      background: language === lang ? "rgba(139,92,246,0.3)" : "rgba(139,92,246,0.07)",
+                      color: language === lang ? "#c4b5fd" : "rgba(139,92,246,0.55)",
+                      border: `1px solid ${language === lang ? "rgba(139,92,246,0.6)" : "rgba(139,92,246,0.2)"}`,
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {lang}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Idea textarea */}
             <textarea
               value={visionInput}
               onChange={(e) => setVisionInput(e.target.value)}
               rows={3}
-              placeholder={`Describe what you want in plain words. Examples:\n• "A song for Vinayaka Chavithi with modak offerings, include his vehicle Mushika, joyful mood"\n• "Peaceful Venkateswara bhajan about a devotee's first visit to Tirumala, include Alipiri"\n• "Powerful Durga stotram for Navaratri, lion vahana, demon slayer imagery"`}
+              placeholder={`Describe what you want in plain words. Examples:\n• "Vinayaka Chavithi song with modak offerings, include his vehicle Mushika, joyful mood"\n• "Peaceful bhajan about a devotee's first visit to Tirumala, include Alipiri steps"\n• "Powerful Navratri stotram, lion vahana, demon slayer imagery"`}
               style={{ ...inputStyle, fontSize: "0.875rem", lineHeight: "1.5", marginBottom: "0.75rem", border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.06)" }}
             />
+
             <button
               onClick={() => {
                 if (!visionInput.trim()) { toast.error("Describe your idea first"); return; }
@@ -398,13 +454,14 @@ export default function Step2Lyrics() {
               }}
             >
               {promptGenMutation.isPending
-                ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Generating prompt…</>
+                ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Generating directive…</>
                 : <><Wand2 size={14} /> Generate Prompt with AI</>
               }
             </button>
+
             {customPrompt && (
-              <p style={{ marginTop: "0.6rem", fontSize: "0.75rem", color: "rgba(139,92,246,0.7)", fontStyle: "italic" }}>
-                ✓ Prompt applied to "Custom direction" below — review, edit if needed, then click Generate Lyrics.
+              <p style={{ marginTop: "0.6rem", fontSize: "0.75rem", color: "#a78bfa", fontStyle: "italic" }}>
+                ✓ Directive ready — it's now the primary brief for lyrics generation. Review or edit it in "Custom direction" below.
               </p>
             )}
           </div>
@@ -416,62 +473,40 @@ export default function Step2Lyrics() {
             Generation Settings
           </p>
 
-          {/* Row: theme / duration / language */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem", marginBottom: "1rem" }}>
-            <div>
-              <label style={labelStyle}>Theme</label>
-              <select value={theme} onChange={(e) => setTheme(e.target.value)} style={{ ...inputStyle, resize: undefined }}>
-                {THEME_OPTIONS.map((t) => (
-                  <option key={t.value} value={t.value} style={{ background: "#0a0e27" }}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label style={labelStyle}>Duration</label>
-              <select value={duration} onChange={(e) => setDuration(Number(e.target.value))} style={{ ...inputStyle, resize: undefined }}>
-                {DURATION_OPTIONS.map((d) => (
-                  <option key={d.value} value={d.value} style={{ background: "#0a0e27" }}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label style={labelStyle}>Language</label>
-              <div style={{ display: "flex", gap: "0.5rem", paddingTop: "0.15rem" }}>
-                {(["telugu", "english"] as const).map((lang) => (
-                  <button
-                    key={lang}
-                    onClick={() => setLanguage(lang)}
-                    style={{
-                      flex: 1,
-                      padding: "0.72rem 0",
-                      background: language === lang ? "rgba(0,212,255,0.2)" : "rgba(0,0,0,0.3)",
-                      color: language === lang ? "#00d4ff" : "rgba(255,255,255,0.45)",
-                      border: `1px solid ${language === lang ? "rgba(0,212,255,0.5)" : "rgba(255,255,255,0.1)"}`,
-                      borderRadius: "0.375rem",
-                      fontWeight: 600,
-                      fontSize: "0.8rem",
-                      cursor: "pointer",
-                      textTransform: "capitalize",
-                    }}
-                  >
-                    {lang}
-                  </button>
-                ))}
-              </div>
+          {/* Duration row — theme/language live in the Song Idea panel above */}
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={labelStyle}>Duration</label>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              {DURATION_OPTIONS.map((d) => (
+                <button
+                  key={d.value}
+                  onClick={() => setDuration(d.value)}
+                  style={{
+                    padding: "0.45rem 1rem",
+                    borderRadius: "999px",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 150ms",
+                    background: duration === d.value ? "rgba(0,212,255,0.2)" : "rgba(0,0,0,0.3)",
+                    color: duration === d.value ? "#00d4ff" : "rgba(255,255,255,0.45)",
+                    border: `1px solid ${duration === d.value ? "rgba(0,212,255,0.5)" : "rgba(255,255,255,0.1)"}`,
+                  }}
+                >
+                  {d.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Custom prompt */}
+          {/* Custom prompt / vision directive */}
           <div>
             <label style={labelStyle}>
-              Custom direction{" "}
-              <span style={{ color: "rgba(255,255,255,0.3)", fontWeight: 400, textTransform: "none" }}>
-                — optional but powerful
-              </span>
+              {customPrompt ? (
+                <span style={{ color: "#a78bfa" }}>✓ AI-generated directive (primary brief)</span>
+              ) : (
+                <>Custom direction <span style={{ color: "rgba(255,255,255,0.3)", fontWeight: 400, textTransform: "none" }}>— optional, or use "Generate Prompt" above</span></>
+              )}
             </label>
             <textarea
               value={customPrompt}

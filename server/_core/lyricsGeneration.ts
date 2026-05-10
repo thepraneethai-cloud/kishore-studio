@@ -183,11 +183,11 @@ Return a JSON object with this exact structure:
   "notes": "Brief explanation of the lyrical theme and structure"
 }`;
 
-  if (input.customPrompt) {
-    systemPrompt += `\n\nUSER DIRECTION:\n${input.customPrompt}\n\nIncorporate this direction while maintaining the devotional authenticity and structure above.`;
-  }
-
-  const userMessage = `Create a ${duration}-minute devotional bhajan for ${input.deity.charAt(0).toUpperCase() + input.deity.slice(1)}${input.theme ? ` with the theme of "${input.theme}"` : ""}.`;
+  // When a vision-generated directive is provided, it becomes the PRIMARY creative brief.
+  // Without one, fall back to the generic theme-based request.
+  const userMessage = input.customPrompt
+    ? `${input.customPrompt}\n\n(Deity: ${input.deity}, Duration: ${duration} min, Language: ${input.language ?? "telugu"})`
+    : `Create a ${duration}-minute devotional bhajan for ${input.deity.charAt(0).toUpperCase() + input.deity.slice(1)}${input.theme ? ` with the theme of "${input.theme}"` : ""}.`;
 
   try {
     const response = await invokeLLM({
