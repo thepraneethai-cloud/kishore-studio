@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useProject } from "@/contexts/ProjectContext";
 import { DEITIES, getDefaultCharacterPrefix } from "@/lib/studioData";
-import { ChevronRight, Copy, Check, Download, Sparkles, Image, Loader2, AlertCircle, Settings, Shuffle, Lock, Unlock, Zap } from "lucide-react";
+import { ChevronRight, Copy, Check, Download, Sparkles, Image, Loader2, AlertCircle, Settings, Shuffle, Lock, Unlock, Zap, ThumbsUp, ThumbsDown, Link, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -35,7 +35,7 @@ interface ImageJob {
 }
 
 export default function Step6ImagePrompts() {
-  const { project, setScenes, setActiveStep, markStepComplete, setCharacterPrefix, setImageSeed } = useProject();
+  const { project, setScenes, updateScene, setActiveStep, markStepComplete, setCharacterPrefix, setImageSeed } = useProject();
   const { isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
   const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -114,6 +114,11 @@ export default function Step6ImagePrompts() {
             if (!updated) return job;
             const rawOutput = updated.output;
             const imageUrl = Array.isArray(rawOutput) ? rawOutput[0] : (rawOutput as string | undefined);
+            // Auto-save URL to scene when job succeeds
+            if (updated.status === "succeeded" && imageUrl) {
+              const scene = project.scenes[job.sceneIdx];
+              if (scene) updateScene(scene.id, { imageUrl });
+            }
             return {
               ...job,
               status: updated.status as ImageJob["status"],
@@ -182,6 +187,14 @@ export default function Step6ImagePrompts() {
         status: job.status as ImageJob["status"],
         imageUrl: Array.isArray(job.output) ? job.output[0] : (job.output as string | undefined),
       }));
+
+      // For DALL-E, save image URLs immediately (results come back in one shot)
+      jobs.forEach((job) => {
+        if (job.status === "succeeded" && job.imageUrl) {
+          const scene = project.scenes[job.sceneIdx];
+          if (scene) updateScene(scene.id, { imageUrl: job.imageUrl });
+        }
+      });
 
       setImageJobs(jobs);
 
@@ -275,6 +288,34 @@ export default function Step6ImagePrompts() {
 
   const pendingCount = imageJobs.filter((j) => j.status === "starting" || j.status === "processing").length;
   const doneCount = imageJobs.filter((j) => j.status === "succeeded").length;
+  const [uploadingSceneId, setUploadingSceneId] = useState<number | null>(null);
+
+  const handleFileUpload = async (sceneId: number, file: File) => {
+    setUploadingSceneId(sceneId);
+    try {
+      const res = await fetch(
+        file.type.startsWith("video/") ? "/api/upload/video" : "/api/upload/image",
+        { method: "POST", headers: { "Content-Type": file.type }, body: file },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Upload failed");
+        return;
+      }
+      const { url } = await res.json();
+      updateScene(sceneId, { imageUrl: url });
+      toast.success("Image uploaded!");
+    } catch {
+      toast.error("Upload failed — check network");
+    } finally {
+      setUploadingSceneId(null);
+    }
+  };
+
+  const approvedCount = project.scenes.filter((s) => s.imageApproved === true).length;
+  const rejectedCount = project.scenes.filter((s) => s.imageApproved === false).length;
+  const reviewedCount = approvedCount + rejectedCount;
+  const scenesWithImages = project.scenes.filter((s) => s.imageUrl).length;
 
   if (project.scenes.length === 0) {
     return (
@@ -741,17 +782,121 @@ export default function Step6ImagePrompts() {
                 </div>
               </div>
 
-              {/* Generated image preview */}
-              {job?.imageUrl && (
-                <div className="rounded overflow-hidden" style={{ border: "1px solid oklch(0.28 0.025 58)" }}>
-                  <img
-                    src={job.imageUrl}
-                    alt={`Scene ${idx + 1}`}
-                    className="w-full object-cover"
-                    style={{ maxHeight: "180px" }}
-                  />
-                </div>
-              )}
+              {/* Image preview + approval */}
+              {(() => {
+                const displayUrl = scene.imageUrl || job?.imageUrl;
+                const approved = scene.imageApproved;
+                return displayUrl ? (
+                  <div className="space-y-2">
+                    <div
+                      className="rounded overflow-hidden relative"
+                      style={{
+                        border: `2px solid ${approved === true ? "oklch(0.60 0.18 145)" : approved === false ? "oklch(0.55 0.18 25)" : "oklch(0.28 0.025 58)"}`,
+                        transition: "border-color 200ms",
+                      }}
+                    >
+                      <img
+                        src={displayUrl}
+                        alt={`Scene ${idx + 1}`}
+                        className="w-full object-cover"
+                        style={{ maxHeight: "200px" }}
+                      />
+                      {approved === true && (
+                        <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold"
+                          style={{ background: "oklch(0.20 0.10 145 / 0.9)", color: "oklch(0.72 0.18 145)" }}>
+                          <Check size={11} /> Approved
+                        </div>
+                      )}
+                      {approved === false && (
+                        <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold"
+                          style={{ background: "oklch(0.20 0.08 25 / 0.9)", color: "oklch(0.70 0.18 25)" }}>
+                          ✗ Rejected
+                        </div>
+                      )}
+                    </div>
+                    {/* Approve / Reject buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => updateScene(scene.id, { imageApproved: true })}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold transition-all"
+                        style={{
+                          background: approved === true ? "oklch(0.20 0.10 145)" : "oklch(0.18 0.016 52)",
+                          color: approved === true ? "oklch(0.72 0.18 145)" : "oklch(0.55 0.012 65)",
+                          border: `1px solid ${approved === true ? "oklch(0.50 0.15 145 / 0.6)" : "oklch(0.28 0.025 58)"}`,
+                        }}
+                      >
+                        <ThumbsUp size={12} /> Approve
+                      </button>
+                      <button
+                        onClick={() => updateScene(scene.id, { imageApproved: false, imageUrl: undefined })}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold transition-all"
+                        style={{
+                          background: approved === false ? "oklch(0.18 0.08 25)" : "oklch(0.18 0.016 52)",
+                          color: approved === false ? "oklch(0.70 0.18 25)" : "oklch(0.55 0.012 65)",
+                          border: `1px solid ${approved === false ? "oklch(0.45 0.12 25 / 0.6)" : "oklch(0.28 0.025 58)"}`,
+                        }}
+                      >
+                        <ThumbsDown size={12} /> Reject & Clear
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* No image yet — URL paste + file upload */
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <Link size={12} style={{ color: "oklch(0.45 0.010 60)", flexShrink: 0 }} />
+                      <input
+                        type="url"
+                        placeholder="Paste image URL from Leonardo AI…"
+                        defaultValue={scene.imageUrl || ""}
+                        onBlur={(e) => {
+                          const url = e.currentTarget.value.trim();
+                          if (url) updateScene(scene.id, { imageUrl: url });
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            const url = e.currentTarget.value.trim();
+                            if (url) updateScene(scene.id, { imageUrl: url });
+                            e.currentTarget.blur();
+                          }
+                        }}
+                        className="sanctum-input text-xs"
+                        style={{ padding: "0.3rem 0.625rem", flex: 1 }}
+                      />
+                    </div>
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        cursor: uploadingSceneId === scene.id ? "not-allowed" : "pointer",
+                        padding: "0.35rem 0.75rem",
+                        borderRadius: "0.375rem",
+                        border: "1px dashed oklch(0.35 0.025 58)",
+                        color: "oklch(0.50 0.012 65)",
+                        fontSize: "0.72rem",
+                        transition: "all 150ms",
+                        width: "fit-content",
+                      }}
+                    >
+                      {uploadingSceneId === scene.id
+                        ? <><Loader2 size={11} className="animate-spin" /> Uploading…</>
+                        : <><Upload size={11} /> Upload from computer (saved to R2)</>}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        disabled={uploadingSceneId === scene.id}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleFileUpload(scene.id, file);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  </div>
+                );
+              })()}
 
               <textarea
                 value={scene.imagePrompt || buildImagePrompt(scene.sceneDescription)}
@@ -765,17 +910,43 @@ export default function Step6ImagePrompts() {
         })}
       </div>
 
-      {/* Continue */}
+      {/* Approval summary + Continue */}
+      {scenesWithImages > 0 && (
+        <div className="rounded-lg p-4 space-y-3" style={{ background: "oklch(0.15 0.014 52)", border: "1px solid oklch(0.25 0.020 55)" }}>
+          <div className="flex items-center justify-between text-xs">
+            <span style={{ color: "oklch(0.60 0.012 65)" }}>Image Approval</span>
+            <span style={{ color: approvedCount > 0 ? "oklch(0.72 0.18 145)" : "oklch(0.55 0.012 65)" }}>
+              {approvedCount} approved · {rejectedCount} rejected · {scenesWithImages - reviewedCount} pending review
+            </span>
+          </div>
+          <div className="rounded-full overflow-hidden" style={{ height: "6px", background: "oklch(0.22 0.018 52)" }}>
+            <div className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${(approvedCount / project.scenes.length) * 100}%`, background: "linear-gradient(90deg, oklch(0.60 0.18 145), oklch(0.72 0.18 145))" }} />
+          </div>
+          {approvedCount === 0 && scenesWithImages > 0 && (
+            <p className="text-xs" style={{ color: "oklch(0.60 0.12 65)" }}>
+              👆 Review each image above — approve the ones you want to use in the video
+            </p>
+          )}
+        </div>
+      )}
+
       <button
         onClick={handleContinue}
-        className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 hover:opacity-90"
+        disabled={approvedCount === 0}
+        className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200"
         style={{
-          background: "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
-          color: "oklch(0.12 0.015 55)",
+          background: approvedCount > 0
+            ? "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))"
+            : "oklch(0.20 0.016 52)",
+          color: approvedCount > 0 ? "oklch(0.12 0.015 55)" : "oklch(0.40 0.010 60)",
+          cursor: approvedCount > 0 ? "pointer" : "not-allowed",
           fontFamily: "'Cinzel', serif",
+          opacity: approvedCount > 0 ? 1 : 0.6,
         }}
       >
         Continue to Video Prompts
+        {approvedCount > 0 && <span className="text-xs opacity-70">({approvedCount} approved)</span>}
         <ChevronRight size={16} />
       </button>
     </div>

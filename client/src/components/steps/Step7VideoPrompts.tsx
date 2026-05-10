@@ -33,19 +33,19 @@ export default function Step7VideoPrompts() {
   };
 
   const handleCopyAll = () => {
-    const allPrompts = project.scenes
+    const allPrompts = displayScenes
       .map((s, i) => `Scene ${i + 1}: ${s.lyricLine}\nMOTION: ${buildMotionPrompt(s.sceneDescription)}\nDURATION: ${s.duration}s`)
       .join("\n\n---\n\n");
     navigator.clipboard.writeText(allPrompts);
     setCopiedAll(true);
-    toast.success(`Copied all ${project.scenes.length} motion prompts!`);
+    toast.success(`Copied ${displayScenes.length} motion prompts!`);
     setTimeout(() => setCopiedAll(false), 3000);
   };
 
   const handleDownloadCSV = () => {
     const rows = [
       ["Scene #", "Lyric Line", "Duration (s)", "Motion Prompt"],
-      ...project.scenes.map((s, i) => [
+      ...displayScenes.map((s, i) => [
         String(i + 1),
         s.lyricLine,
         String(s.duration),
@@ -83,7 +83,9 @@ export default function Step7VideoPrompts() {
     );
   }
 
-  const totalDuration = project.scenes.reduce((sum, s) => sum + s.duration, 0);
+  const approvedScenes = project.scenes.filter((s) => s.imageApproved === true);
+  const displayScenes = approvedScenes.length > 0 ? approvedScenes : project.scenes;
+  const totalDuration = displayScenes.reduce((sum, s) => sum + s.duration, 0);
 
   return (
     <div className="space-y-5">
@@ -105,7 +107,7 @@ export default function Step7VideoPrompts() {
             className="text-xs font-semibold px-3 py-1.5 rounded-full"
             style={{ background: "oklch(0.65 0.14 65 / 0.15)", color: "oklch(0.72 0.14 68)", border: "1px solid oklch(0.65 0.14 65 / 0.3)" }}
           >
-            {project.scenes.length} scenes
+            {displayScenes.length}{approvedScenes.length > 0 ? " approved" : ""} scenes
           </span>
           <span
             className="text-xs font-semibold px-3 py-1.5 rounded-full"
@@ -175,9 +177,17 @@ export default function Step7VideoPrompts() {
         </div>
       </div>
 
+      {/* Approved-only notice */}
+      {approvedScenes.length > 0 && approvedScenes.length < project.scenes.length && (
+        <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg"
+          style={{ background: "oklch(0.18 0.08 145 / 0.3)", color: "oklch(0.65 0.15 145)", border: "1px solid oklch(0.45 0.12 145 / 0.3)" }}>
+          ✓ Showing video prompts for {approvedScenes.length} approved scenes only ({project.scenes.length - approvedScenes.length} rejected scenes skipped)
+        </div>
+      )}
+
       {/* Prompt list */}
       <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
-        {project.scenes.map((scene, idx) => (
+        {displayScenes.map((scene, idx) => (
           <div key={scene.id} className="shrine-panel p-3">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
