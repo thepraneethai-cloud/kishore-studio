@@ -95,27 +95,27 @@ const SUBJECT_PLACEHOLDER: Record<SongCategory, string> = {
 
 const VISION_EXAMPLES: Record<SongCategory, string[]> = {
   devotional: [
-    "Vinayaka Chavithi song with modak offerings, Mushika vehicle, joyful mood.",
+    "Vinayaka Chavithi song with modak offerings and joyful bhajan feel.",
     "Peaceful bhajan about a devotee's first visit to Tirumala — include Alipiri steps and Govinda chanting.",
     "Powerful Navratri stotram — Durga on her lion, demon slayer imagery, fierce energy.",
   ],
   cinematic: [
-    "Mass hero intro — villain trembling, slow-motion entry, Hyderabad backdrop, swagger attitude.",
+    "Hero intro song with attitude, drums, village crowd energy, and whistle moments.",
     "Emotional father-son reunion in rain — flashback of sacrifice, graduation, tears.",
     "Love-at-first-sight melody — college campus, slow zoom, butterflies, soft music.",
   ],
   folk: [
-    "Bonalu festival — women carrying decorated pots, dappu beats, village square celebration.",
+    "Rustic Telangana village song with dappu rhythm, playful call-and-response lines, and harvest festival imagery.",
     "Shepherd boy meets village girl near a river — traditional flute, playful teasing.",
-    "Farmers celebrating after good rains — dance in the fields, earthy joy.",
+    "Bonalu festival — women carrying decorated pots, dappu beats, village square celebration.",
   ],
   romantic: [
-    "Boy meets girl at a village fair — instant connection, shy glances, soft evening light.",
-    "Long-distance love — rain, phone calls, missing each other, waiting at the bus stop.",
+    "Soft melody in rain, longing, memory, and poetic Telugu phrasing.",
+    "Long-distance love — phone calls, missing each other, waiting at the bus stop.",
     "Rooftop proposal at sunset — nervous confession, she smiles yes.",
   ],
   emotional: [
-    "Mother working double shifts to educate her son — sacrifice, flashback, his graduation tears.",
+    "Mother tribute with intimate lyrics, reflective tone, and soft strings.",
     "Best friends parting — one moves to another city, last evening together by the river.",
     "Heartbreak — she moved on, he replays memories, rain on the window.",
   ],
@@ -191,7 +191,24 @@ function sunoStyleText(style: Record<string, unknown>) {
 }
 
 function sanitizeLyrics(raw: string): string {
-  return raw.replace(/&lt;br&gt;/gi, "\n").replace(/<br\s*\/?>/gi, "\n").trim();
+  let cleaned = raw
+    .replace(/&lt;br&gt;/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .trim();
+
+  // Strip trailing lines that are pure English with no Telugu characters —
+  // these are LLM artifacts (e.g. "Happy Mothers Day Amma", sycophantic closings).
+  const teluguRange = /[ఀ-౿]/;
+  const lines = cleaned.split("\n");
+  while (lines.length > 0) {
+    const last = lines[lines.length - 1].trim();
+    // Remove: empty lines or Latin-only lines that don't look like section headers
+    if (!last) { lines.pop(); continue; }
+    const isLatinOnly = !teluguRange.test(last) && /^[a-zA-Z0-9\s,.'!?\-–—()]+$/.test(last);
+    const isSectionHeader = /^\[(Pallavi|Charanam|Outro|Verse|Chorus|Bridge)/i.test(last);
+    if (isLatinOnly && !isSectionHeader) { lines.pop(); } else { break; }
+  }
+  return lines.join("\n").trim();
 }
 
 const SUBJECT_SUGGESTIONS: Record<SongCategory, string[]> = {
@@ -216,7 +233,8 @@ function normalizeSubjectKey(name: string): string {
 export default function Step2Lyrics() {
   const { project, setDeity, setTitle, setLyrics, setSunoStyle, setActiveStep, markStepComplete, undoLyrics, canUndoLyrics } = useProject();
 
-  const [subjectInput,    setSubjectInput]    = useState(project.deity || "");
+  // Don't pre-fill from project.deity — let the user pick category first
+  const [subjectInput,    setSubjectInput]    = useState("");
   const [suggestions,     setSuggestions]     = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -235,11 +253,14 @@ export default function Step2Lyrics() {
   const [showIterate,     setShowIterate]     = useState(false);
   const [sunoFeedback,    setSunoFeedback]    = useState("");
   const [showSunoRefine,  setShowSunoRefine]  = useState(false);
+  // Only show SUNO panel after a successful generation in the current session
+  const [showSunoPanel,   setShowSunoPanel]   = useState(false);
 
-  // Reset suggestions when category changes
+  // Reset suggestions + SUNO panel when category changes
   useEffect(() => {
     setSuggestions([]);
     setShowSuggestions(false);
+    setShowSunoPanel(false);
   }, [category]);
 
   useEffect(() => {
@@ -275,7 +296,11 @@ export default function Step2Lyrics() {
     onSuccess: (res) => {
       if (!res.success || !res.data) { toast.error(res.error ?? "Generation failed"); return; }
       setLyrics(sanitizeLyrics(res.data.lyrics));
-      if (res.data.sunoStyle) setSunoStyle(res.data.sunoStyle);
+      if (res.data.sunoStyle) {
+        setSunoStyle(res.data.sunoStyle);
+        setShowSunoPanel(true);
+      }
+      markStepComplete(1); // auto-mark step 1 done when lyrics are generated
       setShowIterate(true);
       toast.success("Lyrics generated!");
     },
@@ -456,7 +481,7 @@ export default function Step2Lyrics() {
             {SONG_CATEGORIES.map((cat) => (
               <button
                 key={cat.value}
-                onClick={() => { setCategory(cat.value); setSubjectInput(""); setDeity(""); }}
+                onClick={() => { setCategory(cat.value); setSubjectInput(""); setDeity(""); setTitle(""); setShowSunoPanel(false); }}
                 style={{
                   padding: "0.65rem 0.75rem",
                   borderRadius: "0.5rem",
@@ -866,38 +891,38 @@ export default function Step2Lyrics() {
         )}
 
         {/* ── SUNO STYLE ───────────────────────────────── */}
-        {sunoStyle && outputType !== "lyrics_only" && (
+        {showSunoPanel && sunoStyle && outputType !== "lyrics_only" && (
           <div style={{ ...panel, background: "linear-gradient(135deg, rgba(255,0,110,0.06) 0%, rgba(0,212,255,0.06) 100%)", border: "1px solid rgba(255,0,110,0.22)", marginBottom: "1.75rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.2rem" }}>
-                  <Music size={17} style={{ color: "#ff006e" }} />
-                  <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#ff006e", margin: 0 }}>SUNO music style</p>
-                </div>
-                <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", margin: 0 }}>
-                  A ready-to-paste style prompt for SUNO. Refine to localize instruments or tempo.
-                </p>
-              </div>
-              <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0, marginLeft: "0.75rem" }}>
-                <button
-                  onClick={() => copyToClipboard(sunoStyleText(sunoStyle), "SUNO style")}
-                  style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.4rem 0.75rem", background: "rgba(255,0,110,0.1)", color: "#ff006e", border: "1px solid rgba(255,0,110,0.3)", borderRadius: "0.375rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}
-                >
-                  <Copy size={12} /> Copy for SUNO
-                </button>
-                <button
-                  onClick={() => setShowSunoRefine(!showSunoRefine)}
-                  style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.4rem 0.75rem", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "0.375rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}
-                >
-                  {showSunoRefine ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                  Refine style with AI
-                </button>
-              </div>
+            {/* Header — title + description only */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.25rem" }}>
+              <Music size={17} style={{ color: "#ff006e" }} />
+              <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#ff006e", margin: 0 }}>SUNO music style</p>
             </div>
+            <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.75rem" }}>
+              A ready-to-paste style prompt for SUNO. Refine to localize instruments or tempo.
+            </p>
 
-            <pre style={{ margin: "0.75rem 0 0", padding: "0.875rem", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,0,110,0.2)", borderRadius: "0.375rem", color: "#ff006e", fontSize: "0.875rem", fontFamily: "monospace", fontWeight: 600, lineHeight: "1.7", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+            {/* Style text first — read it, then act on it */}
+            <pre style={{ margin: 0, padding: "0.875rem", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,0,110,0.2)", borderRadius: "0.375rem", color: "#ff006e", fontSize: "0.875rem", fontFamily: "monospace", fontWeight: 600, lineHeight: "1.7", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
               {sunoStyleText(sunoStyle)}
             </pre>
+
+            {/* Action buttons — below the style text */}
+            <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
+              <button
+                onClick={() => copyToClipboard(sunoStyleText(sunoStyle), "SUNO style")}
+                style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.5rem 1rem", background: "rgba(255,0,110,0.12)", color: "#ff006e", border: "1px solid rgba(255,0,110,0.35)", borderRadius: "0.375rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}
+              >
+                <Copy size={13} /> Copy for SUNO
+              </button>
+              <button
+                onClick={() => setShowSunoRefine(!showSunoRefine)}
+                style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.5rem 1rem", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "0.375rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}
+              >
+                {showSunoRefine ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                Refine style with AI
+              </button>
+            </div>
 
             {showSunoRefine && (
               <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid rgba(255,0,110,0.15)" }}>

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 const STEPS = [
-  { id: 1, label: "Deity & Lyrics", icon: Flame, short: "Lyrics" },
+  { id: 1, label: "Concept & Lyrics", icon: Flame, short: "Lyrics" },
   { id: 2, label: "Audio", icon: Mic2, short: "Audio" },
   { id: 3, label: "Scene Breakdown", icon: Film, short: "Scenes" },
   { id: 4, label: "Image Prompts", icon: Sparkles, short: "Images" },

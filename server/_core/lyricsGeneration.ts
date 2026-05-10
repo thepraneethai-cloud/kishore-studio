@@ -367,7 +367,11 @@ ${sectionCounts}
 SONG STRUCTURE NOTE: Pallavi = chorus (repeats between each Charanam). Each line: 8–12 syllables, singable at ~4–5 seconds per line.
 
 OUTPUT FORMAT:
-Return a JSON object. CRITICAL: separate each song line with \\n inside the string — do NOT write multiple lines as one long sentence:
+Return ONLY a JSON object — no markdown fences, no preamble, no closing remarks.
+CRITICAL rules:
+1. Separate each song line with \\n inside the string — do NOT write multiple lines as one long sentence.
+2. Do NOT add any English-only closing lines, blessings, congratulations, or meta-commentary after the lyrics. Pure song content only.
+3. Every value must be in the target language and style — no stray English phrases unless the language style is "mixed".
 {
   "pallavi": "line one\\nline two\\nline three",
   "charanam1": "line one\\nline two\\nline three\\nline four",
@@ -441,7 +445,7 @@ export async function generateDevotionalLyrics(
   let systemPrompt = buildSystemPrompt(input, subjectContext);
 
   if (input.customPrompt) {
-    systemPrompt += `\n\nUSER DIRECTION:\n${input.customPrompt}\n\nIncorporate this direction. REMINDER: output valid JSON where every song line is separated by \\n inside the string value — never join lines into one sentence.`;
+    systemPrompt += `\n\nUSER DIRECTION:\n${input.customPrompt}\n\nIncorporate this direction. REMINDER: output valid JSON only — every song line separated by \\n, no English artifact endings, no markdown.`;
   }
 
   const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1);
