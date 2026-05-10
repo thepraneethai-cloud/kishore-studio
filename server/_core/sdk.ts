@@ -267,11 +267,25 @@ class SDKServer {
 
     const signedInAt = new Date();
 
-    // Try DB lookup, but fall back to JWT payload if DB is unavailable
+    // Try DB lookup — if not found, create the user then re-fetch so we get a real DB id
     let user = await db.getUserByOpenId(session.openId).catch(() => null);
 
     if (!user) {
-      // Synthesize user from JWT claims — works without a database
+      await db.upsertUser({
+        openId: session.openId,
+        name: session.name ?? "Admin",
+        email: null,
+        loginMethod: "password",
+        role: "admin",
+        lastSignedIn: signedInAt,
+      }).catch(() => {});
+      user = await db.getUserByOpenId(session.openId).catch(() => null);
+    } else {
+      db.upsertUser({ openId: user.openId, lastSignedIn: signedInAt }).catch(() => {});
+    }
+
+    // Final fallback if DB is completely unavailable
+    if (!user) {
       user = {
         openId: session.openId,
         name: session.name ?? "Admin",
@@ -281,8 +295,6 @@ class SDKServer {
         createdAt: signedInAt,
         lastSignedIn: signedInAt,
       } as unknown as import("../../drizzle/schema").User;
-    } else {
-      db.upsertUser({ openId: user.openId, lastSignedIn: signedInAt }).catch(() => {});
     }
 
     return user;
