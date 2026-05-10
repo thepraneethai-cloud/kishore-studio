@@ -206,6 +206,7 @@ Return a JSON object with this exact structure:
           content: userMessage,
         },
       ],
+      temperature: 1.2,
       response_format: {
         type: "json_schema",
         json_schema: {

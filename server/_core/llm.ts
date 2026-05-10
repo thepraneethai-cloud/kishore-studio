@@ -66,6 +66,7 @@ export type InvokeParams = {
   output_schema?: OutputSchema;
   responseFormat?: ResponseFormat;
   response_format?: ResponseFormat;
+  temperature?: number;
 };
 
 export type ToolCall = {
@@ -308,9 +309,14 @@ export async function invokeLLM(
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = 32768
-  payload.thinking = {
-    "budget_tokens": 128
+  payload.max_tokens = 32768;
+  // Gemini 2.5 flash: custom temperature and thinking are mutually exclusive.
+  // When temperature is set, disable thinking so the model uses the requested temperature.
+  if (params.temperature !== undefined) {
+    payload.temperature = params.temperature;
+    payload.thinking = { budget_tokens: 0 };
+  } else {
+    payload.thinking = { budget_tokens: 128 };
   }
 
   const normalizedResponseFormat = normalizeResponseFormat({
