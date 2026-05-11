@@ -124,6 +124,27 @@ const SCENE_TEMPLATES: Record<string, { keywords: string[]; description: string 
   ],
 };
 
+// Fallback scene visuals — cycled when no keyword template matches.
+// Variety ensures every unmatched lyric line gets a distinct image prompt.
+const FALLBACK_SCENES = [
+  "Temple sanctum interior — rows of brass oil lamps on granite steps, golden glow, incense smoke rising",
+  "Close-up of sacred flower garlands on stone deity — marigold, jasmine, and lotus layered with gold",
+  "Devotees with folded hands in silent prayer, soft amber lamp-light on their faces, deep shadows behind",
+  "Ancient temple gopuram at twilight — temple bells in silhouette, birds rising, sky turning rose-gold",
+  "Camphor aarti flame being waved before the idol, devotees' faces lit golden, eyes closed in devotion",
+  "Carved stone temple corridor lined with oil lamps receding into darkness, intricate pillars, sacred mist",
+  "Hands offering bilva leaves and jasmine to a polished lingam, water drops glistening, candlelight close-up",
+  "Temple courtyard at dawn — dew on lotus flowers in the tank, first light catching stone carvings",
+  "Ritual bell hanging in temple archway, golden sheen, marigold garlands draped around it, soft bokeh",
+  "Sacred fire (havan kund) with priests in white, orange flames rising, sparks drifting upward",
+  "Feet of the deity adorned with anklets and flower offerings — close detail, stone floor, lamp glow",
+  "Aerial view of temple tank at dusk, oil lamp floats on still water, reflection of gopuram wavering",
+  "Stone chariot wheels of a temple — intricate carvings, warm afternoon sun, pigeons on the steps",
+  "Priest performing abhishek — water cascading over the idol, flowers swirling, silver vessel gleaming",
+  "Temple threshold with a lit brass diya at either side, banana leaves as decoration, devotee silhouette",
+  "Fragrant sandalwood paste being applied to stone idol by devotee's fingers, candle nearby, macro detail",
+];
+
 function generateScenesFromLyrics(lyrics: string, deityKey: string): Scene[] {
   const lines = lyrics
     .split("\n")
@@ -131,16 +152,24 @@ function generateScenesFromLyrics(lyrics: string, deityKey: string): Scene[] {
     .filter((l) => l && !l.startsWith("[") && l.length > 3);
 
   const templates = SCENE_TEMPLATES[deityKey] || [];
+  // Track which keyword-templates have already been used so each fires at most once
+  const usedTemplateIndices = new Set<number>();
 
   return lines.slice(0, 32).map((line, i) => {
     const lowerLine = line.toLowerCase();
-    const matched = templates.find((t) =>
-      t.keywords.some((k) => lowerLine.includes(k.toLowerCase()))
-    );
 
-    const sceneDesc = matched
-      ? matched.description
-      : `Devotional scene for: "${line}" — temple interior with warm lamp light, incense smoke, stone carvings`;
+    // Find the first unused template that matches this lyric line
+    let matchedDesc: string | null = null;
+    for (let j = 0; j < templates.length; j++) {
+      if (!usedTemplateIndices.has(j) && templates[j].keywords.some((k) => lowerLine.includes(k.toLowerCase()))) {
+        matchedDesc = templates[j].description;
+        usedTemplateIndices.add(j);
+        break;
+      }
+    }
+
+    // If no unused template matched, use a rotating fallback (guarantees visual variety)
+    const sceneDesc = matchedDesc ?? FALLBACK_SCENES[i % FALLBACK_SCENES.length];
 
     return {
       id: i + 1,
