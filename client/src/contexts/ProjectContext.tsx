@@ -24,6 +24,7 @@ interface ProjectContextType {
   setScenes: (scenes: Scene[]) => void;
   updateScene: (id: number, updates: Partial<Scene>) => void;
   setYouTubeData: (data: Partial<Pick<Project, "youtubeTitle" | "youtubeDescription" | "youtubeTags" | "thumbnailPrompt">>) => void;
+  setSongMeta: (meta: { category?: string; mood?: string; languageStyle?: string }) => void;
   setCharacterPrefix: (prefix: string) => void;
   setImageSeed: (seed: number | null) => void;
   setCinematicStyle: (style: CinematicStyle | null) => void;
@@ -172,6 +173,10 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  const setSongMeta = useCallback((meta: { category?: string; mood?: string; languageStyle?: string }) => {
+    setProject((p) => ({ ...p, ...meta }));
+  }, []);
+
   const setCharacterPrefix = useCallback((prefix: string) => {
     setProject((p) => ({ ...p, characterPrefix: prefix }));
   }, []);
@@ -221,6 +226,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         setScenes,
         updateScene,
         setYouTubeData,
+        setSongMeta,
         setCharacterPrefix,
         setImageSeed,
         setCinematicStyle,

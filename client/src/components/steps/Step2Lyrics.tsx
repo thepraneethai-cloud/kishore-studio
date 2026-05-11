@@ -251,7 +251,7 @@ function normalizeSubjectKey(name: string): string {
 
 // ── Component ─────────────────────────────────────────────────
 export default function Step2Lyrics() {
-  const { project, setDeity, setTitle, setLyrics, setSunoStyle, setActiveStep, markStepComplete, undoLyrics, canUndoLyrics } = useProject();
+  const { project, setDeity, setTitle, setLyrics, setSunoStyle, setSongMeta, setActiveStep, markStepComplete, undoLyrics, canUndoLyrics } = useProject();
 
   // Don't pre-fill from project.deity — let the user pick category first
   const [subjectInput,    setSubjectInput]    = useState("");
@@ -259,9 +259,9 @@ export default function Step2Lyrics() {
   const [suggestions,     setSuggestions]     = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const [category,      setCategory]      = useState<SongCategory>("devotional");
-  const [mood,          setMood]          = useState("");
-  const [languageStyle, setLanguageStyle] = useState<string>("pure_telugu");
+  const [category,      setCategory]      = useState<SongCategory>((project.category as SongCategory) || "devotional");
+  const [mood,          setMood]          = useState(project.mood || "");
+  const [languageStyle, setLanguageStyle] = useState<string>(project.languageStyle || "pure_telugu");
   const [outputType,    setOutputType]    = useState<string>("lyrics_suno");
   const [duration,      setDuration]      = useState(4);
   const [llmModel,      setLlmModel]      = useState("gemini-2.5-flash");
@@ -278,6 +278,9 @@ export default function Step2Lyrics() {
   const [showSunoPanel,   setShowSunoPanel]   = useState(false);
   // Track whether user has explicitly clicked a category (shows mixed examples before that)
   const [hasPicked,       setHasPicked]       = useState(false);
+
+  // Persist category/mood/languageStyle to project context whenever they change
+  useEffect(() => { setSongMeta({ category, mood, languageStyle }); }, [category, mood, languageStyle]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset suggestions + SUNO panel when category changes
   useEffect(() => {

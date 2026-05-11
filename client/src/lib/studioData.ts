@@ -212,6 +212,9 @@ export interface Project {
   deity: DeityKey | null;
   title: string;
   lyrics: string;
+  category: string;
+  mood: string;
+  languageStyle: string;
   sunoStyle: SunoStyle;
   scenes: Scene[];
   youtubeTitle: string;
@@ -233,6 +236,9 @@ export function createEmptyProject(): Project {
     deity: null,
     title: "",
     lyrics: "",
+    category: "devotional",
+    mood: "",
+    languageStyle: "pure_telugu",
     sunoStyle: {
       tempo: "slow",
       style: "Bhajan",

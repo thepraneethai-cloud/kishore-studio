@@ -233,8 +233,8 @@ export default function Step5Scenes() {
       const result = await sceneBreakdownMutation.mutateAsync({
         lyrics:   project.lyrics,
         deity:    project.deity    || undefined,
-        category: (project as any).category || undefined,
-        mood:     (project as any).mood     || undefined,
+        category: project.category || undefined,
+        mood:     project.mood     || undefined,
         llmModel,
       });
       if (!result.success || !result.data) throw new Error(result.error || "Scene breakdown failed");
