@@ -326,7 +326,7 @@ export default function Step6ImagePrompts() {
         </div>
         <div className="text-center py-12 rounded-lg" style={{ border: "2px dashed oklch(0.28 0.025 58)", color: "oklch(0.45 0.010 60)" }}>
           <Sparkles size={32} className="mx-auto mb-3 opacity-40" />
-          <p className="text-sm">Please complete Step 4 (Scene Breakdown) first</p>
+          <p className="text-sm">Please complete Step 3 (Scene Breakdown) first</p>
         </div>
       </div>
     );
