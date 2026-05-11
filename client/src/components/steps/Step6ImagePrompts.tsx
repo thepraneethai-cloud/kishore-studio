@@ -902,8 +902,8 @@ export default function Step6ImagePrompts() {
                 value={scene.imagePrompt || buildImagePrompt(scene.sceneDescription)}
                 onChange={(e) => handleUpdatePrompt(scene.id, e.target.value)}
                 className="sanctum-input text-xs"
-                rows={2}
-                style={{ padding: "0.375rem 0.625rem", resize: "none" }}
+                rows={3}
+                style={{ display: "block", width: "100%", boxSizing: "border-box", padding: "0.375rem 0.625rem", resize: "vertical" }}
               />
             </div>
           );
