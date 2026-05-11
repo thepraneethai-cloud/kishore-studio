@@ -246,23 +246,24 @@ export const generationRouter = router({
         if (lines.length === 0) throw new Error("No lyric lines found in the lyrics");
 
         const deity   = input.deity    || "Hindu deity";
-        const category = input.category || "devotional";
-        const mood    = input.mood     || "devotional and meditative";
+        const category = input.category || "sacred";
+        const mood    = input.mood     || "meditative and serene";
 
         const systemPrompt =
-          `You are a professional visual director creating scene breakdowns for a South Indian ${category} music video about ${deity}. ` +
+          `You are a professional visual director creating scene breakdowns for a South Indian music video about ${deity}. ` +
           `Your job: for each lyric line, create a unique cinematic visual scene and a detailed AI image-generator prompt.`;
 
         const userPrompt =
-          `Song: ${deity} — ${category} style, ${mood} mood.\n\n` +
+          `Song honoring ${deity} — style: ${category}, mood: ${mood}.\n\n` +
           `For EACH lyric line below, produce:\n` +
-          `- sceneDescription: 1 vivid sentence describing exactly what the camera sees\n` +
-          `- imagePrompt: 2-sentence detailed prompt for an AI image generator (specific subjects, lighting, composition). ` +
-          `Append to every prompt: "South Indian temple art style, warm oil lamp lighting, incense atmosphere, 8K quality, no text, no humans"\n\n` +
+          `- sceneDescription: 1 vivid sentence describing exactly what the camera sees (specific objects, setting, action — NO generic labels)\n` +
+          `- imagePrompt: 2-sentence detailed AI image prompt. Lead with the specific visual subject (deity, ritual object, architectural detail, nature element). ` +
+          `End every prompt with: "South Indian temple art style, warm oil lamp lighting, incense atmosphere, 8K quality, no text, no humans"\n\n` +
           `Rules:\n` +
           `• Every scene MUST be visually distinct — no repeated descriptions\n` +
-          `• Base each scene on the emotional content and imagery of THAT specific lyric line\n` +
-          `• Vary: close-ups vs wide shots, objects vs architecture vs nature vs ritual\n\n` +
+          `• Each scene must reflect the meaning of THAT specific lyric line — vary: deity close-ups, ritual objects, temple architecture, nature, abstract light\n` +
+          `• Do NOT start any imagePrompt with generic words like "Devotional", "Sacred", "Scene" — lead with the concrete visual subject\n` +
+          `• Vary shot types: extreme close-up, wide establishing shot, medium, aerial, macro detail\n\n` +
           `Lyric lines:\n` +
           lines.map((line, i) => `${i + 1}. ${line}`).join("\n") +
           `\n\nReturn ONLY a valid JSON array, no markdown fences:\n` +
@@ -306,8 +307,8 @@ export const generationRouter = router({
           return {
             id:               i + 1,
             lyricLine:        line,
-            sceneDescription: ai?.sceneDescription || `Devotional scene: ${line}`,
-            imagePrompt:      ai?.imagePrompt       || `Cinematic devotional scene inspired by "${line.substring(0, 60)}". South Indian temple art style, warm oil lamp lighting, incense atmosphere, 8K quality, no text, no humans`,
+            sceneDescription: ai?.sceneDescription || `${deity} temple scene: ${line.substring(0, 80)}`,
+            imagePrompt:      ai?.imagePrompt       || `${deity} in ornate South Indian temple, stone carvings and oil lamp glow, scene inspired by: "${line.substring(0, 60)}". Warm amber lighting, incense smoke, 8K quality, no text, no humans`,
             motionPrompt:     `Gentle slow camera push-in (0.3x zoom over 6 seconds). Soft particle glow on light sources, subtle smoke drift, lamp flames flickering.`,
             duration:         5,
           };
