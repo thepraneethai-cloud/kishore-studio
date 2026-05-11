@@ -509,34 +509,56 @@ export default function Step2Lyrics() {
           </p>
         </div>
 
+        {/* ── LLM MODEL (top-level, used for all generations) ── */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.25rem", padding: "0.65rem 1rem", background: "rgba(0,212,255,0.04)", border: "1px solid rgba(0,212,255,0.18)", borderRadius: "0.5rem", flexWrap: "wrap" }}>
+          <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "rgba(0,212,255,0.6)", whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.05em" }}>AI Model</span>
+          <select
+            value={llmModel}
+            onChange={(e) => setLlmModel(e.target.value)}
+            style={{ flex: 1, minWidth: "200px", padding: "0.4rem 0.6rem", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(0,212,255,0.25)", borderRadius: "0.375rem", color: "#00d4ff", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", outline: "none" }}
+          >
+            <optgroup label="Gemini (platform key — no setup needed)">
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash — fast · default</option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro — most capable</option>
+            </optgroup>
+            <optgroup label="Gemini (requires your Gemini API key)">
+              <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+              <option value="gemini-2.0-flash-thinking-exp">Gemini 2.0 Flash Thinking</option>
+              <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+            </optgroup>
+            <optgroup label="ChatGPT (requires your OpenAI API key)">
+              <option value="gpt-4o">GPT-4o — powerful</option>
+              <option value="gpt-4o-mini">GPT-4o Mini — fast · cheap</option>
+              <option value="gpt-4-turbo">GPT-4 Turbo</option>
+            </optgroup>
+            <optgroup label="Claude (requires your Anthropic API key)">
+              <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku — fast · excellent</option>
+              <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet — best quality</option>
+            </optgroup>
+            <optgroup label="Groq / Llama (requires your Groq API key — free tier)">
+              <option value="llama-3.1-8b-instant">Llama 3.1 8B — ultra-fast · free</option>
+              <option value="llama-3.3-70b-versatile">Llama 3.3 70B — quality · free</option>
+              <option value="qwen-2.5-7b-instruct">Qwen 2.5 7B — multilingual · free</option>
+            </optgroup>
+            <optgroup label="Mistral (requires your Mistral API key — free tier)">
+              <option value="mistral-small-latest">Mistral Small — multilingual · free</option>
+            </optgroup>
+          </select>
+          <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.3)", fontStyle: "italic", whiteSpace: "nowrap" }}>Used for all generations on this page</span>
+        </div>
+
         {/* ── SONG CATEGORY ────────────────────────────── */}
         <div style={{ ...panel, marginBottom: "1.25rem" }}>
-          <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#00d4ff", marginBottom: "0.85rem" }}>
-            Song category
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "0.6rem" }}>
+          <label style={{ ...labelStyle, marginBottom: "0.5rem" }}>Song category</label>
+          <select
+            value={category}
+            onChange={(e) => { setCategory(e.target.value as SongCategory); setHasPicked(true); }}
+            style={{ width: "100%", padding: "0.625rem 0.75rem", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(0,212,255,0.2)", borderRadius: "0.375rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", outline: "none" }}
+          >
             {SONG_CATEGORIES.map((cat) => (
-              <button
-                key={cat.value}
-                onClick={() => { setCategory(cat.value); setHasPicked(true); setSubjectInput(""); setTitleInput(""); setDeity(""); setTitle(""); setLyrics(""); setShowSunoPanel(false); }}
-                style={{
-                  padding: "0.65rem 0.75rem",
-                  borderRadius: "0.5rem",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  transition: "all 150ms",
-                  background: category === cat.value ? "rgba(0,212,255,0.15)" : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${category === cat.value ? "rgba(0,212,255,0.5)" : "rgba(255,255,255,0.1)"}`,
-                }}
-              >
-                <div style={{ fontSize: "1.15rem", marginBottom: "0.2rem" }}>{cat.emoji}</div>
-                <div style={{ fontSize: "0.8rem", fontWeight: 700, color: category === cat.value ? "#00d4ff" : "rgba(255,255,255,0.75)", marginBottom: "0.15rem" }}>
-                  {cat.label}
-                </div>
-                <div style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.35)" }}>{cat.description}</div>
-              </button>
+              <option key={cat.value} value={cat.value}>{cat.emoji} {cat.label} — {cat.description}</option>
             ))}
-          </div>
+          </select>
         </div>
 
         {/* ── SUBJECT & TITLE ──────────────────────────── */}
@@ -620,113 +642,54 @@ export default function Step2Lyrics() {
             {/* Mood chips */}
             <div style={{ marginBottom: "0.85rem" }}>
               <label style={{ ...labelStyle, color: "rgba(139,92,246,0.7)" }}>Mood</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+              <select
+                value={mood}
+                onChange={(e) => setMood(e.target.value)}
+                style={{ width: "100%", padding: "0.5rem 0.75rem", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: "0.375rem", color: "#a78bfa", fontSize: "0.875rem", cursor: "pointer", outline: "none" }}
+              >
+                <option value="">— Select mood (optional) —</option>
                 {MOOD_OPTIONS.map((m) => (
-                  <button
-                    key={m.value}
-                    onClick={() => setMood(mood === m.value ? "" : m.value)}
-                    style={chip(mood === m.value, "rgba(139,92,246")}
-                  >
-                    {m.label}
-                  </button>
+                  <option key={m.value} value={m.value}>{m.label}</option>
                 ))}
-              </div>
+              </select>
             </div>
 
             {/* Language style */}
             <div style={{ marginBottom: "0.85rem" }}>
               <label style={{ ...labelStyle, color: "rgba(139,92,246,0.7)" }}>Language style</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
-                {LANGUAGE_STYLES.map((ls) => {
-                  const active = languageStyle === ls.value;
-                  return (
-                    <button
-                      key={ls.value}
-                      onClick={() => setLanguageStyle(ls.value)}
-                      style={{
-                        display: "flex", flexDirection: "column", alignItems: "flex-start",
-                        padding: "0.4rem 0.75rem",
-                        borderRadius: "0.5rem",
-                        fontSize: "0.78rem", fontWeight: 600,
-                        cursor: "pointer", transition: "all 150ms",
-                        background: active ? "rgba(139,92,246,0.25)" : "rgba(139,92,246,0.06)",
-                        color: active ? "rgba(139,92,246,1)" : "rgba(139,92,246,0.5)",
-                        border: `1px solid ${active ? "rgba(139,92,246,0.55)" : "rgba(139,92,246,0.18)"}`,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {ls.label}
-                      <span style={{ fontSize: "0.62rem", fontWeight: 400, opacity: 0.75, marginTop: "0.1rem" }}>
-                        {ls.hint}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Vision textarea */}
-            <label style={{ ...labelStyle, color: "rgba(139,92,246,0.7)" }}>Describe your vision</label>
-            <textarea
-              value={visionInput}
-              onChange={(e) => setVisionInput(e.target.value)}
-              rows={3}
-              placeholder="Describe the setting, mood, and key imagery for your song…"
-              style={{ ...inputStyle, fontSize: "0.875rem", lineHeight: "1.5", marginBottom: "0.5rem", border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.06)" }}
-            />
-
-            {/* Examples — mixed until category is explicitly picked; click to use */}
-            <div style={examplesBox}>
-              <p style={{ fontSize: "0.68rem", fontWeight: 600, color: "rgba(139,92,246,0.45)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                {hasPicked ? `${SONG_CATEGORIES.find(c => c.value === category)?.label} examples` : "Examples · pick a category to filter"}{" "}
-                <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.7 }}>· click to use</span>
-              </p>
-              <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                {hasPicked
-                  ? VISION_EXAMPLES[category].map((ex) => (
-                      <li key={ex}>
-                        <button
-                          onClick={() => setVisionInput(ex)}
-                          style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: "0.15rem 0", fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", lineHeight: "1.4", width: "100%", marginBottom: "0.15rem" }}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(139,92,246,0.85)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.35)"; }}
-                        >
-                          • {ex}
-                        </button>
-                      </li>
-                    ))
-                  : MIXED_STARTER_EXAMPLES.map((ex) => (
-                      <li key={ex.text}>
-                        <button
-                          onClick={() => setVisionInput(ex.text)}
-                          style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: "0.15rem 0", fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", lineHeight: "1.4", width: "100%", marginBottom: "0.15rem", display: "flex", gap: "0.4rem" }}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(139,92,246,0.85)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.35)"; }}
-                        >
-                          <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "rgba(139,92,246,0.5)", textTransform: "uppercase", flexShrink: 0, paddingTop: "1px" }}>[{ex.cat}]</span>
-                          {ex.text}
-                        </button>
-                      </li>
-                    ))
-                }
-              </ul>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.75rem", flexWrap: "wrap" }}>
               <select
-                value={llmModel}
-                onChange={(e) => setLlmModel(e.target.value)}
-                style={{ padding: "0.4rem 0.6rem", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: "0.375rem", color: "#a78bfa", fontSize: "0.75rem", cursor: "pointer", outline: "none" }}
+                value={languageStyle}
+                onChange={(e) => setLanguageStyle(e.target.value)}
+                style={{ width: "100%", padding: "0.5rem 0.75rem", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: "0.375rem", color: "#a78bfa", fontSize: "0.875rem", cursor: "pointer", outline: "none" }}
               >
-                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                <option value="gpt-4o">GPT-4o</option>
-                <option value="gpt-4o-mini">GPT-4o Mini</option>
-                <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
-                <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
-                <option value="llama-3.3-70b-versatile">Llama 3.3 70B (free)</option>
+                {LANGUAGE_STYLES.map((ls) => (
+                  <option key={ls.value} value={ls.value}>{ls.label} — {ls.hint}</option>
+                ))}
               </select>
+            </div>
+
+            {/* Song brief quick-pick + custom textarea */}
+            <div style={{ marginBottom: "0.85rem" }}>
+              <label style={{ ...labelStyle, color: "rgba(139,92,246,0.7)" }}>Song brief</label>
+              <select
+                value=""
+                onChange={(e) => { if (e.target.value) setVisionInput(e.target.value); }}
+                style={{ width: "100%", padding: "0.5rem 0.75rem", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: "0.375rem", color: "rgba(139,92,246,0.7)", fontSize: "0.8rem", cursor: "pointer", outline: "none", marginBottom: "0.5rem" }}
+              >
+                <option value="">— Quick pick an example (optional) —</option>
+                {(hasPicked ? VISION_EXAMPLES[category] : MIXED_STARTER_EXAMPLES.map(e => e.text)).map((ex) => (
+                  <option key={ex} value={ex}>{ex}</option>
+                ))}
+              </select>
+              <textarea
+                value={visionInput}
+                onChange={(e) => setVisionInput(e.target.value)}
+                rows={3}
+                placeholder="Describe the setting, mood, and key imagery for your song…"
+                style={{ ...inputStyle, fontSize: "0.875rem", lineHeight: "1.5", border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.06)" }}
+              />
+            </div>
+
             <button
               onClick={() => {
                 if (!visionInput.trim()) { toast.error("Describe your idea first"); return; }
@@ -736,7 +699,6 @@ export default function Step2Lyrics() {
               disabled={promptGenMutation.isPending || !visionInput.trim()}
               style={{
                 display: "flex", alignItems: "center", gap: "0.5rem",
-                marginTop: "0.75rem",
                 padding: "0.625rem 1.25rem",
                 background: promptGenMutation.isPending ? "rgba(139,92,246,0.15)" : "linear-gradient(135deg, #8b5cf6, #6d28d9)",
                 color: promptGenMutation.isPending ? "rgba(139,92,246,0.5)" : "#fff",
@@ -752,7 +714,6 @@ export default function Step2Lyrics() {
                 : <><Wand2 size={14} /> Generate prompt with AI</>
               }
             </button>
-            </div>
 
             {customPrompt && (
               <p style={{ marginTop: "0.6rem", fontSize: "0.75rem", color: "#a78bfa", fontStyle: "italic" }}>
@@ -798,73 +759,19 @@ export default function Step2Lyrics() {
             )}
           </div>
 
-          {/* Duration + LLM model row */}
-          <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
-            <div>
-              <label style={labelStyle}>Song duration</label>
-              <select
-                value={duration}
-                onChange={(e) => setDuration(Number(e.target.value))}
-                style={{ padding: "0.5rem 0.75rem", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(0,212,255,0.2)", borderRadius: "0.375rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", outline: "none", minWidth: "185px" }}
-              >
-                {DURATION_OPTIONS.map((d) => (
-                  <option key={d.value} value={d.value}>{d.label}</option>
-                ))}
-              </select>
-              <p style={helperStyle}>Affects how long the lyrics and SUNO audio will be.</p>
-            </div>
-
-            <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.4rem" }}>
-                <span style={{ ...labelStyle, marginBottom: 0 }}>AI model</span>
-                <span style={{ fontSize: "0.68rem", fontWeight: 600, padding: "0.15rem 0.5rem", background: "rgba(0,212,255,0.12)", color: "rgba(0,212,255,0.75)", border: "1px solid rgba(0,212,255,0.2)", borderRadius: "999px" }}>
-                  Using: {MODEL_LABELS[llmModel] ?? llmModel}
-                </span>
-              </div>
-              <select
-                value={llmModel}
-                onChange={(e) => setLlmModel(e.target.value)}
-                style={{ width: "100%", padding: "0.5rem 0.75rem", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(0,212,255,0.2)", borderRadius: "0.375rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", outline: "none" }}
-              >
-                <optgroup label="Gemini (platform key — no setup needed)">
-                  <option value="gemini-2.5-flash">Gemini 2.5 Flash — fast · default</option>
-                  <option value="gemini-2.5-pro">Gemini 2.5 Pro — most capable</option>
-                </optgroup>
-                <optgroup label="Gemini (requires your Gemini API key)">
-                  <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                  <option value="gemini-2.0-flash-thinking-exp">Gemini 2.0 Flash Thinking</option>
-                  <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                </optgroup>
-                <optgroup label="ChatGPT (requires your OpenAI API key)">
-                  <option value="gpt-4o">GPT-4o — powerful</option>
-                  <option value="gpt-4o-mini">GPT-4o Mini — fast · cheap</option>
-                  <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                </optgroup>
-                <optgroup label="Claude (requires your Anthropic API key)">
-                  <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku — fast · excellent</option>
-                  <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet — best quality</option>
-                </optgroup>
-                <optgroup label="Groq / Llama (requires your Groq API key — free tier)">
-                  <option value="llama-3.1-8b-instant">Llama 3.1 8B — ultra-fast · free</option>
-                  <option value="llama-3.3-70b-versatile">Llama 3.3 70B — quality · free</option>
-                  <option value="qwen-2.5-7b-instruct">Qwen 2.5 7B — multilingual · free</option>
-                </optgroup>
-                <optgroup label="Mistral (requires your Mistral API key — free tier)">
-                  <option value="mistral-small-latest">Mistral Small — multilingual · free</option>
-                </optgroup>
-              </select>
-              <div style={{ marginTop: "0.5rem", padding: "0.5rem 0.75rem", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "0.375rem" }}>
-                <p style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.45)", margin: "0 0 0.2rem" }}>
-                  <span style={{ color: "#39ff14", marginRight: "0.35rem" }}>●</span>
-                  <strong>Ready now:</strong> Gemini 2.5 Flash &amp; Pro (platform key — no setup)
-                </p>
-                <p style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.45)", margin: 0 }}>
-                  <span style={{ color: "#ff9632", marginRight: "0.35rem" }}>●</span>
-                  <strong>Needs API key:</strong> Gemini 2.0, GPT-4o, Claude, Llama, Mistral — add keys in{" "}
-                  <span style={{ color: "rgba(0,212,255,0.7)", fontWeight: 600 }}>Settings</span>
-                </p>
-              </div>
-            </div>
+          {/* Duration */}
+          <div>
+            <label style={labelStyle}>Song duration</label>
+            <select
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+              style={{ padding: "0.5rem 0.75rem", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(0,212,255,0.2)", borderRadius: "0.375rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", outline: "none", minWidth: "185px" }}
+            >
+              {DURATION_OPTIONS.map((d) => (
+                <option key={d.value} value={d.value}>{d.label}</option>
+              ))}
+            </select>
+            <p style={helperStyle}>Affects how long the lyrics and SUNO audio will be.</p>
           </div>
         </div>
 
