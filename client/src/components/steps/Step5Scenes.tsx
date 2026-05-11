@@ -589,166 +589,81 @@ export default function Step5Scenes() {
             const shotConfig = scene.shotType ? SHOT_CONFIG[scene.shotType] : null;
             const moveConfig = scene.cameraMovement ? MOVE_CONFIG[scene.cameraMovement] : null;
 
+            const ta = (field: keyof Scene, value: string, rows: number, placeholder: string, color: string, border: string, bg: string) => (
+              <textarea
+                value={value}
+                onChange={(e) => handleUpdateScene(scene.id, field, e.target.value)}
+                placeholder={placeholder}
+                rows={rows}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  boxSizing: "border-box",
+                  padding: "0.5rem 0.75rem",
+                  background: bg,
+                  border: `1px solid ${border}`,
+                  borderRadius: "0.375rem",
+                  color,
+                  resize: "vertical",
+                  outline: "none",
+                  lineHeight: "1.6",
+                  fontSize: "0.8rem",
+                  fontFamily: field === "lyricLine" ? "'Noto Sans Telugu', 'Inter', sans-serif" : "inherit",
+                }}
+              />
+            );
+
             return (
-              <div key={scene.id} className="shrine-panel p-3 space-y-2">
-                <div className="flex items-start gap-3">
-                  <div
-                    className="flex-shrink-0 w-6 h-6 rounded flex items-center justify-center text-xs font-bold mt-0.5"
-                    style={{ background: "oklch(0.72 0.12 75 / 0.15)", color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}
-                  >
-                    {idx + 1}
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    {/* Director badges row */}
-                    {(weightConfig || shotConfig || moveConfig) && (
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {weightConfig && (
-                          <span
-                            className="text-xs px-2 py-0.5 rounded"
-                            style={{ background: weightConfig.bg, color: weightConfig.color, border: `1px solid ${weightConfig.color}40` }}
-                          >
-                            {weightConfig.label}
-                          </span>
-                        )}
-                        {shotConfig && (
-                          <span
-                            className="text-xs px-2 py-0.5 rounded font-mono font-semibold"
-                            style={{ background: "oklch(0.55 0.10 270 / 0.15)", color: "oklch(0.75 0.10 270)", border: "1px solid oklch(0.55 0.10 270 / 0.3)" }}
-                            title={shotConfig.label}
-                          >
-                            {shotConfig.abbr}
-                          </span>
-                        )}
-                        {moveConfig && (
-                          <span
-                            className="text-xs px-2 py-0.5 rounded"
-                            style={{ background: "oklch(0.18 0.016 52)", color: "oklch(0.55 0.012 65)", border: "1px solid oklch(0.28 0.025 58)" }}
-                          >
-                            {moveConfig.label}
-                          </span>
-                        )}
-                      </div>
-                    )}
+              <div key={scene.id} className="shrine-panel" style={{ padding: "0.875rem", marginBottom: "0.5rem" }}>
 
-                    {/* Director note */}
-                    {showDirectorNotes && scene.directorNote && (
-                      <p
-                        className="text-xs italic"
-                        style={{
-                          color: "oklch(0.60 0.08 270)",
-                          borderLeft: "2px solid oklch(0.55 0.10 270 / 0.4)",
-                          paddingLeft: "0.5rem",
-                        }}
-                      >
-                        {scene.directorNote}
-                      </p>
-                    )}
-
-                    {/* Lyric line */}
-                    <div>
-                      <p className="text-xs mb-1" style={{ color: "oklch(0.50 0.012 65)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Lyric</p>
-                      <textarea
-                        value={scene.lyricLine}
-                        onChange={(e) => handleUpdateScene(scene.id, "lyricLine", e.target.value)}
-                        placeholder="Lyric line..."
-                        rows={2}
-                        className="telugu-text w-full text-sm"
-                        style={{
-                          padding: "0.5rem 0.625rem",
-                          background: "oklch(0.15 0.012 52)",
-                          border: "1px solid oklch(0.30 0.025 58)",
-                          borderRadius: "0.375rem",
-                          color: "#fff",
-                          resize: "vertical",
-                          outline: "none",
-                          lineHeight: "1.6",
-                          fontFamily: "'Noto Sans Telugu', 'Inter', sans-serif",
-                          width: "100%",
-                        }}
-                      />
-                    </div>
-                    {/* Scene description — full width */}
-                    <div>
-                      <p className="text-xs mb-1" style={{ color: "oklch(0.55 0.10 270)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Scene description</p>
-                      <textarea
-                        value={scene.sceneDescription}
-                        onChange={(e) => handleUpdateScene(scene.id, "sceneDescription", e.target.value)}
-                        placeholder="What the camera sees..."
-                        rows={2}
-                        className="w-full text-xs"
-                        style={{
-                          padding: "0.5rem 0.625rem",
-                          background: "oklch(0.15 0.012 52)",
-                          border: "1px solid oklch(0.28 0.025 58)",
-                          borderRadius: "0.375rem",
-                          color: "oklch(0.80 0.012 68)",
-                          resize: "vertical",
-                          outline: "none",
-                          lineHeight: "1.5",
-                          width: "100%",
-                        }}
-                      />
-                    </div>
-                    {/* Image prompt — full width */}
-                    <div>
-                      <p className="text-xs mb-1" style={{ color: "oklch(0.72 0.12 75)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Image prompt</p>
-                      <textarea
-                        value={scene.imagePrompt}
-                        onChange={(e) => handleUpdateScene(scene.id, "imagePrompt", e.target.value)}
-                        placeholder="AI image generator prompt..."
-                        rows={3}
-                        className="w-full text-xs"
-                        style={{
-                          padding: "0.5rem 0.625rem",
-                          background: "oklch(0.13 0.014 60)",
-                          border: "1px solid oklch(0.72 0.12 75 / 0.3)",
-                          borderRadius: "0.375rem",
-                          color: "oklch(0.82 0.10 78)",
-                          resize: "vertical",
-                          outline: "none",
-                          lineHeight: "1.5",
-                          width: "100%",
-                        }}
-                      />
-                    </div>
-                    {/* Duration row */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>Duration:</span>
-                      <select
-                        value={scene.duration}
-                        onChange={(e) => handleUpdateScene(scene.id, "duration", Number(e.target.value))}
-                        style={{
-                          appearance: "none",
-                          WebkitAppearance: "none",
-                          padding: "0.25rem 0.5rem",
-                          background: "oklch(0.16 0.016 52)",
-                          border: "1px solid oklch(0.28 0.025 58)",
-                          borderRadius: "0.375rem",
-                          color: "oklch(0.72 0.12 75)",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          outline: "none",
-                          width: "58px",
-                          textAlign: "center",
-                        }}
-                      >
-                        {[3, 4, 5, 6, 7, 8, 10].map((d) => (
-                          <option key={d} value={d} style={{ background: "oklch(0.18 0.016 52)" }}>
-                            {d}s
-                          </option>
-                          ))}
-                        </select>
-                      </div>
+                {/* ── Header: scene number + badges + delete ── */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.625rem", flexWrap: "wrap", gap: "0.4rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                    <span style={{ background: "oklch(0.72 0.12 75 / 0.15)", color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif", fontWeight: 700, fontSize: "0.75rem", padding: "0.2rem 0.5rem", borderRadius: "0.25rem" }}>
+                      {idx + 1}
+                    </span>
+                    {weightConfig && <span className="text-xs px-2 py-0.5 rounded" style={{ background: weightConfig.bg, color: weightConfig.color, border: `1px solid ${weightConfig.color}40` }}>{weightConfig.label}</span>}
+                    {shotConfig   && <span className="text-xs px-2 py-0.5 rounded font-mono font-semibold" style={{ background: "oklch(0.55 0.10 270 / 0.15)", color: "oklch(0.75 0.10 270)", border: "1px solid oklch(0.55 0.10 270 / 0.3)" }} title={shotConfig.label}>{shotConfig.abbr}</span>}
+                    {moveConfig   && <span className="text-xs px-2 py-0.5 rounded" style={{ background: "oklch(0.18 0.016 52)", color: "oklch(0.55 0.012 65)", border: "1px solid oklch(0.28 0.025 58)" }}>{moveConfig.label}</span>}
+                    <span style={{ fontSize: "0.68rem", color: "oklch(0.45 0.010 60)" }}>
+                      Duration:
+                    </span>
+                    <select
+                      value={scene.duration}
+                      onChange={(e) => handleUpdateScene(scene.id, "duration", Number(e.target.value))}
+                      style={{ padding: "0.15rem 0.4rem", background: "oklch(0.16 0.016 52)", border: "1px solid oklch(0.28 0.025 58)", borderRadius: "0.25rem", color: "oklch(0.72 0.12 75)", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", outline: "none" }}
+                    >
+                      {[3, 4, 5, 6, 7, 8, 10].map((d) => <option key={d} value={d} style={{ background: "oklch(0.18 0.016 52)" }}>{d}s</option>)}
+                    </select>
                   </div>
                   <button
                     onClick={() => handleDeleteScene(scene.id)}
-                    className="flex-shrink-0 p-1.5 rounded transition-colors hover:bg-red-500/10"
-                    style={{ color: "oklch(0.45 0.010 60)" }}
+                    className="p-1.5 rounded transition-colors hover:bg-red-500/10"
+                    style={{ color: "oklch(0.45 0.010 60)", flexShrink: 0 }}
                   >
                     <Trash2 size={13} />
                   </button>
                 </div>
+
+                {/* Director note */}
+                {showDirectorNotes && scene.directorNote && (
+                  <p className="text-xs italic" style={{ color: "oklch(0.60 0.08 270)", borderLeft: "2px solid oklch(0.55 0.10 270 / 0.4)", paddingLeft: "0.5rem", marginBottom: "0.5rem" }}>
+                    {scene.directorNote}
+                  </p>
+                )}
+
+                {/* ── Lyric ── */}
+                <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "oklch(0.50 0.012 65)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "0.25rem" }}>Lyric</p>
+                {ta("lyricLine", scene.lyricLine, 2, "Lyric line…", "#fff", "oklch(0.32 0.025 58)", "oklch(0.15 0.012 52)")}
+
+                {/* ── Scene description ── */}
+                <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "oklch(0.65 0.10 270)", textTransform: "uppercase", letterSpacing: "0.07em", marginTop: "0.625rem", marginBottom: "0.25rem" }}>Scene description</p>
+                {ta("sceneDescription", scene.sceneDescription, 3, "What the camera sees…", "oklch(0.82 0.012 68)", "oklch(0.28 0.025 58)", "oklch(0.15 0.012 52)")}
+
+                {/* ── Image prompt ── */}
+                <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", textTransform: "uppercase", letterSpacing: "0.07em", marginTop: "0.625rem", marginBottom: "0.25rem" }}>Image prompt</p>
+                {ta("imagePrompt", scene.imagePrompt, 4, "AI image generator prompt…", "oklch(0.84 0.10 78)", "oklch(0.72 0.12 75 / 0.35)", "oklch(0.13 0.014 60)")}
+
               </div>
             );
           })}
