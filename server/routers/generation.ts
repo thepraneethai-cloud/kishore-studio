@@ -222,6 +222,108 @@ export const generationRouter = router({
     }),
 
   // ============================================================
+  // SCENE BREAKDOWN — AI-generated scene descriptions + image prompts
+  // ============================================================
+  generateSceneBreakdown: protectedProcedure
+    .input(z.object({
+      lyrics:   z.string(),
+      deity:    z.string().optional(),
+      category: z.string().optional(),
+      mood:     z.string().optional(),
+      llmModel: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        await assertBudgetAvailable(ctx.user.id);
+        const userSettings = await getUserSettings(ctx.user.id);
+
+        const lines = input.lyrics
+          .split("\n")
+          .map((l) => l.trim())
+          .filter((l) => l && !l.startsWith("[") && l.length > 3)
+          .slice(0, 32);
+
+        if (lines.length === 0) throw new Error("No lyric lines found in the lyrics");
+
+        const deity   = input.deity    || "Hindu deity";
+        const category = input.category || "devotional";
+        const mood    = input.mood     || "devotional and meditative";
+
+        const systemPrompt =
+          `You are a professional visual director creating scene breakdowns for a South Indian ${category} music video about ${deity}. ` +
+          `Your job: for each lyric line, create a unique cinematic visual scene and a detailed AI image-generator prompt.`;
+
+        const userPrompt =
+          `Song: ${deity} — ${category} style, ${mood} mood.\n\n` +
+          `For EACH lyric line below, produce:\n` +
+          `- sceneDescription: 1 vivid sentence describing exactly what the camera sees\n` +
+          `- imagePrompt: 2-sentence detailed prompt for an AI image generator (specific subjects, lighting, composition). ` +
+          `Append to every prompt: "South Indian temple art style, warm oil lamp lighting, incense atmosphere, 8K quality, no text, no humans"\n\n` +
+          `Rules:\n` +
+          `• Every scene MUST be visually distinct — no repeated descriptions\n` +
+          `• Base each scene on the emotional content and imagery of THAT specific lyric line\n` +
+          `• Vary: close-ups vs wide shots, objects vs architecture vs nature vs ritual\n\n` +
+          `Lyric lines:\n` +
+          lines.map((line, i) => `${i + 1}. ${line}`).join("\n") +
+          `\n\nReturn ONLY a valid JSON array, no markdown fences:\n` +
+          `[{"id":1,"lyricLine":"...","sceneDescription":"...","imagePrompt":"..."}]`;
+
+        const result = await invokeLLM(
+          {
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user",   content: userPrompt   },
+            ],
+            maxTokens: 8192,
+          },
+          {
+            ...(userSettings?.geminiApiKey  ? { apiKey:        userSettings.geminiApiKey  } : {}),
+            model: input.llmModel || userSettings?.llmModel || undefined,
+            ...(userSettings?.openaiApiKey  ? { openaiApiKey:  userSettings.openaiApiKey  } : {}),
+            ...(userSettings?.claudeApiKey  ? { claudeApiKey:  userSettings.claudeApiKey  } : {}),
+            ...(userSettings?.groqApiKey    ? { groqApiKey:    userSettings.groqApiKey    } : {}),
+            ...(userSettings?.mistralApiKey ? { mistralApiKey: userSettings.mistralApiKey } : {}),
+          }
+        );
+
+        const raw = (result.choices[0]?.message?.content ?? "").toString().trim();
+
+        // Parse JSON — handle both bare arrays and objects wrapping the array
+        let aiScenes: Array<{ id: number; lyricLine: string; sceneDescription: string; imagePrompt: string }> = [];
+        try {
+          const parsed = JSON.parse(raw);
+          aiScenes = Array.isArray(parsed) ? parsed : (parsed.scenes ?? parsed.data ?? []);
+        } catch {
+          const match = raw.match(/\[[\s\S]*\]/);
+          if (match) {
+            try { aiScenes = JSON.parse(match[0]); } catch { /* fall through to fallback */ }
+          }
+        }
+
+        // Merge AI output with line list; fill any gaps with a reasonable fallback
+        const scenes = lines.map((line, i) => {
+          const ai = aiScenes.find((s) => s.id === i + 1) ?? aiScenes[i];
+          return {
+            id:               i + 1,
+            lyricLine:        line,
+            sceneDescription: ai?.sceneDescription || `Devotional scene: ${line}`,
+            imagePrompt:      ai?.imagePrompt       || `Cinematic devotional scene inspired by "${line.substring(0, 60)}". South Indian temple art style, warm oil lamp lighting, incense atmosphere, 8K quality, no text, no humans`,
+            motionPrompt:     `Gentle slow camera push-in (0.3x zoom over 6 seconds). Soft particle glow on light sources, subtle smoke drift, lamp flames flickering.`,
+            duration:         5,
+          };
+        });
+
+        void recordCost(ctx.user.id, "lyrics", "gemini", UNIT_COSTS.lyrics * 2);
+        return { success: true, data: { scenes } };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Scene breakdown generation failed",
+        };
+      }
+    }),
+
+  // ============================================================
   // DIRECTOR ANALYSIS — emotional arc + shot vocabulary
   // ============================================================
   directorAnalysis: protectedProcedure

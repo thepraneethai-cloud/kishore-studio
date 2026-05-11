@@ -218,22 +218,33 @@ export default function Step5Scenes() {
   const [llmModel, setLlmModel] = useState("gemini-2.5-flash");
   const deity = DEITIES.find((d) => d.key === project.deity);
 
-  const directorMutation = trpc.generation.directorAnalysis.useMutation();
+  const directorMutation      = trpc.generation.directorAnalysis.useMutation();
+  const sceneBreakdownMutation = trpc.generation.generateSceneBreakdown.useMutation();
 
   const hasDirectorData = project.scenes.some((s) => s.emotionalWeight);
 
-  const handleAutoGenerate = () => {
+  const handleAutoGenerate = async () => {
     if (!project.lyrics || !project.lyrics.trim()) {
       toast.error("Please write lyrics in Step 1 first");
       return;
     }
     setIsGenerating(true);
-    setTimeout(() => {
-      const scenes = generateScenesFromLyrics(project.lyrics, project.deity || "venkateswara");
-      setScenes(scenes);
+    try {
+      const result = await sceneBreakdownMutation.mutateAsync({
+        lyrics:   project.lyrics,
+        deity:    project.deity    || undefined,
+        category: (project as any).category || undefined,
+        mood:     (project as any).mood     || undefined,
+        llmModel,
+      });
+      if (!result.success || !result.data) throw new Error(result.error || "Scene breakdown failed");
+      setScenes(result.data.scenes as any);
+      toast.success(`Generated ${result.data.scenes.length} scenes from your lyrics!`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to generate scenes");
+    } finally {
       setIsGenerating(false);
-      toast.success(`Generated ${scenes.length} scenes from your lyrics!`);
-    }, 800);
+    }
   };
 
   const handleDirectorAnalysis = async () => {
@@ -634,73 +645,101 @@ export default function Step5Scenes() {
                     )}
 
                     {/* Lyric line */}
-                    <textarea
-                      value={scene.lyricLine}
-                      onChange={(e) => handleUpdateScene(scene.id, "lyricLine", e.target.value)}
-                      placeholder="Lyric line..."
-                      rows={2}
-                      className="telugu-text w-full text-sm"
-                      style={{
-                        padding: "0.375rem 0.625rem",
-                        background: "oklch(0.15 0.012 52)",
-                        border: "1px solid oklch(0.30 0.025 58)",
-                        borderRadius: "0.375rem",
-                        color: "#fff",
-                        resize: "none",
-                        outline: "none",
-                        lineHeight: "1.5",
-                        fontFamily: "'Noto Sans Telugu', 'Inter', sans-serif",
-                      }}
-                    />
-                    {/* Scene description + Duration in one row */}
-                    <div className="flex gap-2 items-start">
+                    <div>
+                      <p className="text-xs mb-1" style={{ color: "oklch(0.50 0.012 65)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Lyric</p>
+                      <textarea
+                        value={scene.lyricLine}
+                        onChange={(e) => handleUpdateScene(scene.id, "lyricLine", e.target.value)}
+                        placeholder="Lyric line..."
+                        rows={2}
+                        className="telugu-text w-full text-sm"
+                        style={{
+                          padding: "0.5rem 0.625rem",
+                          background: "oklch(0.15 0.012 52)",
+                          border: "1px solid oklch(0.30 0.025 58)",
+                          borderRadius: "0.375rem",
+                          color: "#fff",
+                          resize: "vertical",
+                          outline: "none",
+                          lineHeight: "1.6",
+                          fontFamily: "'Noto Sans Telugu', 'Inter', sans-serif",
+                          width: "100%",
+                        }}
+                      />
+                    </div>
+                    {/* Scene description — full width */}
+                    <div>
+                      <p className="text-xs mb-1" style={{ color: "oklch(0.55 0.10 270)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Scene description</p>
                       <textarea
                         value={scene.sceneDescription}
                         onChange={(e) => handleUpdateScene(scene.id, "sceneDescription", e.target.value)}
-                        placeholder="Scene description..."
+                        placeholder="What the camera sees..."
                         rows={2}
-                        className="flex-1 text-xs"
+                        className="w-full text-xs"
                         style={{
-                          padding: "0.375rem 0.625rem",
+                          padding: "0.5rem 0.625rem",
                           background: "oklch(0.15 0.012 52)",
                           border: "1px solid oklch(0.28 0.025 58)",
                           borderRadius: "0.375rem",
                           color: "oklch(0.80 0.012 68)",
-                          resize: "none",
+                          resize: "vertical",
                           outline: "none",
                           lineHeight: "1.5",
-                          minWidth: 0,
+                          width: "100%",
                         }}
                       />
-                      <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
-                        <span className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>Dur.</span>
-                        <select
-                          value={scene.duration}
-                          onChange={(e) => handleUpdateScene(scene.id, "duration", Number(e.target.value))}
-                          style={{
-                            appearance: "none",
-                            WebkitAppearance: "none",
-                            padding: "0.375rem 0.5rem",
-                            background: "oklch(0.16 0.016 52)",
-                            border: "1px solid oklch(0.28 0.025 58)",
-                            borderRadius: "0.375rem",
-                            color: "oklch(0.72 0.12 75)",
-                            fontSize: "0.75rem",
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            outline: "none",
-                            width: "54px",
-                            textAlign: "center",
-                          }}
-                        >
-                          {[3, 4, 5, 6, 7, 8, 10].map((d) => (
-                            <option key={d} value={d} style={{ background: "oklch(0.18 0.016 52)" }}>
-                              {d}s
-                            </option>
+                    </div>
+                    {/* Image prompt — full width */}
+                    <div>
+                      <p className="text-xs mb-1" style={{ color: "oklch(0.72 0.12 75)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Image prompt</p>
+                      <textarea
+                        value={scene.imagePrompt}
+                        onChange={(e) => handleUpdateScene(scene.id, "imagePrompt", e.target.value)}
+                        placeholder="AI image generator prompt..."
+                        rows={3}
+                        className="w-full text-xs"
+                        style={{
+                          padding: "0.5rem 0.625rem",
+                          background: "oklch(0.13 0.014 60)",
+                          border: "1px solid oklch(0.72 0.12 75 / 0.3)",
+                          borderRadius: "0.375rem",
+                          color: "oklch(0.82 0.10 78)",
+                          resize: "vertical",
+                          outline: "none",
+                          lineHeight: "1.5",
+                          width: "100%",
+                        }}
+                      />
+                    </div>
+                    {/* Duration row */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>Duration:</span>
+                      <select
+                        value={scene.duration}
+                        onChange={(e) => handleUpdateScene(scene.id, "duration", Number(e.target.value))}
+                        style={{
+                          appearance: "none",
+                          WebkitAppearance: "none",
+                          padding: "0.25rem 0.5rem",
+                          background: "oklch(0.16 0.016 52)",
+                          border: "1px solid oklch(0.28 0.025 58)",
+                          borderRadius: "0.375rem",
+                          color: "oklch(0.72 0.12 75)",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          outline: "none",
+                          width: "58px",
+                          textAlign: "center",
+                        }}
+                      >
+                        {[3, 4, 5, 6, 7, 8, 10].map((d) => (
+                          <option key={d} value={d} style={{ background: "oklch(0.18 0.016 52)" }}>
+                            {d}s
+                          </option>
                           ))}
                         </select>
                       </div>
-                    </div>
                   </div>
                   <button
                     onClick={() => handleDeleteScene(scene.id)}
