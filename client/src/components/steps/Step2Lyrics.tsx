@@ -712,6 +712,21 @@ export default function Step2Lyrics() {
               </ul>
             </div>
 
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.75rem", flexWrap: "wrap" }}>
+              <select
+                value={llmModel}
+                onChange={(e) => setLlmModel(e.target.value)}
+                style={{ padding: "0.4rem 0.6rem", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: "0.375rem", color: "#a78bfa", fontSize: "0.75rem", cursor: "pointer", outline: "none" }}
+              >
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                <option value="gpt-4o">GPT-4o</option>
+                <option value="gpt-4o-mini">GPT-4o Mini</option>
+                <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+                <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                <option value="llama-3.3-70b-versatile">Llama 3.3 70B (free)</option>
+              </select>
             <button
               onClick={() => {
                 if (!visionInput.trim()) { toast.error("Describe your idea first"); return; }
@@ -737,6 +752,7 @@ export default function Step2Lyrics() {
                 : <><Wand2 size={14} /> Generate prompt with AI</>
               }
             </button>
+            </div>
 
             {customPrompt && (
               <p style={{ marginTop: "0.6rem", fontSize: "0.75rem", color: "#a78bfa", fontStyle: "italic" }}>
