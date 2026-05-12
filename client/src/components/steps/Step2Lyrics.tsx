@@ -282,6 +282,15 @@ export default function Step2Lyrics() {
   // Persist category/mood/languageStyle to project context whenever they change
   useEffect(() => { setSongMeta({ category, mood, languageStyle }); }, [category, mood, languageStyle]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // When the song brief idea changes, discard any stale AI-generated directive so it
+  // can't accidentally be used for a generation that was intended for the new idea.
+  useEffect(() => {
+    if (isVisionDirective) {
+      setCustomPrompt("");
+      setIsVisionDirective(false);
+    }
+  }, [visionInput]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Reset suggestions + SUNO panel when category changes
   useEffect(() => {
     setSuggestions([]);
@@ -344,8 +353,11 @@ export default function Step2Lyrics() {
         setSunoStyle(res.data.sunoStyle);
         setShowSunoPanel(true);
       }
-      markStepComplete(1); // auto-mark step 1 done when lyrics are generated
+      markStepComplete(1);
       setShowIterate(true);
+      // Clear directive after use so the next generation starts fresh
+      setCustomPrompt("");
+      setIsVisionDirective(false);
       toast.success("Lyrics generated!");
     },
     onError: (err) => {
@@ -787,10 +799,18 @@ export default function Step2Lyrics() {
             Override the default AI prompt with very specific instructions about style, phrases, or structure.
           </p>
 
-          {customPrompt && isVisionDirective && (
-            <p style={{ fontSize: "0.75rem", color: "#a78bfa", fontStyle: "italic", marginBottom: "0.5rem" }}>
-              ✓ AI-generated directive from Song brief above — you can edit it here.
-            </p>
+          {customPrompt && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+              <p style={{ fontSize: "0.75rem", color: isVisionDirective ? "#a78bfa" : "rgba(255,255,255,0.35)", fontStyle: "italic", margin: 0 }}>
+                {isVisionDirective ? "✓ AI-generated directive — you can edit it here." : "Custom direction active"}
+              </p>
+              <button
+                onClick={() => { setCustomPrompt(""); setIsVisionDirective(false); }}
+                style={{ background: "none", border: "none", padding: "0 0.25rem", fontSize: "0.7rem", color: "rgba(255,80,80,0.5)", cursor: "pointer", fontWeight: 600 }}
+              >
+                ✕ Clear
+              </button>
+            </div>
           )}
 
           <textarea
