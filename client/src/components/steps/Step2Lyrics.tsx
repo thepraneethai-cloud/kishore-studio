@@ -643,6 +643,58 @@ export default function Step2Lyrics() {
           )}
         </div>
 
+        {/* ── GENERATION SETTINGS ──────────────────────── */}
+        <div style={{ ...panel, marginBottom: "1.25rem" }}>
+          <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#00d4ff", marginBottom: "1rem" }}>
+            Generation settings
+          </p>
+
+          {/* Output type */}
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={labelStyle}>Output type</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+              {OUTPUT_TYPES.map((ot) => (
+                <button
+                  key={ot.value}
+                  onClick={() => setOutputType(ot.value)}
+                  style={chip(outputType === ot.value)}
+                >
+                  {ot.label}
+                </button>
+              ))}
+            </div>
+            <p style={helperStyle}>
+              {outputType === "lyrics_suno"  && "After generating you'll receive lyrics plus a SUNO music style block (tempo, instruments, mood, vocals) ready to paste directly into Suno."}
+              {outputType === "lyrics_only"  && "Generates lyrics only — no SUNO block. Use this if you're scoring or recording the music separately."}
+              {outputType === "lyrics_scene" && "Generates lyrics plus a visual scene note per section (Pallavi, Charanam) describing mood, shot type, and setting. Feeds directly into Step 3 Scene Breakdown."}
+            </p>
+            {/* If there's a saved SUNO style from a previous generation, offer to restore it */}
+            {!showSunoPanel && sunoStyle && outputType !== "lyrics_only" && (
+              <button
+                onClick={() => setShowSunoPanel(true)}
+                style={{ marginTop: "0.4rem", background: "none", border: "none", padding: 0, fontSize: "0.7rem", color: "rgba(255,0,110,0.6)", cursor: "pointer", fontWeight: 600, textDecoration: "underline" }}
+              >
+                Show SUNO style from previous generation →
+              </button>
+            )}
+          </div>
+
+          {/* Duration */}
+          <div>
+            <label style={labelStyle}>Song duration</label>
+            <select
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+              style={{ padding: "0.5rem 0.75rem", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(0,212,255,0.2)", borderRadius: "0.375rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", outline: "none", minWidth: "185px" }}
+            >
+              {DURATION_OPTIONS.map((d) => (
+                <option key={d.value} value={d.value}>{d.label}</option>
+              ))}
+            </select>
+            <p style={helperStyle}>Affects how long the lyrics and SUNO audio will be.</p>
+          </div>
+        </div>
+
         {/* ── SONG BRIEF ───────────────────────────────── */}
         {effectiveSubject && (
           <div style={{ ...panel, marginBottom: "1.25rem", border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.04)" }}>
@@ -737,58 +789,6 @@ export default function Step2Lyrics() {
             )}
           </div>
         )}
-
-        {/* ── GENERATION SETTINGS ──────────────────────── */}
-        <div style={{ ...panel, marginBottom: "1.25rem" }}>
-          <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#00d4ff", marginBottom: "1rem" }}>
-            Generation settings
-          </p>
-
-          {/* Output type */}
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={labelStyle}>Output type</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-              {OUTPUT_TYPES.map((ot) => (
-                <button
-                  key={ot.value}
-                  onClick={() => setOutputType(ot.value)}
-                  style={chip(outputType === ot.value)}
-                >
-                  {ot.label}
-                </button>
-              ))}
-            </div>
-            <p style={helperStyle}>
-              {outputType === "lyrics_suno"  && "After generating you'll receive lyrics plus a SUNO music style block (tempo, instruments, mood, vocals) ready to paste directly into Suno."}
-              {outputType === "lyrics_only"  && "Generates lyrics only — no SUNO block. Use this if you're scoring or recording the music separately."}
-              {outputType === "lyrics_scene" && "Generates lyrics plus a visual scene note per section (Pallavi, Charanam) describing mood, shot type, and setting. Feeds directly into Step 3 Scene Breakdown."}
-            </p>
-            {/* If there's a saved SUNO style from a previous generation, offer to restore it */}
-            {!showSunoPanel && sunoStyle && outputType !== "lyrics_only" && (
-              <button
-                onClick={() => setShowSunoPanel(true)}
-                style={{ marginTop: "0.4rem", background: "none", border: "none", padding: 0, fontSize: "0.7rem", color: "rgba(255,0,110,0.6)", cursor: "pointer", fontWeight: 600, textDecoration: "underline" }}
-              >
-                Show SUNO style from previous generation →
-              </button>
-            )}
-          </div>
-
-          {/* Duration */}
-          <div>
-            <label style={labelStyle}>Song duration</label>
-            <select
-              value={duration}
-              onChange={(e) => setDuration(Number(e.target.value))}
-              style={{ padding: "0.5rem 0.75rem", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(0,212,255,0.2)", borderRadius: "0.375rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", outline: "none", minWidth: "185px" }}
-            >
-              {DURATION_OPTIONS.map((d) => (
-                <option key={d.value} value={d.value}>{d.label}</option>
-              ))}
-            </select>
-            <p style={helperStyle}>Affects how long the lyrics and SUNO audio will be.</p>
-          </div>
-        </div>
 
         {/* ── CUSTOM DIRECTION ─────────────────────────── */}
         <div style={{ ...panel, marginBottom: "1.25rem", border: "1px solid rgba(0,212,255,0.12)" }}>
