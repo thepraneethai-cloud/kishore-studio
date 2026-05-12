@@ -282,15 +282,6 @@ export default function Step2Lyrics() {
   // Persist category/mood/languageStyle to project context whenever they change
   useEffect(() => { setSongMeta({ category, mood, languageStyle }); }, [category, mood, languageStyle]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // When the song brief idea changes, discard any stale AI-generated directive so it
-  // can't accidentally be used for a generation that was intended for the new idea.
-  useEffect(() => {
-    if (isVisionDirective) {
-      setCustomPrompt("");
-      setIsVisionDirective(false);
-    }
-  }, [visionInput]); // eslint-disable-line react-hooks/exhaustive-deps
-
   // Reset suggestions + SUNO panel when category changes
   useEffect(() => {
     setSuggestions([]);
@@ -382,6 +373,7 @@ export default function Step2Lyrics() {
       if (!res.success || !res.data) { toast.error(res.error ?? "Prompt generation failed"); return; }
       setCustomPrompt(res.data.prompt);
       setIsVisionDirective(true);
+      setVisionInput(""); // clear the brief so next click can't accidentally reuse it
       toast.success("Directive ready — review it below, then generate!");
     },
     onError: (err) => toast.error(err.message),
