@@ -182,3 +182,17 @@
 
 ## App Title Update
 - [x] Change app title from "Telugu Devotional Video Studio" to "Kishore's Studio"
+
+
+## Phase 20: Bug Fixes & UX Improvements (User Implementation)
+- [x] Step 6 (Image Prompts) — Layout Fix: Image prompt textarea now fills full card width
+- [x] Scene Breakdown — Remove "Devotional" prefix from prompts: LLM now forbids generic prefixes
+- [x] Project Context — Save category/mood/languageStyle: Fields now persist across steps
+- [x] Step 2 — Move Generation Settings section: Moved to just below "Subject & Title"
+- [x] Step 2 — Fix stale directive causing mixed instructions: Clears after generation
+- [x] Step 2 — Inline status for Generate Prompt button: Replaced toast with inline status
+- [x] Sri Rama / Jai Sriram alias resolution: Added fuzzy multi-word matching for deities
+- [x] Directive generation — Stop inventing unrelated themes: Tightened LLM constraints
+- [x] Deity context cache — TTL fix: Added 10-minute TTL to prevent stale contexts
+- [x] Stale lyrics warning + Clear buttons: Orange warning banner with clear options
+- [x] Fix silent reuse of old deity from localStorage: Subject input always starts empty
