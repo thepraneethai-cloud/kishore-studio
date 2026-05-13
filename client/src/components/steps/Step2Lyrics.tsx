@@ -352,9 +352,9 @@ export default function Step2Lyrics() {
       generateMasterPrompt(effectiveSubject, res.data.lyrics, customPrompt, category, mood, llmModel);
       markStepComplete(1);
       setShowIterate(true);
-      // Clear directive after use so the next generation starts fresh
-      setCustomPrompt("");
-      setIsVisionDirective(false);
+      // KEEP custom directions so user can refine and regenerate without retyping
+      // Only clear the vision input field so it doesn't clutter the UI
+      setVisionInput("");
       toast.success("Lyrics generated!");
     },
     onError: (err) => {
