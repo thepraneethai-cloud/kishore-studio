@@ -251,7 +251,7 @@ function normalizeSubjectKey(name: string): string {
 
 // ── Component ─────────────────────────────────────────────────
 export default function Step2Lyrics() {
-  const { project, setDeity, setTitle, setLyrics, setSunoStyle, setSongMeta, setActiveStep, markStepComplete, undoLyrics, canUndoLyrics } = useProject();
+  const { project, setDeity, setTitle, setLyrics, setSunoStyle, setSongMeta, setActiveStep, markStepComplete, undoLyrics, canUndoLyrics, resetProject } = useProject();
 
   // Don't pre-fill from project.deity — let the user pick category first
   const [subjectInput,    setSubjectInput]    = useState("");
@@ -901,6 +901,29 @@ export default function Step2Lyrics() {
         {/* ── GENERATED LYRICS ─────────────────────────── */}
         {project.lyrics && (
           <>
+            {/* Stale-lyrics warning — shown when lyrics are from a previous session */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0.9rem", marginBottom: "0.5rem", background: "rgba(255,165,0,0.07)", border: "1px solid rgba(255,165,0,0.25)", borderRadius: "0.5rem", flexWrap: "wrap", gap: "0.5rem" }}>
+              <span style={{ fontSize: "0.75rem", color: "rgba(255,165,0,0.85)" }}>
+                ⚠ Lyrics from a previous song are loaded. Generate new lyrics above or clear to start fresh.
+              </span>
+              <button
+                onClick={() => {
+                  if (window.confirm("This will clear the current lyrics, title, and scenes. Continue?")) {
+                    resetProject();
+                    setSubjectInput("");
+                    setTitleInput("");
+                    setVisionInput("");
+                    setCustomPrompt("");
+                    setIsVisionDirective(false);
+                    setPromptStatus("idle");
+                  }
+                }}
+                style={{ fontSize: "0.73rem", fontWeight: 700, color: "rgba(255,80,80,0.8)", background: "rgba(255,80,80,0.08)", border: "1px solid rgba(255,80,80,0.25)", borderRadius: "0.375rem", padding: "0.3rem 0.75rem", cursor: "pointer" }}
+              >
+                Clear &amp; start fresh
+              </button>
+            </div>
+
             <div style={{ ...panel, marginBottom: "0.75rem" }}>
               <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#00d4ff", margin: "0 0 0.25rem" }}>Generated lyrics</p>
               <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", margin: "0 0 0.75rem" }}>
@@ -927,6 +950,12 @@ export default function Step2Lyrics() {
                   style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.5rem 0.9rem", background: "rgba(0,212,255,0.12)", color: "#00d4ff", border: "1px solid rgba(0,212,255,0.35)", borderRadius: "0.375rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}
                 >
                   <Copy size={13} /> Copy lyrics
+                </button>
+                <button
+                  onClick={() => { if (window.confirm("Clear these lyrics?")) setLyrics(""); }}
+                  style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.5rem 0.9rem", background: "rgba(255,80,80,0.08)", color: "rgba(255,80,80,0.7)", border: "1px solid rgba(255,80,80,0.25)", borderRadius: "0.375rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", marginLeft: "auto" }}
+                >
+                  Clear lyrics
                 </button>
               </div>
             </div>
