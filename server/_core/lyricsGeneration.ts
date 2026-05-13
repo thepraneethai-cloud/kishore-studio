@@ -164,7 +164,8 @@ const DEITY_CONTEXT: Record<string, string> = {
     Instruments: Nadaswaram, Flute, Mridangam. Mood: Youthful, victorious, radiant devotion.`,
 };
 
-const deityContextCache = new Map<string, string>();
+const deityContextCache = new Map<string, { context: string; expiresAt: number }>();
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 function buildLLMOptions(
   llmApiKey?: string,
@@ -242,7 +243,8 @@ async function getSubjectContext(
   }
 
   const cacheKey = `${category}:${subject.toLowerCase().trim()}`;
-  if (deityContextCache.has(cacheKey)) return deityContextCache.get(cacheKey)!;
+  const cached = deityContextCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.context;
 
   // For non-devotional categories, generate a short context via LLM
   const categoryDescriptions: Record<SongCategory, string> = {
@@ -268,7 +270,7 @@ async function getSubjectContext(
       ? content.trim()
       : `A ${categoryDescriptions[category]} about "${subject}".`;
 
-    deityContextCache.set(cacheKey, context);
+    deityContextCache.set(cacheKey, { context, expiresAt: Date.now() + CACHE_TTL_MS });
     return context;
   } catch {
     return `A ${categoryDescriptions[category]} about "${subject}". Capture the essence with authentic Telugu cultural references.`;
