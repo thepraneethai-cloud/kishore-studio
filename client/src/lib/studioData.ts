@@ -216,6 +216,7 @@ export interface Project {
   mood: string;
   languageStyle: string;
   sunoStyle: SunoStyle;
+  masterPrompt: string; // Master creative directive for consistency across all AI generations
   scenes: Scene[];
   youtubeTitle: string;
   youtubeDescription: string;
@@ -246,6 +247,7 @@ export function createEmptyProject(): Project {
       mood: "Divine & Calm",
       vocals: "Male devotional tenor",
     },
+    masterPrompt: "",
     scenes: [],
     youtubeTitle: "",
     youtubeDescription: "",

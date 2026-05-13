@@ -158,7 +158,24 @@
 
 
 ## Phase 18: Bug Fixes - Railway Deployment
-- [ ] Fix: Generate Lyrics button generates "Mother" lyrics when subject field is empty
-- [ ] Add validation to prevent empty subject submission
-- [ ] Show error toast when subject is missing
-- [ ] Test fix on Railway deployment
+- [x] Fix: Generate Lyrics button generates "Mother" lyrics when subject field is empty
+- [x] Add validation to prevent empty subject submission
+- [x] Show error toast when subject is missing
+- [x] Test fix on Railway deployment
+- [x] Fixed database schema: llm_model → llmModel column rename
+
+## Phase 19: Master Prompt System Implementation
+- [ ] Phase 1: Add masterPrompt field to project schema and context
+- [ ] Phase 1: Create generateMasterPrompt backend procedure
+- [ ] Phase 1: Display Master Prompt panel in Step 1 after lyrics generation
+- [ ] Phase 2: Add refineMasterPrompt backend procedure with feedback
+- [ ] Phase 2: Add "Refine Master Prompt" UI in Step 1 with feedback textarea
+- [ ] Phase 3: Update Step 2 (SUNO) to use Master Prompt in generation
+- [ ] Phase 3: Update Step 5 (Image Prompts) to use Master Prompt in generation
+- [ ] Phase 3: Update Step 6 (Video Prompts) to use Master Prompt in generation
+- [ ] Phase 3: Update Step 7 (YouTube) to use Master Prompt in generation
+- [ ] Phase 3: Display Master Prompt reference panels in Steps 2, 5, 6, 7
+- [ ] Phase 4: Test consistency across all steps with different categories
+- [ ] Phase 4: Verify LLM constraints work per category (devotional vs cinematic)
+- [ ] Phase 4: Fine-tune Master Prompt generation prompts
+- [ ] Phase 5: Run all tests, commit to GitHub, deploy to Railway

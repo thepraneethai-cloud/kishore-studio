@@ -8,6 +8,8 @@ import { Music, Copy, Zap, RefreshCw, ChevronDown, ChevronUp, Undo2, Wand2 } fro
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { DEITIES } from "@/lib/studioData";
+import { useMasterPrompt } from "@/hooks/useMasterPrompt";
+import { MasterPromptPanel } from "@/components/MasterPromptPanel";
 
 // ── Song categories ───────────────────────────────────────────
 const SONG_CATEGORIES = [
@@ -251,7 +253,8 @@ function normalizeSubjectKey(name: string): string {
 
 // ── Component ─────────────────────────────────────────────────
 export default function Step2Lyrics() {
-  const { project, setDeity, setTitle, setLyrics, setSunoStyle, setSongMeta, setActiveStep, markStepComplete, undoLyrics, canUndoLyrics, resetProject } = useProject();
+  const { project, setDeity, setTitle, setLyrics, setSunoStyle, setMasterPrompt, setSongMeta, setActiveStep, markStepComplete, undoLyrics, canUndoLyrics, resetProject } = useProject();
+  const { masterPrompt, showMasterPromptPanel, setShowMasterPromptPanel, masterPromptFeedback, setMasterPromptFeedback, generateMasterPrompt, refineMasterPrompt, isGenerating: isMasterPromptGenerating, isRefining: isMasterPromptRefining } = useMasterPrompt();
 
   const [subjectInput,    setSubjectInput]    = useState("");
   const [titleInput,      setTitleInput]      = useState("");
@@ -346,6 +349,7 @@ export default function Step2Lyrics() {
         setSunoStyle(res.data.sunoStyle);
         setShowSunoPanel(true);
       }
+      generateMasterPrompt(effectiveSubject, res.data.lyrics, customPrompt, category, mood, llmModel);
       markStepComplete(1);
       setShowIterate(true);
       // Clear directive after use so the next generation starts fresh
@@ -1003,6 +1007,19 @@ export default function Step2Lyrics() {
         )}
 
         {/* ── SUNO STYLE ───────────────────────────────── */}
+        {/* ── MASTER PROMPT ───────────────────────────────── */}
+        {masterPrompt && (
+          <div style={{ marginBottom: "1.75rem" }}>
+            <MasterPromptPanel
+              masterPrompt={masterPrompt}
+              isOpen={showMasterPromptPanel}
+              onToggle={() => setShowMasterPromptPanel(!showMasterPromptPanel)}
+              onRefine={(feedback) => refineMasterPrompt(feedback, category, llmModel)}
+              isRefining={isMasterPromptRefining}
+            />
+          </div>
+        )}
+
         {showSunoPanel && sunoStyle && outputType !== "lyrics_only" && (
           <div style={{ ...panel, background: "linear-gradient(135deg, rgba(255,0,110,0.06) 0%, rgba(0,212,255,0.06) 100%)", border: "1px solid rgba(255,0,110,0.22)", marginBottom: "1.75rem" }}>
             {/* Header — title + description only */}

@@ -553,4 +553,124 @@ export const generationRouter = router({
         };
       }
     }),
+
+  // ============================================================
+  // GENERATE MASTER PROMPT FOR CONSISTENCY
+  // ============================================================
+  generateMasterPrompt: protectedProcedure
+    .input(
+      z.object({
+        deity: z.string(),
+        lyrics: z.string(),
+        customDirection: z.string(),
+        category: z.enum(["devotional", "cinematic", "folk", "romantic", "emotional", "festival", "mass"]),
+        mood: z.string().optional(),
+        llmModel: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        await assertBudgetAvailable(ctx.user.id);
+        const userSettings = await getUserSettings(ctx.user.id);
+        const llmModel = input.llmModel || userSettings?.llmModel || "gemini-2.5-flash";
+
+        const categoryDescriptions: Record<string, string> = {
+          devotional: "a spiritual and devotional song",
+          cinematic: "a cinematic and narrative-driven song",
+          folk: "a folk and traditional song",
+          romantic: "a romantic and emotional song",
+          emotional: "an emotional and heartfelt song",
+          festival: "a festival and celebratory song",
+          mass: "a mass and commercial song",
+        };
+
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content:
+                `You are a master creative director for ${categoryDescriptions[input.category]}. ` +
+                `Your task is to create a comprehensive Master Prompt that will guide ALL downstream creative work (image generation, video creation, music styling, and marketing). ` +
+                `The Master Prompt must be: (1) Faithful to the original subject and theme, (2) Specific and vivid with visual/emotional details, (3) Consistent across all interpretations, (4) Flexible enough for artistic variation within the theme. ` +
+                `For ${input.category} content, apply appropriate constraints: devotional content must stay true to spiritual themes, cinematic allows narrative flexibility, etc.`,
+            },
+            {
+              role: "user",
+              content:
+                `Subject: ${input.deity}\n` +
+                `Category: ${input.category}\n` +
+                `Mood: ${input.mood || "meditative and devotional"}\n` +
+                `Lyrics (excerpt): ${input.lyrics.substring(0, 300)}...\n` +
+                `Creative Direction: ${input.customDirection}\n\n` +
+                `Create a Master Prompt (150-250 words) that captures the core creative vision. Include: visual aesthetic, emotional tone, key themes, cultural/spiritual elements, character descriptions (if applicable), color palette, atmosphere, and any specific constraints to maintain consistency. This prompt will be used to generate images, videos, music styling, and marketing materials.`,
+            },
+          ],
+        });
+
+        const masterPrompt =
+          typeof response.choices?.[0]?.message?.content === "string"
+            ? response.choices[0].message.content
+            : "Unable to generate master prompt";
+
+        void recordCost(ctx.user.id, "lyrics", llmModel, UNIT_COSTS.lyrics);
+        return { success: true, data: { masterPrompt } };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Failed to generate master prompt",
+        };
+      }
+    }),
+
+  // ============================================================
+  // REFINE MASTER PROMPT BASED ON FEEDBACK
+  // ============================================================
+  refineMasterPrompt: protectedProcedure
+    .input(
+      z.object({
+        currentMasterPrompt: z.string(),
+        feedback: z.string(),
+        category: z.enum(["devotional", "cinematic", "folk", "romantic", "emotional", "festival", "mass"]),
+        llmModel: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        await assertBudgetAvailable(ctx.user.id);
+        const userSettings = await getUserSettings(ctx.user.id);
+        const llmModel = input.llmModel || userSettings?.llmModel || "gemini-2.5-flash";
+
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content:
+                `You are a master creative director refining a creative brief. ` +
+                `Your task is to update the Master Prompt based on user feedback while maintaining the core theme and vision. ` +
+                `Keep the same subject and spiritual/thematic essence, but adjust the aesthetic, mood, or specific details as requested.`,
+            },
+            {
+              role: "user",
+              content:
+                `Current Master Prompt:\n${input.currentMasterPrompt}\n\n` +
+                `User Feedback: ${input.feedback}\n\n` +
+                `Please refine the Master Prompt based on this feedback. Keep it 150-250 words. Maintain the core theme and subject, but adjust the aesthetic, mood, visual details, or emphasis as requested.`,
+            },
+          ],
+        });
+
+        const refinedMasterPrompt =
+          typeof response.choices?.[0]?.message?.content === "string"
+            ? response.choices[0].message.content
+            : "Unable to refine master prompt";
+
+        void recordCost(ctx.user.id, "lyrics", llmModel, UNIT_COSTS.lyrics);
+        return { success: true, data: { masterPrompt: refinedMasterPrompt } };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Failed to refine master prompt",
+        };
+      }
+    }),
 });

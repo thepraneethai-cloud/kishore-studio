@@ -21,6 +21,7 @@ interface ProjectContextType {
   sessionTitle: string | null; // set only in current browser session, never from localStorage
   setLyrics: (lyrics: string) => void;
   setSunoStyle: (style: Partial<SunoStyle>) => void;
+  setMasterPrompt: (prompt: string) => void;
   setScenes: (scenes: Scene[]) => void;
   updateScene: (id: number, updates: Partial<Scene>) => void;
   setYouTubeData: (data: Partial<Pick<Project, "youtubeTitle" | "youtubeDescription" | "youtubeTags" | "thumbnailPrompt">>) => void;
@@ -148,6 +149,10 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     setProject((p) => ({ ...p, sunoStyle: { ...p.sunoStyle, ...style } }));
   }, []);
 
+  const setMasterPrompt = useCallback((prompt: string) => {
+    setProject((p) => ({ ...p, masterPrompt: prompt }));
+  }, []);
+
   const setScenes = useCallback((scenes: Scene[]) => {
     setProject((p) => {
       if (p.scenes.length > 0) {
@@ -223,6 +228,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         sessionTitle,
         setLyrics,
         setSunoStyle,
+        setMasterPrompt,
         setScenes,
         updateScene,
         setYouTubeData,
