@@ -215,6 +215,24 @@ input, textarea, select {
   transition: all var(--transition-base);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  -webkit-text-size-adjust: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  z-index: 1;
+}
+
+/* Mobile-specific input fixes */
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  
+  input:focus, textarea:focus, select:focus {
+    font-size: 16px;
+  }
 }
 
 input::placeholder, textarea::placeholder {
@@ -226,6 +244,8 @@ input:focus, textarea:focus, select:focus {
   border-color: var(--accent-blue);
   box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2), var(--shadow-glow-blue);
   background: rgba(0, 212, 255, 0.05);
+  position: relative;
+  z-index: 10;
 }
 
 /* Sidebar */

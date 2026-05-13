@@ -197,3 +197,7 @@
 - [x] Deity context cache — TTL fix: Added 10-minute TTL to prevent stale contexts
 - [x] Stale lyrics warning + Clear buttons: Orange warning banner with clear options
 - [x] Fix silent reuse of old deity from localStorage: Subject input always starts empty
+
+
+## Phase 21: Mobile UX Fixes
+- [ ] Fix mobile cursor positioning bug (cursor appearing outside text box on mobile Chrome)
