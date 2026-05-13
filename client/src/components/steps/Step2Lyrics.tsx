@@ -270,6 +270,8 @@ export default function Step2Lyrics() {
   const [customPrompt,      setCustomPrompt]       = useState("");
   const [isVisionDirective, setIsVisionDirective] = useState(false);
 
+  const [promptStatus,    setPromptStatus]    = useState<"idle" | "done" | "error">("idle");
+  const [promptError,     setPromptError]     = useState("");
   const [iterateFeedback, setIterateFeedback] = useState("");
   const [showIterate,     setShowIterate]     = useState(false);
   const [sunoFeedback,    setSunoFeedback]    = useState("");
@@ -370,13 +372,21 @@ export default function Step2Lyrics() {
 
   const promptGenMutation = trpc.generation.generateLyricsPrompt.useMutation({
     onSuccess: (res) => {
-      if (!res.success || !res.data) { toast.error(res.error ?? "Prompt generation failed"); return; }
+      if (!res.success || !res.data) {
+        setPromptStatus("error");
+        setPromptError(res.error ?? "Prompt generation failed");
+        return;
+      }
       setCustomPrompt(res.data.prompt);
       setIsVisionDirective(true);
-      setVisionInput(""); // clear the brief so next click can't accidentally reuse it
-      toast.success("Directive ready — review it below, then generate!");
+      setVisionInput("");
+      setPromptStatus("done");
+      setPromptError("");
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err) => {
+      setPromptStatus("error");
+      setPromptError(err.message ?? "Generation failed");
+    },
   });
 
   // ── Handlers ─────────────────────────────────────────────
@@ -749,36 +759,51 @@ export default function Step2Lyrics() {
               />
             </div>
 
-            <button
-              onClick={() => {
-                if (!visionInput.trim()) { toast.error("Describe your idea first"); return; }
-                if (!project.deity) handleSelectSubject(effectiveSubject);
-                promptGenMutation.mutate({ deity: effectiveSubject, userIdea: visionInput, category: category as any, mood: mood || undefined, llmModel });
-              }}
-              disabled={promptGenMutation.isPending || !visionInput.trim()}
-              style={{
-                display: "flex", alignItems: "center", gap: "0.5rem",
-                padding: "0.625rem 1.25rem",
-                background: promptGenMutation.isPending ? "rgba(139,92,246,0.15)" : "linear-gradient(135deg, #8b5cf6, #6d28d9)",
-                color: promptGenMutation.isPending ? "rgba(139,92,246,0.5)" : "#fff",
-                border: "none", borderRadius: "0.5rem",
-                fontWeight: 600, fontSize: "0.875rem",
-                cursor: promptGenMutation.isPending || !visionInput.trim() ? "not-allowed" : "pointer",
-                opacity: !visionInput.trim() ? 0.5 : 1,
-                transition: "all 200ms",
-              }}
-            >
-              {promptGenMutation.isPending
-                ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Generating directive…</>
-                : <><Wand2 size={14} /> Generate prompt with AI</>
-              }
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+              <button
+                onClick={() => {
+                  if (!visionInput.trim()) { toast.error("Describe your idea first"); return; }
+                  if (!project.deity) handleSelectSubject(effectiveSubject);
+                  setPromptStatus("idle");
+                  setPromptError("");
+                  promptGenMutation.mutate({ deity: effectiveSubject, userIdea: visionInput, category: category as any, mood: mood || undefined, llmModel });
+                }}
+                disabled={promptGenMutation.isPending || !visionInput.trim()}
+                style={{
+                  display: "flex", alignItems: "center", gap: "0.5rem",
+                  padding: "0.625rem 1.25rem",
+                  background: promptGenMutation.isPending ? "rgba(139,92,246,0.15)" : "linear-gradient(135deg, #8b5cf6, #6d28d9)",
+                  color: promptGenMutation.isPending ? "rgba(139,92,246,0.5)" : "#fff",
+                  border: "none", borderRadius: "0.5rem",
+                  fontWeight: 600, fontSize: "0.875rem",
+                  cursor: promptGenMutation.isPending || !visionInput.trim() ? "not-allowed" : "pointer",
+                  opacity: !visionInput.trim() ? 0.5 : 1,
+                  transition: "all 200ms",
+                  flexShrink: 0,
+                }}
+              >
+                {promptGenMutation.isPending
+                  ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Generating…</>
+                  : <><Wand2 size={14} /> Generate prompt with AI</>
+                }
+              </button>
 
-            {customPrompt && (
-              <p style={{ marginTop: "0.6rem", fontSize: "0.75rem", color: "#a78bfa", fontStyle: "italic" }}>
-                ✓ Directive ready — review or edit it in "Custom direction" below.
-              </p>
-            )}
+              {promptGenMutation.isPending && (
+                <span style={{ fontSize: "0.78rem", color: "rgba(139,92,246,0.7)", fontStyle: "italic" }}>
+                  In progress…
+                </span>
+              )}
+              {!promptGenMutation.isPending && promptStatus === "done" && (
+                <span style={{ fontSize: "0.78rem", color: "oklch(0.72 0.18 145)", fontWeight: 600 }}>
+                  ✓ Done — directive ready below
+                </span>
+              )}
+              {!promptGenMutation.isPending && promptStatus === "error" && (
+                <span style={{ fontSize: "0.78rem", color: "oklch(0.70 0.18 25)", fontWeight: 600 }}>
+                  ✗ {promptError}
+                </span>
+              )}
+            </div>
           </div>
         )}
 
