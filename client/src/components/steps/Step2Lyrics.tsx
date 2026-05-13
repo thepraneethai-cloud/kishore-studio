@@ -253,9 +253,8 @@ function normalizeSubjectKey(name: string): string {
 export default function Step2Lyrics() {
   const { project, setDeity, setTitle, setLyrics, setSunoStyle, setSongMeta, setActiveStep, markStepComplete, undoLyrics, canUndoLyrics, resetProject } = useProject();
 
-  // Pre-fill from saved project so the user can see what's loaded (prevents silent reuse of old deity)
-  const [subjectInput,    setSubjectInput]    = useState(project.deity ?? "");
-  const [titleInput,      setTitleInput]      = useState(project.title ?? "");
+  const [subjectInput,    setSubjectInput]    = useState("");
+  const [titleInput,      setTitleInput]      = useState("");
   const [suggestions,     setSuggestions]     = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -291,8 +290,9 @@ export default function Step2Lyrics() {
     setShowSunoPanel(false);
   }, [category]);
 
-  // On mount: sanitize any stored lyrics and mark step 1 complete if lyrics exist
+  // On mount: clear stale deity so it can't silently drive generation; sanitize stored lyrics
   useEffect(() => {
+    setDeity(null as any);  // force the user to re-type the subject every session
     if (project.lyrics) {
       markStepComplete(1);
       const cleaned = sanitizeLyrics(project.lyrics);
@@ -335,7 +335,7 @@ export default function Step2Lyrics() {
     if (subjectInput.trim() && !project.deity) handleSelectSubject(subjectInput.trim());
   };
 
-  const effectiveSubject = project.deity || subjectInput.trim();
+  const effectiveSubject = subjectInput.trim();
 
   // ── tRPC mutations ────────────────────────────────────────
   const generateMutation = trpc.generation.generateLyrics.useMutation({
@@ -410,7 +410,7 @@ export default function Step2Lyrics() {
   const handleIterate = () => {
     if (!iterateFeedback.trim()) { toast.error("Please describe what you'd like to change"); return; }
     generateMutation.mutate({
-      deity:        effectiveSubject || project.deity!,
+      deity:        effectiveSubject,
       category:     category as any,
       mood:         mood || undefined,
       languageStyle: languageStyle as any,
