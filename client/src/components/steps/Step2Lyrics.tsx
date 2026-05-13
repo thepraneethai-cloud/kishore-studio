@@ -253,9 +253,9 @@ function normalizeSubjectKey(name: string): string {
 export default function Step2Lyrics() {
   const { project, setDeity, setTitle, setLyrics, setSunoStyle, setSongMeta, setActiveStep, markStepComplete, undoLyrics, canUndoLyrics, resetProject } = useProject();
 
-  // Don't pre-fill from project.deity — let the user pick category first
-  const [subjectInput,    setSubjectInput]    = useState("");
-  const [titleInput,      setTitleInput]      = useState(""); // Always fresh — never pre-filled from localStorage
+  // Pre-fill from saved project so the user can see what's loaded (prevents silent reuse of old deity)
+  const [subjectInput,    setSubjectInput]    = useState(project.deity ?? "");
+  const [titleInput,      setTitleInput]      = useState(project.title ?? "");
   const [suggestions,     setSuggestions]     = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
