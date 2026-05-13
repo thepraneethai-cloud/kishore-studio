@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useProject } from "@/contexts/ProjectContext";
 import { DEITIES, getDefaultCharacterPrefix } from "@/lib/studioData";
-import { ChevronRight, Copy, Check, Download, Sparkles, Image, Loader2, AlertCircle, Settings, Shuffle, Lock, Unlock, Zap, ThumbsUp, ThumbsDown, Link, Upload } from "lucide-react";
+import { ChevronRight, Copy, Check, Download, Sparkles, Image, Loader2, AlertCircle, Settings, Shuffle, Lock, Unlock, Zap, ThumbsUp, ThumbsDown, Link, Upload, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -55,6 +55,7 @@ export default function Step6ImagePrompts() {
   const [imageJobs, setImageJobs] = useState<ImageJob[]>([]);
   const [genStatus, setGenStatus] = useState<"idle" | "submitting" | "polling" | "done" | "error">("idle");
   const [isPolling, setIsPolling] = useState(false);
+  const [showMasterPrompt, setShowMasterPrompt] = useState(false);
 
   const utils = trpc.useUtils();
   const deity = DEITIES.find((d) => d.key === project.deity);
@@ -81,8 +82,12 @@ export default function Step6ImagePrompts() {
 
   const buildImagePrompt = useCallback((sceneDesc: string) => {
     const styleSuffix = STYLE_SUFFIXES[selectedStyle];
-    return `${sceneDesc}. ${styleSuffix}, warm amber and gold lighting from oil lamps, incense smoke, South Indian temple architecture, intricate stone carvings, sacred and divine atmosphere, ultra-detailed, high quality`;
-  }, [selectedStyle]);
+    // Incorporate Master Prompt guidance into image generation
+    const masterPromptGuidance = project.masterPrompt
+      ? `Guided by: ${project.masterPrompt}. `
+      : "";
+    return `${masterPromptGuidance}${sceneDesc}. ${styleSuffix}, warm amber and gold lighting from oil lamps, incense smoke, South Indian temple architecture, intricate stone carvings, sacred and divine atmosphere, ultra-detailed, high quality`;
+  }, [selectedStyle, project.masterPrompt]);
 
   // Polling loop — re-runs whenever imageJobs changes while isPolling is true
   useEffect(() => {
@@ -344,7 +349,7 @@ export default function Step6ImagePrompts() {
             Image Prompts
           </h2>
           <p className="text-sm mt-1" style={{ color: "oklch(0.60 0.015 68)" }}>
-            Generate images in-app or copy prompts for Leonardo AI / Midjourney.
+            Generate images in-app or copy prompts for Leonardo AI / Midjourney. Master Prompt guides visual consistency.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 mt-1">
@@ -353,6 +358,37 @@ export default function Step6ImagePrompts() {
           </span>
         </div>
       </div>
+
+      {/* Master Prompt Reference Panel */}
+      {project.masterPrompt && (
+        <div className="shrine-panel p-4 space-y-3">
+          <button
+            onClick={() => setShowMasterPrompt(!showMasterPrompt)}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+              📋 Master Creative Vision (Reference)
+            </p>
+            {showMasterPrompt ? (
+              <ChevronUp size={16} style={{ color: "oklch(0.65 0.14 65)" }} />
+            ) : (
+              <ChevronDown size={16} style={{ color: "oklch(0.65 0.14 65)" }} />
+            )}
+          </button>
+          {showMasterPrompt && (
+            <div
+              className="text-xs leading-relaxed p-3 rounded"
+              style={{
+                background: "oklch(0.14 0.016 52)",
+                color: "oklch(0.70 0.015 68)",
+                border: "1px solid oklch(0.24 0.020 55)",
+              }}
+            >
+              {project.masterPrompt}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Controls card — Style + Seed + Actions */}
       <div className="rounded-xl space-y-4 p-4" style={{ background: "oklch(0.17 0.014 52)", border: "1px solid oklch(0.28 0.025 58)" }}>

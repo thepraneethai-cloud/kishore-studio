@@ -4,8 +4,9 @@
 import { useState } from "react";
 import { useProject } from "@/contexts/ProjectContext";
 import { DEITIES, TEMPO_OPTIONS, INSTRUMENT_OPTIONS, MOOD_OPTIONS } from "@/lib/studioData";
-import { ChevronRight, Copy, Check, Wand2 } from "lucide-react";
+import { ChevronRight, Copy, Check, Wand2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
+import { MasterPromptPanel } from "@/components/MasterPromptPanel";
 import { cn } from "@/lib/utils";
 
 const VOCAL_OPTIONS = [
@@ -25,10 +26,20 @@ const STYLE_PRESETS = [
   { label: "Meditative", tempo: "slow", style: "Meditative mantra chant", mood: "Meditative & Peaceful", instruments: ["Flute", "Santoor", "Veena"] },
 ];
 
-function buildSunoPrompt(style: { tempo: string; style: string; instruments: string[]; mood: string; vocals: string }, deityName: string, lyrics: string): string {
+function buildSunoPrompt(
+  style: { tempo: string; style: string; instruments: string[]; mood: string; vocals: string },
+  deityName: string,
+  lyrics: string,
+  masterPrompt?: string
+): string {
   const tempoLabel = TEMPO_OPTIONS.find((t) => t.value === style.tempo)?.label || style.tempo;
   const instrList = style.instruments.join(", ");
   const firstLine = lyrics.split("\n").find((l) => l.trim() && !l.startsWith("["))?.trim() || "";
+
+  // Incorporate Master Prompt into SUNO style guidance
+  const masterPromptGuidance = masterPrompt
+    ? `\n[Master Creative Vision]\n${masterPrompt}\n`
+    : "";
 
   return `[Style: ${style.style}]
 [Tempo: ${tempoLabel}]
@@ -36,17 +47,17 @@ function buildSunoPrompt(style: { tempo: string; style: string; instruments: str
 [Mood: ${style.mood}]
 [Vocals: ${style.vocals}]
 [Language: Telugu]
-[Theme: ${deityName} devotional]
-
+[Theme: ${deityName} devotional]${masterPromptGuidance}
 ${lyrics}
 
-[Note: Avoid robotic sounds, maintain smooth melodic flow, traditional South Indian classical feel]`;
+[Note: Avoid robotic sounds, maintain smooth melodic flow, traditional South Indian classical feel. Ensure music aligns with the Master Creative Vision above.]`;
 }
 
 export default function Step3SunoStyle() {
   const { project, setSunoStyle, setActiveStep, markStepComplete } = useProject();
   const [copied, setCopied] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [showMasterPrompt, setShowMasterPrompt] = useState(false);
 
   const deity = DEITIES.find((d) => d.key === project.deity);
   const { sunoStyle } = project;
@@ -71,7 +82,7 @@ export default function Step3SunoStyle() {
   };
 
   const sunoPrompt = deity
-    ? buildSunoPrompt(sunoStyle, deity.name, project.lyrics)
+    ? buildSunoPrompt(sunoStyle, deity.name, project.lyrics, project.masterPrompt)
     : "";
 
   const handleCopy = () => {
@@ -101,9 +112,40 @@ export default function Step3SunoStyle() {
           SUNO Music Style
         </h2>
         <p className="text-sm" style={{ color: "oklch(0.60 0.015 68)" }}>
-          Define the musical style for your SUNO AI generation — tempo, instruments, mood, and vocals.
+          Define the musical style for your SUNO AI generation — tempo, instruments, mood, and vocals. Your Master Prompt will guide the music direction.
         </p>
       </div>
+
+      {/* Master Prompt Reference Panel */}
+      {project.masterPrompt && (
+        <div className="shrine-panel p-4 space-y-3">
+          <button
+            onClick={() => setShowMasterPrompt(!showMasterPrompt)}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+              📋 Master Creative Vision (Reference)
+            </p>
+            {showMasterPrompt ? (
+              <ChevronUp size={16} style={{ color: "oklch(0.65 0.14 65)" }} />
+            ) : (
+              <ChevronDown size={16} style={{ color: "oklch(0.65 0.14 65)" }} />
+            )}
+          </button>
+          {showMasterPrompt && (
+            <div
+              className="text-xs leading-relaxed p-3 rounded"
+              style={{
+                background: "oklch(0.14 0.016 52)",
+                color: "oklch(0.70 0.015 68)",
+                border: "1px solid oklch(0.24 0.020 55)",
+              }}
+            >
+              {project.masterPrompt}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Quick Presets */}
       <div className="shrine-panel p-4">

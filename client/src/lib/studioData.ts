@@ -366,12 +366,16 @@ export function generateYouTubeMetadata(project: Project, deity: Deity) {
 
   const youtubeTitle = `${title} | ${teluguName} | Telugu Bhakti Songs 2024 | 4K`;
 
+  // Incorporate Master Prompt into description if available
+  const masterPromptSection = project.masterPrompt
+    ? `\n🎨 Creative Vision:\n${project.masterPrompt}\n`
+    : "";
+
   const description = `🙏 ${title} — A devotional offering to ${deityName} (${teluguName})
 
 🎵 About This Song:
 This sacred Telugu devotional song is composed with love and devotion for ${deityName}. 
-Featuring traditional South Indian classical instruments including ${deity.instruments.slice(0, 3).join(", ")}.
-
+Featuring traditional South Indian classical instruments including ${deity.instruments.slice(0, 3).join(", ")}.${masterPromptSection}
 📿 Mood: ${deity.mood}
 🎼 Style: Traditional Telugu Bhakti
 
@@ -408,7 +412,12 @@ Featuring traditional South Indian classical instruments including ${deity.instr
     teluguName,
   ];
 
-  const thumbnailPrompt = `YouTube thumbnail for Telugu devotional song about ${deityName}: ${deity.visualStyle}. Dramatic lighting with warm gold and amber tones, ${deityName} in center with divine glow, ornate temple background, bold Telugu text "${title}" at bottom in gold, cinematic composition, 16:9 ratio, high contrast, visually striking`;
+  // Incorporate Master Prompt into thumbnail generation
+  const masterPromptThumbnailGuidance = project.masterPrompt
+    ? `Guided by Master Vision: ${project.masterPrompt}. `
+    : "";
 
-  return { youtubeTitle, description, tags, thumbnailPrompt };
+  const thumbnailPrompt = `${masterPromptThumbnailGuidance}YouTube thumbnail for Telugu devotional song about ${deityName}: ${deity.visualStyle}. Dramatic lighting with warm gold and amber tones, ${deityName} in center with divine glow, ornate temple background, bold Telugu text "${title}" at bottom in gold, cinematic composition, 16:9 ratio, high contrast, visually striking`;
+
+  return { youtubeTitle, description, tags, thumbnailPrompt, masterPrompt: project.masterPrompt };
 }

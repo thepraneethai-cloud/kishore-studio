@@ -3,7 +3,7 @@
 // ============================================================
 import { useState } from "react";
 import { useProject } from "@/contexts/ProjectContext";
-import { ChevronRight, Copy, Check, Download, Video } from "lucide-react";
+import { ChevronRight, Copy, Check, Download, Video, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 
 const MOTION_TYPES = [
@@ -19,10 +19,15 @@ export default function Step7VideoPrompts() {
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
   const [selectedMotion, setSelectedMotion] = useState(0);
+  const [showMasterPrompt, setShowMasterPrompt] = useState(false);
 
   const buildMotionPrompt = (sceneDesc: string) => {
     const template = MOTION_TYPES[selectedMotion].template;
-    return template.replace("{scene}", sceneDesc);
+    // Incorporate Master Prompt guidance into video motion
+    const masterPromptGuidance = project.masterPrompt
+      ? `[Master Vision: ${project.masterPrompt}] `
+      : "";
+    return `${masterPromptGuidance}${template.replace("{scene}", sceneDesc)}`;
   };
 
   const handleCopyOne = (id: number, prompt: string) => {
@@ -99,7 +104,7 @@ export default function Step7VideoPrompts() {
             Video Motion Prompts
           </h2>
           <p className="text-sm" style={{ color: "oklch(0.55 0.012 65)" }}>
-            Generate motion prompts for Runway, Pika, Kling, or similar tools.
+            Generate motion prompts for Runway, Pika, Kling, or similar tools. Master Prompt guides thematic consistency.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -117,6 +122,37 @@ export default function Step7VideoPrompts() {
           </span>
         </div>
       </div>
+
+      {/* Master Prompt Reference Panel */}
+      {project.masterPrompt && (
+        <div className="shrine-panel p-4 space-y-3">
+          <button
+            onClick={() => setShowMasterPrompt(!showMasterPrompt)}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+              📋 Master Creative Vision (Reference)
+            </p>
+            {showMasterPrompt ? (
+              <ChevronUp size={16} style={{ color: "oklch(0.65 0.14 65)" }} />
+            ) : (
+              <ChevronDown size={16} style={{ color: "oklch(0.65 0.14 65)" }} />
+            )}
+          </button>
+          {showMasterPrompt && (
+            <div
+              className="text-xs leading-relaxed p-3 rounded"
+              style={{
+                background: "oklch(0.14 0.016 52)",
+                color: "oklch(0.70 0.015 68)",
+                border: "1px solid oklch(0.24 0.020 55)",
+              }}
+            >
+              {project.masterPrompt}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Controls card */}
       <div className="rounded-xl space-y-3 p-4" style={{ background: "oklch(0.17 0.014 52)", border: "1px solid oklch(0.28 0.025 58)" }}>
