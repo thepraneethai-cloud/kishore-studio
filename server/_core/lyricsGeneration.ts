@@ -202,20 +202,42 @@ async function getSubjectContext(
     if (hardcoded) return hardcoded;
 
     const aliases: Record<string, string> = {
+      // Venkateswara
       balaji: "venkateswara", srinivasa: "venkateswara", govinda: "venkateswara",
+      tirupati: "venkateswara", "sri venkateswara": "venkateswara", "lord venkateswara": "venkateswara",
+      // Ganesha
       ganapati: "ganesha", vinayaka: "ganesha", vighneshwara: "ganesha",
-      mahalakshmi: "lakshmi", dhanalakshmi: "lakshmi",
+      ganapathi: "ganesha", ganesh: "ganesha", ganpati: "ganesha",
+      // Lakshmi
+      mahalakshmi: "lakshmi", dhanalakshmi: "lakshmi", "sri lakshmi": "lakshmi",
+      // Shiva
       mahadeva: "shiva", shankar: "shiva", shankaraa: "shiva",
+      maheshwara: "shiva", bholenath: "shiva", shambho: "shiva",
+      // Krishna
       govind: "krishna", madhava: "krishna", radha: "krishna",
-      anjaneya: "hanuman", maruti: "hanuman",
-      raghava: "rama", ramachandra: "rama",
-      sharada: "saraswati", vageeshwari: "saraswati",
+      "jai krishna": "krishna", "sri krishna": "krishna",
+      // Hanuman
+      anjaneya: "hanuman", maruti: "hanuman", bajrangbali: "hanuman",
+      "jai hanuman": "hanuman", "sri hanuman": "hanuman",
+      // Rama — cover all common salutation forms
+      raghava: "rama", ramachandra: "rama", raghavendra: "rama",
+      "sri rama": "rama", "sri ram": "rama", "jai sriram": "rama",
+      "jai sri ram": "rama", "jai ram": "rama", "jai shri ram": "rama",
+      "lord rama": "rama", "lord ram": "rama",
+      // Saraswati
+      sharada: "saraswati", vageeshwari: "saraswati", "sri saraswati": "saraswati",
+      // Durga
       shakti: "durga", bhavani: "durga", durgamba: "durga",
-      kartikeya: "murugan", skanda: "murugan",
-      nrusimha: "narasimha", ugra: "narasimha",
-      sastha: "ayyappa", dharmasastha: "ayyappa",
+      "jai durga": "durga", "sri durga": "durga",
+      // Murugan
+      kartikeya: "murugan", skanda: "murugan", subrahmanya: "murugan",
+      // Narasimha
+      nrusimha: "narasimha", ugra: "narasimha", "sri narasimha": "narasimha",
+      // Ayyappa
+      sastha: "ayyappa", dharmasastha: "ayyappa", "swami ayyappa": "ayyappa",
     };
-    const aliasTarget = aliases[key];
+    // Also handle "jai sriram", "sri rama" etc. with multi-word fuzzy match
+    const aliasTarget = aliases[key] ?? Object.entries(aliases).find(([k]) => key.includes(k))?.[1];
     if (aliasTarget && DEITY_CONTEXT[aliasTarget]) return DEITY_CONTEXT[aliasTarget];
   }
 

@@ -188,12 +188,16 @@ export const generationRouter = router({
                 content:
                   `You are an expert ${categoryConsultant[category] ?? categoryConsultant.devotional} for South Indian YouTube audiences. ` +
                   "Your task: take a user's rough idea and expand it into a precise, structured creative directive (150–200 words) that an AI lyrics generator can follow exactly. " +
-                  "Cover: emotional journey, specific imagery, song structure (Pallavi then Charanam lines), key Telugu words, cultural references, and the target mood. " +
+                  "STRICT RULES: " +
+                  "(1) Stay 100% faithful to the subject and idea the user gave — do NOT invent themes, characters, or narratives they did not mention. " +
+                  "(2) If the user's idea is short (e.g. 'Jai Sriram'), treat it as the emotional core and expand the setting, imagery, and mood around THAT subject — never pivot to an unrelated theme. " +
+                  "(3) Do NOT introduce mother/family themes unless the user explicitly asked for them. " +
+                  "Cover: emotional journey, specific imagery, song structure (Pallavi then Charanam lines), key Telugu words, cultural references tied to the stated subject, and the target mood. " +
                   "Return ONLY the directive — no explanations, no headings, no markdown.",
               },
               {
                 role: "user",
-                content: `Subject / topic: ${input.deity}\nCategory: ${category}\nMood: ${input.mood ?? "not specified"}\nMy idea: ${input.userIdea}\nLanguage: ${lang}\n\nWrite the directive now.`,
+                content: `Subject: ${input.deity}\nCategory: ${category}\nMood: ${input.mood || "meditative and devotional"}\nUser's idea: "${input.userIdea}"\nLanguage: ${lang}\n\nWrite a directive for a song strictly about the stated subject and idea. Do not introduce unrelated themes.`,
               },
             ],
             maxTokens: 400,
