@@ -107,7 +107,7 @@ export const userSettings = mysqlTable("userSettings", {
   pikaApiKey: text("pikaApiKey"),
   groqApiKey: text("groqApiKey"),
   mistralApiKey: text("mistralApiKey"),
-  llmModel: text("llm_model").default("gemini-2.5-flash"),
+  llmModel: text("llmModel"),
   monthlyBudgetUSD: decimal("monthlyBudgetUSD", { precision: 10, scale: 2 }).default("50.00"),
   budgetResetDay: int("budgetResetDay").default(1),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

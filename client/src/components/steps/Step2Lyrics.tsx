@@ -762,6 +762,7 @@ export default function Step2Lyrics() {
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
               <button
                 onClick={() => {
+                  if (!effectiveSubject) { toast.error("Please enter a subject or topic first"); return; }
                   if (!visionInput.trim()) { toast.error("Describe your idea first"); return; }
                   if (!project.deity) handleSelectSubject(effectiveSubject);
                   setPromptStatus("idle");

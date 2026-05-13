@@ -1,0 +1,170 @@
+{
+  "query": "DESCRIBE `userSettings`;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user aNTdCHKaxqbb5yQ.root --database mbLFL8pGLWGQKSC3y2Mcrs --execute DESCRIBE `userSettings`;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "userId",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "UNI",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "lyricsProvider",
+      "Type": "enum('chatgpt','claude','gemini','groq','mistral')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "chatgpt",
+      "Extra": ""
+    },
+    {
+      "Field": "imageProvider",
+      "Type": "enum('flux','dalle','midjourney')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "flux",
+      "Extra": ""
+    },
+    {
+      "Field": "videoProvider",
+      "Type": "enum('runway','grok','pika')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "runway",
+      "Extra": ""
+    },
+    {
+      "Field": "openaiApiKey",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "claudeApiKey",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "geminiApiKey",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "replicateApiKey",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "dallEApiKey",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "midjourneyApiKey",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "grokApiKey",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "pikaApiKey",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "monthlyBudgetUSD",
+      "Type": "decimal(10,2)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "50.00",
+      "Extra": ""
+    },
+    {
+      "Field": "budgetResetDay",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "Field": "groqApiKey",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "mistralApiKey",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "llmModel",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\nuserId\tint\tNO\tUNI\tNULL\t\nlyricsProvider\tenum('chatgpt','claude','gemini','groq','mistral')\tYES\t\tchatgpt\t\nimageProvider\tenum('flux','dalle','midjourney')\tYES\t\tflux\t\nvideoProvider\tenum('runway','grok','pika')\tYES\t\trunway\t\nopenaiApiKey\ttext\tYES\t\tNULL\t\nclaudeApiKey\ttext\tYES\t\tNULL\t\ngeminiApiKey\ttext\tYES\t\tNULL\t\nreplicateApiKey\ttext\tYES\t\tNULL\t\ndallEApiKey\ttext\tYES\t\tNULL\t\nmidjourneyApiKey\ttext\tYES\t\tNULL\t\ngrokApiKey\ttext\tYES\t\tNULL\t\npikaApiKey\ttext\tYES\t\tNULL\t\nmonthlyBudgetUSD\tdecimal(10,2)\tYES\t\t50.00\t\nbudgetResetDay\tint\tYES\t\t1\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\ngroqApiKey\ttext\tYES\t\tNULL\t\nmistralApiKey\ttext\tYES\t\tNULL\t\nllmModel\ttext\tYES\t\tNULL\t\n",
+  "stderr": "",
+  "execution_time_ms": 267
+}

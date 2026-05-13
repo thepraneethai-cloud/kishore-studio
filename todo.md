@@ -155,3 +155,10 @@
 - [x] Add Copy button to copy SUNO style to clipboard
 - [x] Fix feedback refinement procedure to work correctly
 - [x] Test feedback-based refinement with actual updates
+
+
+## Phase 18: Bug Fixes - Railway Deployment
+- [ ] Fix: Generate Lyrics button generates "Mother" lyrics when subject field is empty
+- [ ] Add validation to prevent empty subject submission
+- [ ] Show error toast when subject is missing
+- [ ] Test fix on Railway deployment
