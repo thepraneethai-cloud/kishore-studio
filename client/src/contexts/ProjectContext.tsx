@@ -101,6 +101,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         title: project.title,
         deity: project.deity,
         lyrics: project.lyrics,
+        masterPrompt: project.masterPrompt,
         sunoStyle: project.sunoStyle as unknown as Record<string, unknown>,
         scenes: project.scenes,
         youtubeTitle: project.youtubeTitle,

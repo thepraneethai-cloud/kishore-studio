@@ -15,6 +15,7 @@ export const projectsRouter = router({
         title: z.string(),
         deity: z.string().nullable().optional(),
         lyrics: z.string().optional(),
+        masterPrompt: z.string().optional(),
         sunoStyle: z.record(z.string(), z.unknown()).optional(),
         scenes: z.array(z.unknown()).optional(),
         youtubeTitle: z.string().optional(),
@@ -33,6 +34,7 @@ export const projectsRouter = router({
         youtubeDescription: input.youtubeDescription ?? "",
         youtubeTags: input.youtubeTags ?? [],
         thumbnailPrompt: input.thumbnailPrompt ?? "",
+        masterPrompt: input.masterPrompt ?? "",
       };
 
       if (input.serverProjectId) {
@@ -43,6 +45,7 @@ export const projectsRouter = router({
             name: input.title || "Untitled",
             deity: input.deity ?? null,
             lyrics: input.lyrics ?? "",
+            masterPrompt: input.masterPrompt ?? "",
             sunoStyle: input.sunoStyle,
             metadata,
             updatedAt: new Date(),
@@ -65,6 +68,7 @@ export const projectsRouter = router({
           status: "draft",
           deity: input.deity ?? null,
           lyrics: input.lyrics ?? "",
+          masterPrompt: input.masterPrompt ?? "",
           sunoStyle: input.sunoStyle,
           metadata,
         })
