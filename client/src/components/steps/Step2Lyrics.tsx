@@ -282,6 +282,10 @@ export default function Step2Lyrics() {
   const [showSunoPanel,   setShowSunoPanel]   = useState(false);
   // Track whether user has explicitly clicked a category (shows mixed examples before that)
   const [hasPicked,       setHasPicked]       = useState(false);
+  // Master Prompt generation phase
+  const [showMasterPromptPhase, setShowMasterPromptPhase] = useState(false);
+  const [masterPromptEditable, setMasterPromptEditable] = useState("");
+  const [masterPromptReady, setMasterPromptReady] = useState(false);
 
   // Persist category/mood/languageStyle to project context whenever they change
   useEffect(() => { setSongMeta({ category, mood, languageStyle }); }, [category, mood, languageStyle]); // eslint-disable-line react-hooks/exhaustive-deps

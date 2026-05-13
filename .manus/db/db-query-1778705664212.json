@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE projects ADD COLUMN masterPromptFeedback LONGTEXT AFTER masterPrompt;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user aNTdCHKaxqbb5yQ.root --database mbLFL8pGLWGQKSC3y2Mcrs --execute ALTER TABLE projects ADD COLUMN masterPromptFeedback LONGTEXT AFTER masterPrompt;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 434
+}

@@ -16,6 +16,7 @@ export interface LyricsGenerationInput {
   outputType?: OutputType;
   customPrompt?: string;     // appended to system prompt (iterate feedback, manual direction)
   directivePrompt?: string;  // replaces the user message entirely (AI-generated vision brief)
+  masterPrompt?: string;     // creative direction/master prompt to guide lyrics generation
   theme?: string;
   duration?: number;
   language?: "telugu" | "english";
@@ -467,6 +468,10 @@ export async function generateDevotionalLyrics(
   );
 
   let systemPrompt = buildSystemPrompt(input, subjectContext);
+
+  if (input.masterPrompt) {
+    systemPrompt += `\n\nCREATIVE DIRECTION (Master Prompt):\n${input.masterPrompt}\n\nUse this creative direction as the primary guide for the song. Ensure all lyrics align with this vision.`;
+  }
 
   if (input.customPrompt) {
     systemPrompt += `\n\nUSER DIRECTION:\n${input.customPrompt}\n\nIncorporate this direction. REMINDER: output valid JSON only — every song line separated by \\n, no English artifact endings, no markdown.`;
