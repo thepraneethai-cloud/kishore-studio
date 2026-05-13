@@ -44,7 +44,10 @@ export function useMasterPrompt() {
     customDirection: string,
     category: string,
     mood?: string,
-    llmModel?: string
+    llmModel?: string,
+    languageStyle?: string,
+    outputType?: string,
+    duration?: number
   ) => {
     generateMasterPromptMutation.mutate({
       deity,
@@ -53,10 +56,13 @@ export function useMasterPrompt() {
       category: category as any,
       mood,
       llmModel,
+      languageStyle: languageStyle as any,
+      outputType: outputType as any,
+      duration,
     });
   };
 
-  const refineMasterPrompt = (feedback: string, category: string, llmModel?: string) => {
+  const refineMasterPrompt = (feedback: string, category: string, llmModel?: string, languageStyle?: string, outputType?: string, duration?: number) => {
     if (!project.masterPrompt) {
       toast.error("No Master Prompt to refine");
       return;

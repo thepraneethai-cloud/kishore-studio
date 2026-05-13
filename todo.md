@@ -210,7 +210,7 @@
 - [x] Update Step2Lyrics to pass Master Prompt to lyrics generation
 - [x] Add state management for Master Prompt review phase (before lyrics generation)
 - [x] Update UI flow: Input → Generate Creative Direction → Review Master Prompt → Generate Lyrics
-- [ ] Test new flow: Generate Creative Direction → Review → Generate Lyrics
-- [ ] Verify Master Prompt influences lyrics generation appropriately
-- [ ] Test Master Prompt editing and regeneration
-- [ ] Test end-to-end workflow with new flow
+- [x] Test new flow: Generate Creative Direction → Review → Generate Lyrics
+- [x] Verify Master Prompt influences lyrics generation appropriately
+- [x] Test Master Prompt editing and regeneration
+- [x] Test end-to-end workflow with new flow

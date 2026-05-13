@@ -425,7 +425,7 @@ export default function Step2Lyrics() {
     if (!project.deity) handleSelectSubject(effectiveSubject);
     const trimmed = customPrompt.trim();
     // Call generateMasterPrompt with pre-generation parameters (no lyrics yet)
-    generateMasterPrompt(effectiveSubject, "", trimmed, category, mood, llmModel);
+    generateMasterPrompt(effectiveSubject, "", trimmed, category, mood, llmModel, languageStyle, outputType, duration);
     setShowMasterPromptPhase(true);
   };
 
