@@ -45,13 +45,13 @@
 - [x] Integrate Runway API for videos (via Replicate)
 - [x] Create unified provider router in generation.ts (providers.ts router)
 
-## Phase 7: Cost Tracking
-- [ ] Implement cost calculation per generation
-- [ ] Track cost per provider
-- [ ] Create cost dashboard
-- [ ] Add budget alerts
-- [ ] Implement cost estimation before generation
-- [ ] Add cost breakdown reports
+## Phase 7: Cost Tracking ✅
+- [x] Implement cost calculation per generation (recordCost in generation.ts)
+- [x] Track cost per provider (costTracking table with provider field)
+- [x] Create cost dashboard (getMonthlySummary, getCostHistory procedures)
+- [x] Add budget alerts (checkBudgetStatus, isWarning, isExceeded flags)
+- [x] Implement cost estimation before generation (estimateCost procedure)
+- [x] Add cost breakdown reports (getCostReport, byProvider, byType grouping)
 
 ## Phase 8: Devotional Mode ✅
 - [x] Rebuild Step 1: Deity Selector (mobile-optimized, fixed deity key normalization)
@@ -165,21 +165,21 @@
 - [x] Test fix on Railway deployment
 - [x] Fixed database schema: llm_model → llmModel column rename
 
-## Phase 19: Master Prompt System Implementation
-- [ ] Phase 1: Add masterPrompt field to project schema and context
-- [ ] Phase 1: Create generateMasterPrompt backend procedure
-- [ ] Phase 1: Display Master Prompt panel in Step 1 after lyrics generation
-- [ ] Phase 2: Add refineMasterPrompt backend procedure with feedback
-- [ ] Phase 2: Add "Refine Master Prompt" UI in Step 1 with feedback textarea
-- [ ] Phase 3: Update Step 2 (SUNO) to use Master Prompt in generation
-- [ ] Phase 3: Update Step 5 (Image Prompts) to use Master Prompt in generation
-- [ ] Phase 3: Update Step 6 (Video Prompts) to use Master Prompt in generation
-- [ ] Phase 3: Update Step 7 (YouTube) to use Master Prompt in generation
-- [ ] Phase 3: Display Master Prompt reference panels in Steps 2, 5, 6, 7
-- [ ] Phase 4: Test consistency across all steps with different categories
-- [ ] Phase 4: Verify LLM constraints work per category (devotional vs cinematic)
-- [ ] Phase 4: Fine-tune Master Prompt generation prompts
-- [ ] Phase 5: Run all tests, commit to GitHub, deploy to Railway
+## Phase 19: Master Prompt System Implementation ✅
+- [x] Phase 1: Add masterPrompt field to project schema and context
+- [x] Phase 1: Create generateMasterPrompt backend procedure
+- [x] Phase 1: Display Master Prompt panel in Step 1 after lyrics generation
+- [x] Phase 2: Add refineMasterPrompt backend procedure with feedback
+- [x] Phase 2: Add "Refine Master Prompt" UI in Step 1 with feedback textarea
+- [x] Phase 3: Update Step 2 (SUNO) to use Master Prompt in generation
+- [x] Phase 3: Update Step 5 (Image Prompts) to use Master Prompt in generation
+- [x] Phase 3: Update Step 6 (Video Prompts) to use Master Prompt in generation
+- [x] Phase 3: Update Step 7 (YouTube) to use Master Prompt in generation
+- [x] Phase 3: Display Master Prompt reference panels in Steps 2, 5, 6, 7
+- [x] Phase 4: Test consistency across all steps with different categories
+- [x] Phase 4: Verify LLM constraints work per category (devotional vs cinematic)
+- [x] Phase 4: Fine-tune Master Prompt generation prompts
+- [x] Phase 5: Run all tests, commit to GitHub, deploy to Railway
 
 ## App Title Update
 - [x] Change app title from "Telugu Devotional Video Studio" to "Kishore's Studio"

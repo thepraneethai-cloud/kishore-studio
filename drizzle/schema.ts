@@ -51,6 +51,8 @@ export const projects = mysqlTable("projects", {
   sunoStyle: json("sunoStyle"),
   audioUrl: text("audioUrl"),
   audioStorageKey: varchar("audioStorageKey", { length: 255 }),
+  masterPrompt: text("masterPrompt"),
+  masterPromptFeedback: text("masterPromptFeedback"),
   metadata: json("metadata"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
