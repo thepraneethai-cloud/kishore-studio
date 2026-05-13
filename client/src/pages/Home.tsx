@@ -14,6 +14,7 @@ import Step7VideoPrompts from "@/components/steps/Step7VideoPrompts";
 import Step8CapCut from "@/components/steps/Step8CapCut";
 import Step9YouTube from "@/components/steps/Step9YouTube";
 import { useIsMobile } from "@/hooks/useMobile";
+import MobileBottomNav from "@/components/MobileBottomNav";
 import { useEffect, useState } from "react";
 
 const STEP_COMPONENTS: Record<number, React.ComponentType> = {
@@ -50,6 +51,9 @@ export default function Home() {
     >
       {/* Header with toggle, title, and user menu */}
       <Header sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} activeStep={activeStep} />
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && <MobileBottomNav />}
 
       {/* Main content area */}
       <div
@@ -95,6 +99,7 @@ export default function Home() {
             flexDirection: "column",
             overflowY: "auto",
             transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+            paddingBottom: isMobile ? "70px" : "0",
           }}
         >
           <div

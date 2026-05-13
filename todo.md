@@ -11,10 +11,10 @@
 - [x] Create `scenes` table (projectId, sceneNumber, description, imagePrompt, videoPrompt, urls)
 
 ## Phase 3: Mobile-First UI
-- [ ] Rebuild App.tsx with mobile-first layout
-- [ ] Create responsive navigation (bottom nav on mobile, sidebar on desktop)
-- [ ] Implement mobile-optimized components
-- [ ] Add touch-friendly buttons and inputs
+- [x] Rebuild App.tsx with mobile-first layout (sidebar already responsive)
+- [x] Create responsive navigation (bottom nav on mobile, sidebar on desktop) - Implemented MobileBottomNav
+- [x] Implement mobile-optimized components (using useIsMobile hook)
+- [x] Add touch-friendly buttons and inputs (Tailwind responsive utilities applied)
 - [ ] Test responsiveness on phone/tablet/desktop
 
 ## Phase 4: Settings Panel ✅
@@ -36,13 +36,14 @@
 - [x] Audio upload backend with S3 storage
 
 ## Phase 6: Multi-AI Integration
-- [ ] Integrate ChatGPT API for lyrics
-- [ ] Integrate Claude API for lyrics
+- [x] Add provider abstraction layer (providers.ts with types and registry)
+- [x] Integrate ChatGPT API for lyrics (chatgpt.ts provider)
+- [x] Integrate Claude API for lyrics (claude.ts provider)
 - [ ] Integrate Gemini API for lyrics
-- [ ] Integrate Flux API for images
-- [ ] Integrate DALL-E API for images
+- [x] Integrate Flux API for images (images.ts provider)
+- [x] Integrate DALL-E API for images (images.ts provider)
 - [ ] Integrate Runway API for videos
-- [ ] Add provider abstraction layer
+- [ ] Create unified provider router in generation.ts
 
 ## Phase 7: Cost Tracking
 - [ ] Implement cost calculation per generation
