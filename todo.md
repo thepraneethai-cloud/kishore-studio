@@ -204,12 +204,12 @@
 
 
 ## Phase 22: Restructure Lyrics Generation Flow - Master Prompt First ✅
-- [ ] Update Step2Lyrics UI: Add "GENERATE CREATIVE DIRECTION" button before lyrics generation
-- [ ] Implement Master Prompt generation and display phase with edit/regenerate options
-- [ ] Update generateLyrics backend procedure to accept Master Prompt as input parameter
-- [ ] Update Step2Lyrics to pass Master Prompt to lyrics generation
-- [ ] Add state management for Master Prompt review phase (before lyrics generation)
-- [ ] Update UI flow: Input → Generate Creative Direction → Review Master Prompt → Generate Lyrics
+- [x] Update Step2Lyrics UI: Add "GENERATE CREATIVE DIRECTION" button before lyrics generation
+- [x] Implement Master Prompt generation and display phase with edit/regenerate options
+- [x] Update generateLyrics backend procedure to accept Master Prompt as input parameter
+- [x] Update Step2Lyrics to pass Master Prompt to lyrics generation
+- [x] Add state management for Master Prompt review phase (before lyrics generation)
+- [x] Update UI flow: Input → Generate Creative Direction → Review Master Prompt → Generate Lyrics
 - [ ] Test new flow: Generate Creative Direction → Review → Generate Lyrics
 - [ ] Verify Master Prompt influences lyrics generation appropriately
 - [ ] Test Master Prompt editing and regeneration

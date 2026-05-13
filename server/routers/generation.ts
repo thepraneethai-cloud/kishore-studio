@@ -563,10 +563,13 @@ export const generationRouter = router({
     .input(
       z.object({
         deity: z.string(),
-        lyrics: z.string(),
-        customDirection: z.string(),
+        lyrics: z.string().optional(),
+        customDirection: z.string().optional(),
         category: z.enum(["devotional", "cinematic", "folk", "romantic", "emotional", "festival", "mass"]),
         mood: z.string().optional(),
+        languageStyle: z.enum(["pure_telugu", "colloquial", "poetic", "mixed"]).optional(),
+        outputType: z.enum(["lyrics_only", "lyrics_suno", "lyrics_scene"]).optional(),
+        duration: z.number().min(1).max(10).optional(),
         llmModel: z.string().optional(),
       })
     )
@@ -598,13 +601,21 @@ export const generationRouter = router({
             },
             {
               role: "user",
-              content:
-                `Subject: ${input.deity}\n` +
-                `Category: ${input.category}\n` +
-                `Mood: ${input.mood || "meditative and devotional"}\n` +
-                `Lyrics (excerpt): ${input.lyrics.substring(0, 300)}...\n` +
-                `Creative Direction: ${input.customDirection}\n\n` +
-                `Create a Master Prompt (150-250 words) that captures the core creative vision. Include: visual aesthetic, emotional tone, key themes, cultural/spiritual elements, character descriptions (if applicable), color palette, atmosphere, and any specific constraints to maintain consistency. This prompt will be used to generate images, videos, music styling, and marketing materials.`,
+              content: input.lyrics
+                ? `Subject: ${input.deity}\n` +
+                  `Category: ${input.category}\n` +
+                  `Mood: ${input.mood || "meditative and devotional"}\n` +
+                  `Lyrics (excerpt): ${input.lyrics.substring(0, 300)}...\n` +
+                  `Creative Direction: ${input.customDirection || ""}\n\n` +
+                  `Create a Master Prompt (150-250 words) that captures the core creative vision. Include: visual aesthetic, emotional tone, key themes, cultural/spiritual elements, character descriptions (if applicable), color palette, atmosphere, and any specific constraints to maintain consistency. This prompt will be used to generate images, videos, music styling, and marketing materials.`
+                : `Subject: ${input.deity}\n` +
+                  `Category: ${input.category}\n` +
+                  `Mood: ${input.mood || "meditative and devotional"}\n` +
+                  `Language Style: ${input.languageStyle || "pure_telugu"}\n` +
+                  `Output Type: ${input.outputType || "lyrics_suno"}\n` +
+                  `Duration: ${input.duration || 4} minutes\n` +
+                  `Creative Direction: ${input.customDirection || "No specific direction provided"}\n\n` +
+                  `Create a comprehensive Creative Direction (Master Prompt) for a ${input.category} song (150-250 words). This will guide the generation of lyrics, music, visuals, and marketing. Include: song concept, emotional tone, story arc, devotional/cinematic angle, language style, structure, rhythm guidance, music direction, and things to avoid. Be specific and vivid.`,
             },
           ],
         });

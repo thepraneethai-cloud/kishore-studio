@@ -311,6 +311,12 @@ export default function Step2Lyrics() {
   useEffect(() => {
     if (project.lyrics) markStepComplete(1);
   }, [project.lyrics]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Sync Master Prompt to editable state when generated or regenerated
+  useEffect(() => {
+    if (masterPrompt) {
+      setMasterPromptEditable(masterPrompt);
+    }
+  }, [masterPrompt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (subjectInput.length < 2) { setSuggestions([]); return; }
@@ -413,6 +419,35 @@ export default function Step2Lyrics() {
       directivePrompt: isVisionDirective && trimmed ? trimmed : undefined,
       customPrompt:    !isVisionDirective && trimmed ? trimmed : undefined,
     });
+  };
+  const handleGenerateMasterPrompt = () => {
+    if (!effectiveSubject) { toast.error("Please enter a subject or topic first"); return; }
+    if (!project.deity) handleSelectSubject(effectiveSubject);
+    const trimmed = customPrompt.trim();
+    // Call generateMasterPrompt with pre-generation parameters (no lyrics yet)
+    generateMasterPrompt(effectiveSubject, "", trimmed, category, mood, llmModel);
+    setShowMasterPromptPhase(true);
+  };
+
+  const handleGenerateLyricsWithMasterPrompt = () => {
+    if (!masterPromptEditable.trim()) {
+      toast.error("Please generate a Master Prompt first");
+      return;
+    }
+    const trimmed = customPrompt.trim();
+    generateMutation.mutate({
+      deity:           effectiveSubject,
+      category:        category as any,
+      mood:            mood || undefined,
+      languageStyle:   languageStyle as any,
+      outputType:      outputType as any,
+      duration,
+      llmModel,
+      masterPrompt:    masterPromptEditable,
+      directivePrompt: isVisionDirective && trimmed ? trimmed : undefined,
+      customPrompt:    !isVisionDirective && trimmed ? trimmed : undefined,
+    });
+    setShowMasterPromptPhase(false);
   };
 
   const handleIterate = () => {
@@ -890,22 +925,76 @@ export default function Step2Lyrics() {
           )}
         </div>
 
-        {/* Generate button */}
-        <button
-          onClick={handleGenerate}
-          disabled={isGenerating || !effectiveSubject}
-          style={{ ...primaryBtn(isGenerating || !effectiveSubject), width: "100%", marginBottom: !effectiveSubject ? "0.5rem" : "1.75rem" }}
-        >
-          {isGenerating
-            ? <><RefreshCw size={18} style={{ animation: "spin 1s linear infinite" }} /> Generating lyrics…</>
-            : <><Zap size={18} /> {generateLabel}</>
-          }
-        </button>
-        {!effectiveSubject && !isGenerating && (
-          <p style={{ textAlign: "center", fontSize: "0.72rem", color: "rgba(255,255,255,0.32)", marginBottom: "1.75rem" }}>
-            Enter a subject or topic above to enable generation.
-          </p>
+        {/* Master Prompt Generation Flow */}
+        {!showMasterPromptPhase ? (
+          <>
+            {/* Step 1: Generate Creative Direction button */}
+            <button
+              onClick={handleGenerateMasterPrompt}
+              disabled={isMasterPromptGenerating || !effectiveSubject}
+              style={{ ...primaryBtn(isMasterPromptGenerating || !effectiveSubject), width: "100%", marginBottom: "0.5rem" }}
+            >
+              {isMasterPromptGenerating
+                ? <><RefreshCw size={18} style={{ animation: "spin 1s linear infinite" }} /> Generating creative direction…</>
+                : <><Wand2 size={18} /> GENERATE CREATIVE DIRECTION</>
+              }
+            </button>
+            {!effectiveSubject && !isMasterPromptGenerating && (
+              <p style={{ textAlign: "center", fontSize: "0.72rem", color: "rgba(255,255,255,0.32)", marginBottom: "1.75rem" }}>
+                Enter a subject or topic above to enable generation.
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Step 2: Master Prompt Review Phase */}
+            <div style={{ ...panel, marginBottom: "0.75rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+                <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#00d4ff", margin: 0 }}>Creative Direction (Master Prompt)</p>
+                <button
+                  onClick={() => {
+                    generateMasterPrompt(effectiveSubject, "", customPrompt.trim(), category, mood, llmModel);
+                  }}
+                  disabled={isMasterPromptGenerating}
+                  style={{ fontSize: "0.73rem", fontWeight: 700, color: "rgba(0,212,255,0.8)", background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.25)", borderRadius: "0.375rem", padding: "0.3rem 0.75rem", cursor: "pointer" }}
+                >
+                  {isMasterPromptGenerating ? "Regenerating..." : "Regenerate"}
+                </button>
+              </div>
+              <textarea
+                value={masterPromptEditable}
+                onChange={(e) => setMasterPromptEditable(e.target.value)}
+                rows={8}
+                style={{ ...inputStyle, color: "#a8d8ea", fontFamily: "monospace", fontSize: "0.875rem", lineHeight: "1.6", minHeight: "200px" }}
+              />
+              <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", margin: "0.75rem 0 0" }}>
+                Edit the creative direction above, then click "Generate Lyrics from Direction" to create lyrics aligned with this vision.
+              </p>
+            </div>
+
+            {/* Step 3: Generate Lyrics button */}
+            <button
+              onClick={handleGenerateLyricsWithMasterPrompt}
+              disabled={isGenerating || !masterPromptEditable.trim()}
+              style={{ ...primaryBtn(isGenerating || !masterPromptEditable.trim()), width: "100%", marginBottom: "0.5rem" }}
+            >
+              {isGenerating
+                ? <><RefreshCw size={18} style={{ animation: "spin 1s linear infinite" }} /> Generating lyrics…</>
+                : <><Zap size={18} /> GENERATE LYRICS FROM DIRECTION</>
+              }
+            </button>
+
+            {/* Back button to edit direction */}
+            <button
+              onClick={() => setShowMasterPromptPhase(false)}
+              disabled={isGenerating || isMasterPromptGenerating}
+              style={{ width: "100%", padding: "0.5rem", fontSize: "0.75rem", fontWeight: 600, color: "rgba(255,255,255,0.5)", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "0.375rem", cursor: "pointer", marginBottom: "1.75rem" }}
+            >
+              ← Back to edit direction
+            </button>
+          </>
         )}
+
 
         {/* ── GENERATED LYRICS ─────────────────────────── */}
         {project.lyrics && (
