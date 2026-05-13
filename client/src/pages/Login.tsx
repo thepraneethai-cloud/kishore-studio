@@ -84,7 +84,7 @@ export default function Login() {
             Kishore's Studio
           </h1>
           <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.875rem", marginTop: "0.5rem", marginBottom: 0 }}>
-            Telugu Devotional Song Creator
+            Create Devotional Videos with AI
           </p>
         </div>
 

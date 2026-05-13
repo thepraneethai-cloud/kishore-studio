@@ -179,3 +179,6 @@
 - [ ] Phase 4: Verify LLM constraints work per category (devotional vs cinematic)
 - [ ] Phase 4: Fine-tune Master Prompt generation prompts
 - [ ] Phase 5: Run all tests, commit to GitHub, deploy to Railway
+
+## App Title Update
+- [x] Change app title from "Telugu Devotional Video Studio" to "Kishore's Studio"
