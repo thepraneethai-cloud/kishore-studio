@@ -713,4 +713,107 @@ export const generationRouter = router({
         };
       }
     }),
+
+  generateYoutubeMetadata: protectedProcedure
+    .input(
+      z.object({
+        projectId: z.number(),
+        deity: z.string(),
+        category: z.string(),
+        mood: z.string(),
+        masterPrompt: z.string(),
+        lyrics: z.string().optional(),
+        llmModel: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const { generateSeoMetadata, getTrendingKeywords } = await import(
+          "../\_core/teluguSeo"
+        );
+
+        // Generate SEO-optimized metadata
+        const seoMetadata = generateSeoMetadata({
+          deity: input.deity,
+          category: input.category,
+          mood: input.mood,
+          masterPrompt: input.masterPrompt,
+          language: "telugu",
+        });
+
+        // Get trending keywords for the deity
+        const trendingKeywords = getTrendingKeywords(input.deity);
+
+        // Combine all keywords and hashtags
+        const allKeywords = [...new Set([...seoMetadata.keywords, ...trendingKeywords])];
+        const allHashtags = [...new Set(seoMetadata.hashtags)];
+
+        // Generate additional YouTube-specific content
+        const llmModel = input.llmModel || "gemini-2.5-flash";
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content:
+                `You are an expert YouTube metadata specialist for Telugu devotional content. ` +
+                `Generate compelling YouTube metadata that maximizes views and engagement. ` +
+                `Focus on SEO optimization for Telugu audiences.`,
+            },
+            {
+              role: "user",
+              content:
+                `Generate YouTube metadata for this devotional content:\n\n` +
+                `Deity: ${input.deity}\n` +
+                `Category: ${input.category}\n` +
+                `Mood: ${input.mood}\n` +
+                `Master Prompt: ${input.masterPrompt}\n\n` +
+                `Generate:\n` +
+                `1. An engaging title (50-60 characters)\n` +
+                `2. A compelling description (150-300 characters)\n` +
+                `3. 5-10 relevant keywords\n` +
+                `4. 5-10 relevant hashtags\n\n` +
+                `Format as JSON: { title, description, keywords: [], hashtags: [] }`,
+            },
+          ],
+        });
+
+        const llmMetadata = JSON.parse(
+          typeof response.choices?.[0]?.message?.content === "string"
+            ? response.choices[0].message.content
+            : "{}"
+        );
+
+        // Combine SEO metadata with LLM-generated metadata
+        const finalMetadata = {
+          title: llmMetadata.title || seoMetadata.title,
+          description: llmMetadata.description || seoMetadata.description,
+          keywords: [...new Set([...allKeywords, ...(llmMetadata.keywords || [])])],
+          hashtags: [...new Set([...allHashtags, ...(llmMetadata.hashtags || [])])],
+          seoScore: seoMetadata.seoScore,
+        };
+
+        // Save to project
+        await db
+          .update(projects)
+          .set({
+            youtubeTitle: finalMetadata.title,
+            youtubeDescription: finalMetadata.description,
+            youtubeTags: finalMetadata.hashtags,
+            updatedAt: new Date(),
+          })
+          .where(eq(projects.id, input.projectId));
+
+        void recordCost(ctx.user.id, "lyrics", llmModel, UNIT_COSTS.lyrics);
+
+        return {
+          success: true,
+          data: finalMetadata,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Failed to generate YouTube metadata",
+        };
+      }
+    }),
 });

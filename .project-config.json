@@ -1,0 +1,41 @@
+{
+  "build_command": "pnpm run build",
+  "capabilities": [
+    "db",
+    "server",
+    "user"
+  ],
+  "dev_command": "pnpm run dev",
+  "env_vars": {
+    "DATABASE_URL": "mysql://aNTdCHKaxqbb5yQ.root:cM5MkkVUQ97z5rNu5J5K@gateway06.us-east-1.prod.aws.tidbcloud.com:4000/mbLFL8pGLWGQKSC3y2Mcrs?ssl={\"rejectUnauthorized\":true}"
+  },
+  "experiments": null,
+  "git_remote": {
+    "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663619352162/mbLFL8pGLWGQKSC3y2Mcrs",
+    "access_key_id": "ASIAZV3A2ECZJKUHVWOB",
+    "secret_access_key": "/Lqr/67Dm74d6Zb0CYrC7dWVbAfODAISxry5m4Aa",
+    "session_token": "IQoJb3JpZ2luX2VjEJv//////////wEaCXVzLWVhc3QtMSJIMEYCIQDh+KcMWRuufhR/kWFZunS37s7BL/RD8fDxxtcTOh+Y0gIhAKBznAi3xygRalrRff0tBHvRuAgVh1w7eDJxrK/v3oYbKvYDCGMQBBoMNjY1Mzg2MDk4ODY2IgyH8QJqGujzwh/H+YYq0wNX3gYF3pSJDoZtg2/tth/oLwCCr8nL7NwfYxmnjhuAifDDzt9bkzfpUl3+8bRVrDTV1V+HlIPO+skt5ekKWNm428LQ00SGJu+vb5xCNYaRva6XcljxgW4Uu/+0zjxl+VqsLPHHqIkq3+UR5Yuj3RL8ZqQ7VcAF9Dr85bT7RoyeVHMFUZUaTpI2H0ze+nXj4QWhTgxkZQZ66UDR/aFOmspINwvhE2+Knj5qmX+v6rewkcRdGGcdTs/8Mz6oDi3R9ZlQRBKAX4ox/fHAf+qhej9AubMQzUINnUMv9znGXnufDTAOZUSr8uVgu4REJloi+rVKfZBub+S+NoHYL8Pca0WfiRTOqnV+xJRHhnfNcLBylCkhb2sHLE+L7lXarrDSG1jTBJFKv89u9bijIq6BgzfibV5dUMcAd416vJWa1vJpJJf+rerrmmndTjN0K+t0kiDheh3Pek1Pg0P9ZSC6DZUh+UIUw0CDQOC6zKbYkiCxH1kFArSNAkZCaNlmyoeeX3C2l41mv9Mu63HyoMN4hovr8e3w8uwzXmfcOqw9z7xO9KnloZ81KZNwNaVLcyRpo+dllNHgzFnCxaR3ctalKPAyve7YqZXGw4ZWkRA/+2xPhKxmBzC2nZjQBjqcAauAxBbKh005BipoVaStl8rwSupgjbkpZ8OH5i5hHziK9e6+88v3StqsKNAIkGOrBaycwrMrMTxKtRDUmIM5CU6yoiWRrK5OCJaWCLV08ru6RW+/CX3del5tG4fWYP2JIEPScl9ugT3SGLLSO5Ucc5pnKp8txPb97BBkkpXYrsNWe7YydIhYv8ZxqZ/Bsb2FqS6Z/11RcrT0Ug48/w==",
+    "expiration": "2026-05-15T06:04:38.000Z"
+  },
+  "name": "telugu-devotional-studio",
+  "path": "/home/ubuntu/telugu-devotional-studio",
+  "port": 3000,
+  "secrets": {
+    "BUILT_IN_FORGE_API_KEY": "DRYpSR8gJ49UtfxRkJ3itN",
+    "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "JWT_SECRET": "V3TpLdxRKaM42BfMdZNYV3",
+    "OAUTH_SERVER_URL": "https://api.manus.im",
+    "OWNER_NAME": "Praneeth AI",
+    "OWNER_OPEN_ID": "Biwf4aDjuUwUL6mnSTYXTV",
+    "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
+    "VITE_ANALYTICS_WEBSITE_ID": "888bd45e-c2c3-459e-abb9-33ffe36732fb",
+    "VITE_APP_ID": "mbLFL8pGLWGQKSC3y2Mcrs",
+    "VITE_APP_LOGO": "https://files.manuscdn.com/user_upload_by_module/web_dev_logo/310519663619352162/UNTjcTMojtaJeUbg.png",
+    "VITE_APP_TITLE": "Kishore's Studio",
+    "VITE_FRONTEND_FORGE_API_KEY": "WAEwCdn6gsgnDMvRCcUr2Z",
+    "VITE_FRONTEND_FORGE_API_URL": "https://forge.manus.ai",
+    "VITE_OAUTH_PORTAL_URL": "https://manus.im"
+  },
+  "template_id": "web-db-user",
+  "test_command": "pnpm test"
+}
