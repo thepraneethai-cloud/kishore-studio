@@ -802,7 +802,7 @@ export default function Step2Lyrics() {
               >
                 {promptGenMutation.isPending
                   ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Generating...</>
-                  : <><Wand2 size={14} /> Generate prompt with AI</>
+                  : <><Wand2 size={14} /> Generate Extra Direction</>
                 }
               </button>
 
@@ -896,6 +896,30 @@ export default function Step2Lyrics() {
               Direction saved — click <strong style={{ color: "rgba(0,212,255,0.7)" }}>Regenerate lyrics</strong> above to apply it.
             </p>
           )}
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.85rem", paddingTop: "0.85rem", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+            <button
+              onClick={handleGenerateMasterPrompt}
+              disabled={isMasterPromptGenerating || !effectiveSubject}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.45rem",
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                color: isMasterPromptGenerating || !effectiveSubject ? "rgba(0,212,255,0.35)" : "#00d4ff",
+                background: isMasterPromptGenerating || !effectiveSubject ? "rgba(0,212,255,0.06)" : "rgba(0,212,255,0.12)",
+                border: "1px solid rgba(0,212,255,0.25)",
+                borderRadius: "0.5rem",
+                padding: "0.6rem 1rem",
+                cursor: isMasterPromptGenerating || !effectiveSubject ? "not-allowed" : "pointer",
+              }}
+            >
+              {isMasterPromptGenerating
+                ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Generating...</>
+                : <><Wand2 size={14} /> Generate Creative Direction</>
+              }
+            </button>
+          </div>
         </div>
 
         <div style={{ ...panel, marginBottom: "1rem" }}>
@@ -907,28 +931,6 @@ export default function Step2Lyrics() {
               </p>
             </div>
             <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              <button
-                onClick={handleGenerateMasterPrompt}
-                disabled={isMasterPromptGenerating || !effectiveSubject}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.4rem",
-                  fontSize: "0.78rem",
-                  fontWeight: 700,
-                  color: isMasterPromptGenerating || !effectiveSubject ? "rgba(0,212,255,0.35)" : "#00d4ff",
-                  background: isMasterPromptGenerating || !effectiveSubject ? "rgba(0,212,255,0.06)" : "rgba(0,212,255,0.12)",
-                  border: "1px solid rgba(0,212,255,0.25)",
-                  borderRadius: "0.5rem",
-                  padding: "0.55rem 0.9rem",
-                  cursor: isMasterPromptGenerating || !effectiveSubject ? "not-allowed" : "pointer",
-                }}
-              >
-                {isMasterPromptGenerating
-                  ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Generating...</>
-                  : <><Wand2 size={14} /> Generate</>
-                }
-              </button>
               {masterPromptEditable.trim() && (
                 <button
                   onClick={() => {
