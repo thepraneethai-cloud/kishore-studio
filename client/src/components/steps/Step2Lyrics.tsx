@@ -584,6 +584,47 @@ export default function Step2Lyrics() {
           </p>
         </div>
 
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem", padding: "0.75rem 1rem", background: "rgba(0,212,255,0.05)", border: "1px solid rgba(0,212,255,0.18)", borderRadius: "0.75rem", flexWrap: "wrap" }}>
+          <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "rgba(0,212,255,0.7)", whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            AI Model
+          </span>
+          <select
+            value={llmModel}
+            onChange={(e) => setLlmModel(e.target.value)}
+            style={{ ...selectStyle, flex: 1, minWidth: "240px", padding: "0.55rem 0.75rem" }}
+          >
+            <optgroup label="Gemini (platform key — no setup needed)">
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash — fast · default</option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro — most capable</option>
+            </optgroup>
+            <optgroup label="Gemini (requires your Gemini API key)">
+              <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+              <option value="gemini-2.0-flash-thinking-exp">Gemini 2.0 Flash Thinking</option>
+              <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+            </optgroup>
+            <optgroup label="ChatGPT (requires your OpenAI API key)">
+              <option value="gpt-4o">GPT-4o — powerful</option>
+              <option value="gpt-4o-mini">GPT-4o Mini — fast · cheap</option>
+              <option value="gpt-4-turbo">GPT-4 Turbo</option>
+            </optgroup>
+            <optgroup label="Claude (requires your Anthropic API key)">
+              <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku — fast · excellent</option>
+              <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet — best quality</option>
+            </optgroup>
+            <optgroup label="Groq / Llama (requires your Groq API key — free tier)">
+              <option value="llama-3.1-8b-instant">Llama 3.1 8B — ultra-fast · free</option>
+              <option value="llama-3.3-70b-versatile">Llama 3.3 70B — quality · free</option>
+              <option value="qwen-2.5-7b-instruct">Qwen 2.5 7B — multilingual · free</option>
+            </optgroup>
+            <optgroup label="Mistral (requires your Mistral API key — free tier)">
+              <option value="mistral-small-latest">Mistral Small — multilingual · free</option>
+            </optgroup>
+          </select>
+          <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.36)", whiteSpace: "nowrap" }}>
+            Used for all generation on this page
+          </span>
+        </div>
+
         <div style={{ ...panel, marginBottom: "1rem" }}>
           <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "#00d4ff", marginBottom: "1rem" }}>
             1. Basic details
@@ -699,37 +740,6 @@ export default function Step2Lyrics() {
                 {LANGUAGE_STYLES.map((ls) => (
                   <option key={ls.value} value={ls.value}>{ls.label} — {ls.hint}</option>
                 ))}
-              </select>
-            </div>
-            <div className="concept-grid-full">
-              <label style={labelStyle}>AI model</label>
-              <select value={llmModel} onChange={(e) => setLlmModel(e.target.value)} style={selectStyle}>
-                <optgroup label="Gemini (platform key — no setup needed)">
-                  <option value="gemini-2.5-flash">Gemini 2.5 Flash — fast · default</option>
-                  <option value="gemini-2.5-pro">Gemini 2.5 Pro — most capable</option>
-                </optgroup>
-                <optgroup label="Gemini (requires your Gemini API key)">
-                  <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                  <option value="gemini-2.0-flash-thinking-exp">Gemini 2.0 Flash Thinking</option>
-                  <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                </optgroup>
-                <optgroup label="ChatGPT (requires your OpenAI API key)">
-                  <option value="gpt-4o">GPT-4o — powerful</option>
-                  <option value="gpt-4o-mini">GPT-4o Mini — fast · cheap</option>
-                  <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                </optgroup>
-                <optgroup label="Claude (requires your Anthropic API key)">
-                  <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku — fast · excellent</option>
-                  <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet — best quality</option>
-                </optgroup>
-                <optgroup label="Groq / Llama (requires your Groq API key — free tier)">
-                  <option value="llama-3.1-8b-instant">Llama 3.1 8B — ultra-fast · free</option>
-                  <option value="llama-3.3-70b-versatile">Llama 3.3 70B — quality · free</option>
-                  <option value="qwen-2.5-7b-instruct">Qwen 2.5 7B — multilingual · free</option>
-                </optgroup>
-                <optgroup label="Mistral (requires your Mistral API key — free tier)">
-                  <option value="mistral-small-latest">Mistral Small — multilingual · free</option>
-                </optgroup>
               </select>
             </div>
           </div>
