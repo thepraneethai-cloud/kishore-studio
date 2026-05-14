@@ -24,6 +24,25 @@ function normalizeVideoSrc(value?: string) {
   return value;
 }
 
+function isHostedUrl(value?: string) {
+  return /^https?:\/\//.test(value || "");
+}
+
+function isInlineImage(value?: string) {
+  if (!value) return false;
+  return value.startsWith("data:image/") || (value.length > 100 && /^[A-Za-z0-9+/=\s]+$/.test(value));
+}
+
+function imageValueToDataUrl(value: string) {
+  if (value.startsWith("data:image/")) return value;
+  return `data:image/png;base64,${value.replace(/\s/g, "")}`;
+}
+
+async function imageValueToBlob(value: string) {
+  const response = await fetch(imageValueToDataUrl(value));
+  return response.blob();
+}
+
 const MOTION_TYPES = [
   { id: "push", label: "Slow Push-In", template: "Slow camera push-in (0.3x zoom over 6 seconds), {scene}, soft particle glow on light sources, subtle smoke drift, lamp flames flickering, smooth meditative motion" },
   { id: "pan", label: "Gentle Pan", template: "Slow horizontal pan left-to-right (0.2x speed), {scene}, warm light rays shifting, incense smoke drifting, sacred atmosphere" },
@@ -148,9 +167,9 @@ export default function Step7VideoPrompts() {
       return;
     }
 
-    const readyScenes = displayScenes.filter((scene) => /^https?:\/\//.test(scene.imageUrl || ""));
-    if (readyScenes.length === 0) {
-      toast.error("Approve or paste hosted image URLs before generating video clips");
+    const candidateScenes = displayScenes.filter((scene) => isHostedUrl(scene.imageUrl) || isInlineImage(scene.imageUrl));
+    if (candidateScenes.length === 0) {
+      toast.error("Approve or paste images before generating video clips");
       return;
     }
 
@@ -158,10 +177,50 @@ export default function Step7VideoPrompts() {
     setVideoJobs([]);
 
     try {
+      const hostedBySceneId = new Map<number, string>();
+      const scenesNeedingUpload = candidateScenes.filter((scene) => !isHostedUrl(scene.imageUrl) && isInlineImage(scene.imageUrl));
+
+      if (scenesNeedingUpload.length > 0) {
+        toast.info(`Hosting ${scenesNeedingUpload.length} generated images for video...`);
+      }
+
+      for (const scene of candidateScenes) {
+        if (isHostedUrl(scene.imageUrl)) {
+          hostedBySceneId.set(scene.id, scene.imageUrl!);
+          continue;
+        }
+
+        if (!scene.imageUrl) continue;
+        const blob = await imageValueToBlob(scene.imageUrl);
+        const mimeType = blob.type || "image/png";
+        const response = await fetch("/api/upload/image", {
+          method: "POST",
+          headers: { "Content-Type": mimeType },
+          body: blob,
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.error || "Could not host generated image for video");
+        }
+
+        const { url } = await response.json();
+        hostedBySceneId.set(scene.id, url);
+      }
+
+      const hostedScenes = candidateScenes
+        .map((scene) => ({ scene, imageUrl: hostedBySceneId.get(scene.id) }))
+        .filter((item): item is { scene: typeof candidateScenes[number]; imageUrl: string } => Boolean(item.imageUrl));
+
+      setScenes(project.scenes.map((scene) => {
+        const hostedUrl = hostedBySceneId.get(scene.id);
+        return hostedUrl ? { ...scene, imageUrl: hostedUrl } : scene;
+      }));
+
       const result = await generateVideosMutation.mutateAsync({
         replicateApiKey,
-        videos: readyScenes.map((scene) => ({
-          imageUrl: scene.imageUrl!,
+        videos: hostedScenes.map(({ scene, imageUrl }) => ({
+          imageUrl,
           motionPrompt: buildMotionPrompt(scene.sceneDescription),
           duration: Math.max(5, Math.min(30, scene.duration || 6)),
         })),
@@ -173,7 +232,7 @@ export default function Step7VideoPrompts() {
 
       const jobs: VideoJob[] = result.data.map((job, idx) => ({
         jobId: job.id,
-        sceneId: readyScenes[idx].id,
+        sceneId: hostedScenes[idx].scene.id,
         status: job.status as VideoJob["status"],
         videoUrl: normalizeVideoSrc(Array.isArray(job.output) ? job.output[0] : (job.output as string | undefined)),
         error: job.error,
@@ -218,7 +277,7 @@ export default function Step7VideoPrompts() {
   const displayScenes = sceneSource === "approved" && approvedScenes.length > 0 ? approvedScenes : project.scenes;
   const totalDuration = displayScenes.reduce((sum, s) => sum + s.duration, 0);
   const usingApprovedScenes = sceneSource === "approved" && approvedScenes.length > 0;
-  const readyForVideoCount = displayScenes.filter((scene) => /^https?:\/\//.test(scene.imageUrl || "")).length;
+  const readyForVideoCount = displayScenes.filter((scene) => isHostedUrl(scene.imageUrl) || isInlineImage(scene.imageUrl)).length;
   const videoReadyCount = displayScenes.filter((scene) => scene.videoUrl).length;
 
   const panelStyle = {
@@ -414,7 +473,7 @@ export default function Step7VideoPrompts() {
           {readyForVideoCount === 0 ? (
             <>
               <AlertCircle size={13} />
-              Approve images with hosted URLs before generating clips.
+              Approve or paste images before generating clips.
             </>
           ) : (
             <>
