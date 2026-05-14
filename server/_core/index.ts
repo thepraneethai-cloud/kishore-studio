@@ -75,7 +75,10 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
-    // Start the background job processor
+    if (process.env.DISABLE_JOB_PROCESSOR === "true") {
+      console.log("[JobProcessor] Disabled");
+      return;
+    }
     startJobProcessor({ maxConcurrent: 3, pollIntervalMs: 5000 }).catch(console.error);
   });
 }

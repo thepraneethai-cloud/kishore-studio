@@ -44,6 +44,8 @@ Open `http://localhost:3000` and sign in with:
 codex-test
 ```
 
+The local scripts disable the background job processor so saved-project testing is not interrupted by queued-job polling.
+
 ## 5. Test saved projects
 
 1. Enter a subject and title on the Concept page.
