@@ -18,6 +18,7 @@ import {
 import { analyzeSceneArc } from "../_core/sceneDirector";
 import { generateImagesWithOpenAI } from "../_core/openaiImages";
 import { invokeLLM } from "../_core/llm";
+import { isR2Configured, uploadToR2 } from "../_core/r2Storage";
 
 // Per-unit cost estimates in USD
 const UNIT_COSTS = {
@@ -68,12 +69,18 @@ export const generationRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        // Upload to S3
-        const { url, key } = await storagePut(
-          `projects/${input.projectId}/audio/${input.fileName}`,
-          input.audioBuffer,
-          input.mimeType
-        );
+        const storageKey = `projects/${input.projectId}/audio/${Date.now()}-${input.fileName}`;
+        let url: string;
+        let key: string;
+
+        if (isR2Configured()) {
+          key = storageKey;
+          url = await uploadToR2(storageKey, Buffer.from(input.audioBuffer), input.mimeType);
+        } else {
+          const uploaded = await storagePut(storageKey, input.audioBuffer, input.mimeType);
+          url = uploaded.url;
+          key = uploaded.key;
+        }
 
         // Update project with audio URL
         const db = await getDb();

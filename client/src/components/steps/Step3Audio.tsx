@@ -50,6 +50,11 @@ export default function Step3Audio() {
 
   const uploadAudioMutation = trpc.generation.uploadAudio.useMutation();
 
+  const continueToScenes = () => {
+    markStepComplete(2);
+    setActiveStep(3);
+  };
+
   const handleContinue = async () => {
     if (!audioFile && !audioUrl && !contextProject.audioUrl) {
       toast.error("Please upload an audio file first");
@@ -71,20 +76,30 @@ export default function Step3Audio() {
         if (result.success && result.url) {
           setProjectAudioUrl(result.url);
           toast.success("Audio uploaded successfully!");
-          markStepComplete(2);
-          setActiveStep(3);
+          continueToScenes();
         } else {
-          toast.error(result.error || "Failed to upload audio");
+          if (audioUrl) {
+            setProjectAudioUrl(audioUrl);
+            toast.warning("Audio storage is not configured. Continuing with this browser session's audio.");
+            continueToScenes();
+          } else {
+            toast.error(result.error || "Failed to upload audio");
+          }
         }
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Upload failed");
+        if (audioUrl) {
+          setProjectAudioUrl(audioUrl);
+          toast.warning("Audio storage is not configured. Continuing with this browser session's audio.");
+          continueToScenes();
+        } else {
+          toast.error(error instanceof Error ? error.message : "Upload failed");
+        }
       } finally {
         setUploading(false);
       }
     } else {
       // Audio already uploaded or skipped
-      markStepComplete(2);
-      setActiveStep(3);
+      continueToScenes();
     }
   };
 
