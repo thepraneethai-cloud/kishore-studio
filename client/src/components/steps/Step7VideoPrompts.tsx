@@ -1,10 +1,28 @@
 // ============================================================
 // DESIGN: "Digital Sanctum" — Step 5: Video Motion Prompts
 // ============================================================
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useProject } from "@/contexts/ProjectContext";
-import { ChevronRight, Copy, Check, Download, Video, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronRight, Copy, Check, Download, Video, ChevronDown, ChevronUp, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
+
+interface VideoJob {
+  jobId: string;
+  sceneId: number;
+  status: "starting" | "processing" | "succeeded" | "failed" | "canceled";
+  videoUrl?: string;
+  error?: string;
+}
+
+function normalizeVideoSrc(value?: string) {
+  if (!value) return "";
+  if (/^(https?:|data:video\/|blob:|\/)/.test(value)) return value;
+  if (value.length > 100 && /^[A-Za-z0-9+/=\s]+$/.test(value)) {
+    return `data:video/mp4;base64,${value.replace(/\s/g, "")}`;
+  }
+  return value;
+}
 
 const MOTION_TYPES = [
   { id: "push", label: "Slow Push-In", template: "Slow camera push-in (0.3x zoom over 6 seconds), {scene}, soft particle glow on light sources, subtle smoke drift, lamp flames flickering, smooth meditative motion" },
@@ -21,6 +39,60 @@ export default function Step7VideoPrompts() {
   const [selectedMotion, setSelectedMotion] = useState(0);
   const [sceneSource, setSceneSource] = useState<"approved" | "all">("approved");
   const [showMasterPrompt, setShowMasterPrompt] = useState(false);
+  const [videoJobs, setVideoJobs] = useState<VideoJob[]>([]);
+  const [genStatus, setGenStatus] = useState<"idle" | "submitting" | "polling" | "done" | "error">("idle");
+  const [isPolling, setIsPolling] = useState(false);
+
+  const utils = trpc.useUtils();
+  const { data: userSettings } = trpc.settings.getSettings.useQuery();
+  const generateVideosMutation = trpc.generation.generateVideos.useMutation();
+
+  useEffect(() => {
+    if (!isPolling || videoJobs.length === 0) return;
+
+    const pending = videoJobs.filter((job) => job.status === "starting" || job.status === "processing");
+    if (pending.length === 0) {
+      setIsPolling(false);
+      setGenStatus("done");
+      const succeeded = videoJobs.filter((job) => job.status === "succeeded").length;
+      toast.success(`${succeeded}/${videoJobs.length} video clips ready!`);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const replicateApiKey = userSettings?.replicateApiKey || "";
+        if (!replicateApiKey) return;
+        const result = await utils.generation.pollJobs.fetch({
+          jobIds: pending.map((job) => job.jobId),
+          replicateApiKey,
+        });
+        if (!result.success || !result.data) return;
+
+        const updatedJobs = videoJobs.map((job) => {
+          const updated = result.data!.find((item) => item.id === job.jobId);
+          if (!updated) return job;
+          const videoUrl = normalizeVideoSrc(Array.isArray(updated.output) ? updated.output[0] : (updated.output as string | undefined));
+          return {
+            ...job,
+            status: updated.status as VideoJob["status"],
+            videoUrl: videoUrl || job.videoUrl,
+            error: updated.error,
+          };
+        });
+
+        setVideoJobs(updatedJobs);
+        setScenes(project.scenes.map((scene) => {
+          const job = updatedJobs.find((item) => item.sceneId === scene.id && item.status === "succeeded" && item.videoUrl);
+          return job ? { ...scene, videoUrl: job.videoUrl } : scene;
+        }));
+      } catch (error) {
+        console.error("[Step7] Video polling error:", error);
+      }
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [isPolling, videoJobs, userSettings?.replicateApiKey, utils, project.scenes, setScenes]);
 
   const buildMotionPrompt = (sceneDesc: string) => {
     const template = MOTION_TYPES[selectedMotion].template;
@@ -69,6 +141,59 @@ export default function Step7VideoPrompts() {
     toast.success("CSV downloaded!");
   };
 
+  const handleGenerateVideos = async () => {
+    const replicateApiKey = userSettings?.replicateApiKey || "";
+    if (!replicateApiKey) {
+      toast.error("Add your Replicate API key in Settings first");
+      return;
+    }
+
+    const readyScenes = displayScenes.filter((scene) => /^https?:\/\//.test(scene.imageUrl || ""));
+    if (readyScenes.length === 0) {
+      toast.error("Approve or paste hosted image URLs before generating video clips");
+      return;
+    }
+
+    setGenStatus("submitting");
+    setVideoJobs([]);
+
+    try {
+      const result = await generateVideosMutation.mutateAsync({
+        replicateApiKey,
+        videos: readyScenes.map((scene) => ({
+          imageUrl: scene.imageUrl!,
+          motionPrompt: buildMotionPrompt(scene.sceneDescription),
+          duration: Math.max(5, Math.min(30, scene.duration || 6)),
+        })),
+      });
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "Video generation failed to start");
+      }
+
+      const jobs: VideoJob[] = result.data.map((job, idx) => ({
+        jobId: job.id,
+        sceneId: readyScenes[idx].id,
+        status: job.status as VideoJob["status"],
+        videoUrl: normalizeVideoSrc(Array.isArray(job.output) ? job.output[0] : (job.output as string | undefined)),
+        error: job.error,
+      }));
+
+      setScenes(project.scenes.map((scene) => {
+        const job = jobs.find((item) => item.sceneId === scene.id && item.status === "succeeded" && item.videoUrl);
+        return job ? { ...scene, videoUrl: job.videoUrl } : scene;
+      }));
+
+      setVideoJobs(jobs);
+      setGenStatus("polling");
+      setIsPolling(true);
+      toast.success(`Generating ${jobs.length} video clips...`);
+    } catch (error) {
+      setGenStatus("error");
+      toast.error(error instanceof Error ? error.message : "Failed to start video generation");
+    }
+  };
+
   const handleContinue = () => {
     markStepComplete(5);
     setActiveStep(6);
@@ -93,6 +218,8 @@ export default function Step7VideoPrompts() {
   const displayScenes = sceneSource === "approved" && approvedScenes.length > 0 ? approvedScenes : project.scenes;
   const totalDuration = displayScenes.reduce((sum, s) => sum + s.duration, 0);
   const usingApprovedScenes = sceneSource === "approved" && approvedScenes.length > 0;
+  const readyForVideoCount = displayScenes.filter((scene) => /^https?:\/\//.test(scene.imageUrl || "")).length;
+  const videoReadyCount = displayScenes.filter((scene) => scene.videoUrl).length;
 
   const panelStyle = {
     background: "rgba(12,18,48,0.72)",
@@ -247,6 +374,21 @@ export default function Step7VideoPrompts() {
 
         <div className="flex items-center justify-end gap-2 flex-wrap">
           <button
+            onClick={handleGenerateVideos}
+            disabled={genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0}
+            className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-semibold transition-colors"
+            style={{
+              background: readyForVideoCount > 0 ? "linear-gradient(135deg, #00d4ff, #25f52f)" : "oklch(0.20 0.016 52)",
+              color: readyForVideoCount > 0 ? "oklch(0.08 0.015 55)" : "oklch(0.40 0.010 60)",
+              border: "1px solid rgba(0,212,255,0.35)",
+              cursor: genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0 ? "not-allowed" : "pointer",
+              opacity: genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0 ? 0.7 : 1,
+            }}
+          >
+            {genStatus === "submitting" || genStatus === "polling" ? <Loader2 size={12} className="animate-spin" /> : <Video size={12} />}
+            {genStatus === "submitting" || genStatus === "polling" ? "Generating Clips" : `Generate ${readyForVideoCount} Clips`}
+          </button>
+          <button
             onClick={handleCopyAll}
             className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-colors"
             style={{
@@ -266,6 +408,20 @@ export default function Step7VideoPrompts() {
             <Download size={12} />
             Export CSV
           </button>
+        </div>
+
+        <div className="flex items-center gap-2 text-xs" style={{ color: "rgba(255,255,255,0.46)" }}>
+          {readyForVideoCount === 0 ? (
+            <>
+              <AlertCircle size={13} />
+              Approve images with hosted URLs before generating clips.
+            </>
+          ) : (
+            <>
+              <Check size={13} />
+              {readyForVideoCount} scenes ready for video · {videoReadyCount} clips generated
+            </>
+          )}
         </div>
       </div>
 
@@ -312,6 +468,51 @@ export default function Step7VideoPrompts() {
             <p className="text-xs leading-relaxed" style={{ color: "oklch(0.60 0.015 68)" }}>
               {buildMotionPrompt(scene.sceneDescription)}
             </p>
+            {(() => {
+              const job = videoJobs.find((item) => item.sceneId === scene.id);
+              const videoUrl = normalizeVideoSrc(scene.videoUrl || job?.videoUrl);
+              return (
+                <div className="mt-3 space-y-2">
+                  {job && (
+                    <span
+                      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded"
+                      style={{
+                        background:
+                          job.status === "succeeded" ? "oklch(0.18 0.06 150)" :
+                          job.status === "failed"    ? "oklch(0.18 0.05 20)"  :
+                                                       "oklch(0.22 0.018 52)",
+                        color:
+                          job.status === "succeeded" ? "oklch(0.72 0.12 145)" :
+                          job.status === "failed"    ? "oklch(0.70 0.15 25)"  :
+                                                       "oklch(0.55 0.012 65)",
+                        border: "1px solid currentColor",
+                        opacity: 0.85,
+                      }}
+                    >
+                      {job.status === "succeeded" ? <Check size={10} /> :
+                       job.status === "failed" ? <AlertCircle size={10} /> :
+                       <Loader2 size={10} className="animate-spin" />}
+                      {job.status === "succeeded" ? "Clip ready" :
+                       job.status === "failed" ? "Clip failed" :
+                       "Generating clip..."}
+                    </span>
+                  )}
+                  {videoUrl && (
+                    <video
+                      src={videoUrl}
+                      controls
+                      playsInline
+                      className="w-full rounded-lg"
+                      style={{
+                        maxHeight: "260px",
+                        background: "rgba(4,8,24,0.82)",
+                        border: "1px solid rgba(0,212,255,0.18)",
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            })()}
           </div>
         ))}
       </div>

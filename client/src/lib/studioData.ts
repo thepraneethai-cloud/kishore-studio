@@ -199,6 +199,7 @@ export interface Scene {
   motionPrompt: string;
   duration: number; // seconds
   imageUrl?: string;       // URL of the generated/pasted image
+  videoUrl?: string;       // URL of the generated video clip
   imageApproved?: boolean; // true = approved, false = rejected, undefined = not yet reviewed
   // Director Analysis fields (optional — added after running director agent)
   emotionalWeight?: EmotionalWeight;
