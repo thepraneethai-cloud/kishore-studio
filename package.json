@@ -5,12 +5,19 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
+    "dev:local": "DATABASE_URL=mysql://kishore:localpass@127.0.0.1:3307/kishore_studio ADMIN_PASSWORD=codex-test JWT_SECRET=codex-local-test-secret NODE_ENV=development tsx watch server/_core/index.ts",
     "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
+    "start:local": "npm run build && DATABASE_URL=mysql://kishore:localpass@127.0.0.1:3307/kishore_studio ADMIN_PASSWORD=codex-test JWT_SECRET=codex-local-test-secret NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
-    "db:push": "drizzle-kit generate && drizzle-kit migrate"
+    "db:push": "drizzle-kit generate && drizzle-kit migrate",
+    "db:local:up": "docker compose -f docker-compose.local.yml up -d",
+    "db:local:down": "docker compose -f docker-compose.local.yml down",
+    "db:local:reset": "docker compose -f docker-compose.local.yml down -v && docker compose -f docker-compose.local.yml up -d",
+    "db:local:logs": "docker compose -f docker-compose.local.yml logs -f mysql",
+    "db:local:migrate": "DATABASE_URL=mysql://kishore:localpass@127.0.0.1:3307/kishore_studio drizzle-kit migrate"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",

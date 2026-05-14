@@ -1,0 +1,22 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: kishore-studio-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: kishore_studio
+      MYSQL_USER: kishore
+      MYSQL_PASSWORD: localpass
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - kishore-studio-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -prootpass --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  kishore-studio-mysql-data:
