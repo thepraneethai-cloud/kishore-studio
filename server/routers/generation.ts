@@ -589,36 +589,46 @@ export const generationRouter = router({
           mass: "a mass and commercial song",
         };
 
-        const response = await invokeLLM({
-          messages: [
-            {
-              role: "system",
-              content:
-                `You are a master creative director for ${categoryDescriptions[input.category]}. ` +
-                `Your task is to create a comprehensive Master Prompt that will guide ALL downstream creative work (image generation, video creation, music styling, and marketing). ` +
-                `The Master Prompt must be: (1) Faithful to the original subject and theme, (2) Specific and vivid with visual/emotional details, (3) Consistent across all interpretations, (4) Flexible enough for artistic variation within the theme. ` +
-                `For ${input.category} content, apply appropriate constraints: devotional content must stay true to spiritual themes, cinematic allows narrative flexibility, etc.`,
-            },
-            {
-              role: "user",
-              content: input.lyrics
-                ? `Subject: ${input.deity}\n` +
-                  `Category: ${input.category}\n` +
-                  `Mood: ${input.mood || "meditative and devotional"}\n` +
-                  `Lyrics (excerpt): ${input.lyrics.substring(0, 300)}...\n` +
-                  `Creative Direction: ${input.customDirection || ""}\n\n` +
-                  `Create a Master Prompt (150-250 words) that captures the core creative vision. Include: visual aesthetic, emotional tone, key themes, cultural/spiritual elements, character descriptions (if applicable), color palette, atmosphere, and any specific constraints to maintain consistency. This prompt will be used to generate images, videos, music styling, and marketing materials.`
-                : `Subject: ${input.deity}\n` +
-                  `Category: ${input.category}\n` +
-                  `Mood: ${input.mood || "meditative and devotional"}\n` +
-                  `Language Style: ${input.languageStyle || "pure_telugu"}\n` +
-                  `Output Type: ${input.outputType || "lyrics_suno"}\n` +
-                  `Duration: ${input.duration || 4} minutes\n` +
-                  `Creative Direction: ${input.customDirection || "No specific direction provided"}\n\n` +
-                  `Create a comprehensive Creative Direction (Master Prompt) for a ${input.category} song (150-250 words). This will guide the generation of lyrics, music, visuals, and marketing. Include: song concept, emotional tone, story arc, devotional/cinematic angle, language style, structure, rhythm guidance, music direction, and things to avoid. Be specific and vivid.`,
-            },
-          ],
-        });
+        const response = await invokeLLM(
+          {
+            messages: [
+              {
+                role: "system",
+                content:
+                  `You are a master creative director for ${categoryDescriptions[input.category]}. ` +
+                  `Your task is to create a comprehensive Master Prompt that will guide ALL downstream creative work (image generation, video creation, music styling, and marketing). ` +
+                  `The Master Prompt must be: (1) Faithful to the original subject and theme, (2) Specific and vivid with visual/emotional details, (3) Consistent across all interpretations, (4) Flexible enough for artistic variation within the theme. ` +
+                  `For ${input.category} content, apply appropriate constraints: devotional content must stay true to spiritual themes, cinematic allows narrative flexibility, etc.`,
+              },
+              {
+                role: "user",
+                content: input.lyrics
+                  ? `Subject: ${input.deity}\n` +
+                    `Category: ${input.category}\n` +
+                    `Mood: ${input.mood || "meditative and devotional"}\n` +
+                    `Lyrics (excerpt): ${input.lyrics.substring(0, 300)}...\n` +
+                    `Creative Direction: ${input.customDirection || ""}\n\n` +
+                    `Create a Master Prompt (150-250 words) that captures the core creative vision. Include: visual aesthetic, emotional tone, key themes, cultural/spiritual elements, character descriptions (if applicable), color palette, atmosphere, and any specific constraints to maintain consistency. This prompt will be used to generate images, videos, music styling, and marketing materials.`
+                  : `Subject: ${input.deity}\n` +
+                    `Category: ${input.category}\n` +
+                    `Mood: ${input.mood || "meditative and devotional"}\n` +
+                    `Language Style: ${input.languageStyle || "pure_telugu"}\n` +
+                    `Output Type: ${input.outputType || "lyrics_suno"}\n` +
+                    `Duration: ${input.duration || 4} minutes\n` +
+                    `Creative Direction: ${input.customDirection || "No specific direction provided"}\n\n` +
+                    `Create a comprehensive Creative Direction (Master Prompt) for a ${input.category} song (150-250 words). This will guide the generation of lyrics, music, visuals, and marketing. Include: song concept, emotional tone, story arc, devotional/cinematic angle, language style, structure, rhythm guidance, music direction, and things to avoid. Be specific and vivid.`,
+              },
+            ],
+          },
+          {
+            ...(userSettings?.geminiApiKey ? { apiKey: userSettings.geminiApiKey } : {}),
+            model: llmModel,
+            ...(userSettings?.openaiApiKey ? { openaiApiKey: userSettings.openaiApiKey } : {}),
+            ...(userSettings?.claudeApiKey ? { claudeApiKey: userSettings.claudeApiKey } : {}),
+            ...(userSettings?.groqApiKey ? { groqApiKey: userSettings.groqApiKey } : {}),
+            ...(userSettings?.mistralApiKey ? { mistralApiKey: userSettings.mistralApiKey } : {}),
+          }
+        );
 
         const masterPrompt =
           typeof response.choices?.[0]?.message?.content === "string"
@@ -653,24 +663,34 @@ export const generationRouter = router({
         const userSettings = await getUserSettings(ctx.user.id);
         const llmModel = input.llmModel || userSettings?.llmModel || "gemini-2.5-flash";
 
-        const response = await invokeLLM({
-          messages: [
-            {
-              role: "system",
-              content:
-                `You are a master creative director refining a creative brief. ` +
-                `Your task is to update the Master Prompt based on user feedback while maintaining the core theme and vision. ` +
-                `Keep the same subject and spiritual/thematic essence, but adjust the aesthetic, mood, or specific details as requested.`,
-            },
-            {
-              role: "user",
-              content:
-                `Current Master Prompt:\n${input.currentMasterPrompt}\n\n` +
-                `User Feedback: ${input.feedback}\n\n` +
-                `Please refine the Master Prompt based on this feedback. Keep it 150-250 words. Maintain the core theme and subject, but adjust the aesthetic, mood, visual details, or emphasis as requested.`,
-            },
-          ],
-        });
+        const response = await invokeLLM(
+          {
+            messages: [
+              {
+                role: "system",
+                content:
+                  `You are a master creative director refining a creative brief. ` +
+                  `Your task is to update the Master Prompt based on user feedback while maintaining the core theme and vision. ` +
+                  `Keep the same subject and spiritual/thematic essence, but adjust the aesthetic, mood, or specific details as requested.`,
+              },
+              {
+                role: "user",
+                content:
+                  `Current Master Prompt:\n${input.currentMasterPrompt}\n\n` +
+                  `User Feedback: ${input.feedback}\n\n` +
+                  `Please refine the Master Prompt based on this feedback. Keep it 150-250 words. Maintain the core theme and subject, but adjust the aesthetic, mood, visual details, or emphasis as requested.`,
+              },
+            ],
+          },
+          {
+            ...(userSettings?.geminiApiKey ? { apiKey: userSettings.geminiApiKey } : {}),
+            model: llmModel,
+            ...(userSettings?.openaiApiKey ? { openaiApiKey: userSettings.openaiApiKey } : {}),
+            ...(userSettings?.claudeApiKey ? { claudeApiKey: userSettings.claudeApiKey } : {}),
+            ...(userSettings?.groqApiKey ? { groqApiKey: userSettings.groqApiKey } : {}),
+            ...(userSettings?.mistralApiKey ? { mistralApiKey: userSettings.mistralApiKey } : {}),
+          }
+        );
 
         const refinedMasterPrompt =
           typeof response.choices?.[0]?.message?.content === "string"

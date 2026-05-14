@@ -38,7 +38,7 @@ export function useMasterPrompt() {
     },
   });
 
-  const generateMasterPrompt = (
+  const generateMasterPrompt = async (
     deity: string,
     lyrics: string,
     customDirection: string,
@@ -48,18 +48,27 @@ export function useMasterPrompt() {
     languageStyle?: string,
     outputType?: string,
     duration?: number
-  ) => {
-    generateMasterPromptMutation.mutate({
-      deity,
-      lyrics,
-      customDirection,
-      category: category as any,
-      mood,
-      llmModel,
-      languageStyle: languageStyle as any,
-      outputType: outputType as any,
-      duration,
-    });
+  ): Promise<string | null> => {
+    try {
+      const res = await generateMasterPromptMutation.mutateAsync({
+        deity,
+        lyrics,
+        customDirection,
+        category: category as any,
+        mood,
+        llmModel,
+        languageStyle: languageStyle as any,
+        outputType: outputType as any,
+        duration,
+      });
+
+      if (res.success && res.data?.masterPrompt) {
+        return res.data.masterPrompt;
+      }
+      return null;
+    } catch {
+      return null;
+    }
   };
 
   const refineMasterPrompt = (feedback: string, category: string, llmModel?: string, languageStyle?: string, outputType?: string, duration?: number) => {

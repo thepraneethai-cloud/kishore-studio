@@ -315,8 +315,9 @@ export default function Step2Lyrics() {
   useEffect(() => {
     if (masterPrompt) {
       setMasterPromptEditable(masterPrompt);
+      if (!project.lyrics) setShowMasterPromptPhase(true);
     }
-  }, [masterPrompt]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [masterPrompt, project.lyrics]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (subjectInput.length < 2) { setSuggestions([]); return; }
@@ -424,9 +425,13 @@ export default function Step2Lyrics() {
     if (!effectiveSubject) { toast.error("Please enter a subject or topic first"); return; }
     if (!project.deity) handleSelectSubject(effectiveSubject);
     const trimmed = customPrompt.trim();
-    // Call generateMasterPrompt with pre-generation parameters (no lyrics yet)
-    generateMasterPrompt(effectiveSubject, "", trimmed, category, mood, llmModel, languageStyle, outputType, duration);
-    setShowMasterPromptPhase(true);
+    generateMasterPrompt(effectiveSubject, "", trimmed, category, mood, llmModel, languageStyle, outputType, duration)
+      .then((prompt) => {
+        if (prompt) {
+          setMasterPromptEditable(prompt);
+          setShowMasterPromptPhase(true);
+        }
+      });
   };
 
   const handleGenerateLyricsWithMasterPrompt = () => {
@@ -920,7 +925,10 @@ export default function Step2Lyrics() {
                 <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#00d4ff", margin: 0 }}>Creative Direction (Master Prompt)</p>
                 <button
                   onClick={() => {
-                    generateMasterPrompt(effectiveSubject, "", customPrompt.trim(), category, mood, llmModel);
+                    generateMasterPrompt(effectiveSubject, "", customPrompt.trim(), category, mood, llmModel, languageStyle, outputType, duration)
+                      .then((prompt) => {
+                        if (prompt) setMasterPromptEditable(prompt);
+                      });
                   }}
                   disabled={isMasterPromptGenerating}
                   style={{ fontSize: "0.73rem", fontWeight: 700, color: "rgba(0,212,255,0.8)", background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.25)", borderRadius: "0.375rem", padding: "0.3rem 0.75rem", cursor: "pointer" }}
@@ -1068,7 +1076,7 @@ export default function Step2Lyrics() {
 
         {/* ── SUNO STYLE ───────────────────────────────── */}
         {/* ── MASTER PROMPT ───────────────────────────────── */}
-        {masterPrompt && (
+        {masterPrompt && project.lyrics && (
           <div style={{ marginBottom: "1.75rem" }}>
             <MasterPromptPanel
               masterPrompt={masterPrompt}
