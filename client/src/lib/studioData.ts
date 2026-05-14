@@ -212,6 +212,7 @@ export interface Project {
   deity: DeityKey | null;
   title: string;
   lyrics: string;
+  audioUrl: string;
   category: string;
   mood: string;
   languageStyle: string;
@@ -237,6 +238,7 @@ export function createEmptyProject(): Project {
     deity: null,
     title: "",
     lyrics: "",
+    audioUrl: "",
     category: "devotional",
     mood: "",
     languageStyle: "pure_telugu",

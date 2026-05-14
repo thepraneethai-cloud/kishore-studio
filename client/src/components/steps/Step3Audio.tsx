@@ -8,10 +8,11 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
 export default function Step3Audio() {
-  const { project: contextProject, setActiveStep, markStepComplete } = useProject();
+  const { project: contextProject, setActiveStep, markStepComplete, setAudioUrl: setProjectAudioUrl } = useProject();
   const [uploading, setUploading] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState<string>("");
+  const hasAudio = Boolean(audioFile || audioUrl || contextProject.audioUrl);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -50,13 +51,13 @@ export default function Step3Audio() {
   const uploadAudioMutation = trpc.generation.uploadAudio.useMutation();
 
   const handleContinue = async () => {
-    if (!audioFile && !audioUrl) {
+    if (!audioFile && !audioUrl && !contextProject.audioUrl) {
       toast.error("Please upload an audio file first");
       return;
     }
 
     // If audio file exists and hasn't been uploaded yet
-    if (audioFile && !(contextProject as any).audioUrl) {
+    if (audioFile && !contextProject.audioUrl) {
       setUploading(true);
       try {
         const buffer = await audioFile.arrayBuffer();
@@ -67,7 +68,8 @@ export default function Step3Audio() {
           mimeType: audioFile.type,
         });
 
-        if (result.success) {
+        if (result.success && result.url) {
+          setProjectAudioUrl(result.url);
           toast.success("Audio uploaded successfully!");
           markStepComplete(2);
           setActiveStep(3);
@@ -81,8 +83,8 @@ export default function Step3Audio() {
       }
     } else {
       // Audio already uploaded or skipped
-      markStepComplete(3);
-      setActiveStep(4);
+      markStepComplete(2);
+      setActiveStep(3);
     }
   };
 
@@ -257,15 +259,15 @@ export default function Step3Audio() {
       {/* Continue Button */}
       <button
         onClick={handleContinue}
-        disabled={(!audioFile && !audioUrl) || uploading}
+        disabled={!hasAudio || uploading}
         style={{
           padding: "0.75rem",
           borderRadius: "0.5rem",
-          background: (!audioFile && !audioUrl) || uploading ? "rgba(0, 212, 255, 0.2)" : "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)",
-          color: (!audioFile && !audioUrl) || uploading ? "rgba(255, 255, 255, 0.4)" : "#000",
+          background: !hasAudio || uploading ? "rgba(0, 212, 255, 0.2)" : "linear-gradient(135deg, #00d4ff 0%, #ff006e 100%)",
+          color: !hasAudio || uploading ? "rgba(255, 255, 255, 0.4)" : "#000",
           border: "none",
           fontWeight: "600",
-          cursor: (!audioFile && !audioUrl) || uploading ? "not-allowed" : "pointer",
+          cursor: !hasAudio || uploading ? "not-allowed" : "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",

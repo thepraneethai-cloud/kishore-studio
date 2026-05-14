@@ -20,6 +20,7 @@ interface ProjectContextType {
   setTitle: (title: string) => void;
   sessionTitle: string | null; // set only in current browser session, never from localStorage
   setLyrics: (lyrics: string) => void;
+  setAudioUrl: (audioUrl: string) => void;
   setSunoStyle: (style: Partial<SunoStyle>) => void;
   setMasterPrompt: (prompt: string) => void;
   setScenes: (scenes: Scene[]) => void;
@@ -101,6 +102,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         title: project.title,
         deity: project.deity,
         lyrics: project.lyrics,
+        audioUrl: project.audioUrl,
         masterPrompt: project.masterPrompt,
         sunoStyle: project.sunoStyle as unknown as Record<string, unknown>,
         scenes: project.scenes,
@@ -144,6 +146,10 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     lyricsHistoryRef.current = lyricsHistoryRef.current.slice(1);
     setCanUndoLyrics(lyricsHistoryRef.current.length > 0);
     setProject((p) => ({ ...p, lyrics: prev }));
+  }, []);
+
+  const setAudioUrl = useCallback((audioUrl: string) => {
+    setProject((p) => ({ ...p, audioUrl }));
   }, []);
 
   const setSunoStyle = useCallback((style: Partial<SunoStyle>) => {
@@ -228,6 +234,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         setTitle,
         sessionTitle,
         setLyrics,
+        setAudioUrl,
         setSunoStyle,
         setMasterPrompt,
         setScenes,
