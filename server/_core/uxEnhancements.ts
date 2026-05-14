@@ -310,7 +310,7 @@ export class BatchOperationManager<T> {
   }
 
   getAllBatches(): BatchOperation<T>[] {
-    return Array.from(this.operations.values());
+    return Array.from(this.operations.values()) as BatchOperation<T>[];
   }
 
   clearCompleted(): void {
