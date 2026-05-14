@@ -34,6 +34,15 @@ interface ImageJob {
   error?: string;
 }
 
+function normalizeImageSrc(value?: string) {
+  if (!value) return "";
+  if (/^(https?:|data:image\/|blob:|\/)/.test(value)) return value;
+  if (value.length > 100 && /^[A-Za-z0-9+/=\s]+$/.test(value)) {
+    return `data:image/png;base64,${value.replace(/\s/g, "")}`;
+  }
+  return value;
+}
+
 export default function Step6ImagePrompts() {
   const { project, setScenes, updateScene, setActiveStep, markStepComplete, setCharacterPrefix, setImageSeed } = useProject();
   const { isAuthenticated } = useAuth();
@@ -118,7 +127,7 @@ export default function Step6ImagePrompts() {
             const updated = result.data!.find((r) => r.id === job.jobId);
             if (!updated) return job;
             const rawOutput = updated.output;
-            const imageUrl = Array.isArray(rawOutput) ? rawOutput[0] : (rawOutput as string | undefined);
+            const imageUrl = normalizeImageSrc(Array.isArray(rawOutput) ? rawOutput[0] : (rawOutput as string | undefined));
             // Auto-save URL to scene when job succeeds
             if (updated.status === "succeeded" && imageUrl) {
               const scene = project.scenes[job.sceneIdx];
@@ -190,7 +199,7 @@ export default function Step6ImagePrompts() {
         jobId: job.id,
         sceneIdx: idx,
         status: job.status as ImageJob["status"],
-        imageUrl: Array.isArray(job.output) ? job.output[0] : (job.output as string | undefined),
+        imageUrl: normalizeImageSrc(Array.isArray(job.output) ? job.output[0] : (job.output as string | undefined)),
       }));
 
       // For DALL-E, save image URLs immediately (results come back in one shot)
@@ -808,7 +817,7 @@ export default function Step6ImagePrompts() {
 
               {/* Image preview + approval */}
               {(() => {
-                const displayUrl = scene.imageUrl || job?.imageUrl;
+                const displayUrl = normalizeImageSrc(scene.imageUrl || job?.imageUrl);
                 const approved = scene.imageApproved;
                 return displayUrl ? (
                   <div className="space-y-2">
