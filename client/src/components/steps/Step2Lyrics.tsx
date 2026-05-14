@@ -297,14 +297,12 @@ export default function Step2Lyrics() {
     setShowSunoPanel(false);
   }, [category]);
 
-  // On mount: clear stale deity so it can't silently drive generation; sanitize stored lyrics
+  // On mount: clear stale generation outputs so refresh starts the concept page clean.
   useEffect(() => {
     setDeity(null as any);  // force the user to re-type the subject every session
-    if (project.lyrics) {
-      markStepComplete(1);
-      const cleaned = sanitizeLyrics(project.lyrics);
-      if (cleaned !== project.lyrics) setLyrics(cleaned);
-    }
+    setLyrics("");
+    setMasterPrompt("");
+    setShowSunoPanel(false);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-mark step 1 complete whenever lyrics appear (e.g. after generation)
@@ -484,7 +482,8 @@ export default function Step2Lyrics() {
   const isGenerating   = generateMutation.isPending;
   const isRefiningSuno = refineSunoMutation.isPending;
   const sunoStyle      = project.sunoStyle as unknown as Record<string, unknown> | null;
-  const canContinue    = !!effectiveSubject && !!project.title.trim() && !!project.lyrics;
+  const hasLyrics      = sanitizeLyrics(project.lyrics).trim().length > 0;
+  const canContinue    = !!project.title.trim() && hasLyrics;
 
   const generateLabel = project.lyrics ? "Regenerate lyrics" : "Generate lyrics";
 
@@ -992,7 +991,7 @@ export default function Step2Lyrics() {
 
 
         {/* ── GENERATED LYRICS ─────────────────────────── */}
-        {project.lyrics && (
+        {hasLyrics && (
           <>
             {/* Stale-lyrics warning — shown when lyrics are from a previous session */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.75rem 1rem", marginBottom: "0.75rem", background: "rgba(255,165,0,0.07)", border: "1px solid rgba(255,165,0,0.25)", borderRadius: "0.65rem", flexWrap: "wrap", gap: "0.5rem" }}>
@@ -1187,7 +1186,7 @@ export default function Step2Lyrics() {
             </button>
             {!canContinue && (
               <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.32)", textAlign: "center", marginTop: "0.5rem" }}>
-                {!project.title.trim() ? "Add a song title above to continue." : "Generate lyrics first, then continue."}
+                {!project.title.trim() ? "Add a song title above to continue." : "Add or paste lyrics first, then continue."}
               </p>
             )}
           </div>
