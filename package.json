@@ -5,10 +5,10 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
-    "dev:local": "DATABASE_URL=mysql://kishore:localpass@127.0.0.1:3307/kishore_studio ADMIN_PASSWORD=KishoreStudio2026 JWT_SECRET=codex-local-test-secret DISABLE_JOB_PROCESSOR=true NODE_ENV=development tsx watch server/_core/index.ts",
+    "dev:local": "DATABASE_URL=mysql://kishore:localpass@127.0.0.1:3307/kishore_studio ADMIN_PASSWORD=KishoreStudio2026 JWT_SECRET=codex-local-test-secret DISABLE_AUTH=true DISABLE_JOB_PROCESSOR=true NODE_ENV=development tsx watch server/_core/index.ts",
     "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
-    "start:local": "npm run build && DATABASE_URL=mysql://kishore:localpass@127.0.0.1:3307/kishore_studio ADMIN_PASSWORD=KishoreStudio2026 JWT_SECRET=codex-local-test-secret DISABLE_JOB_PROCESSOR=true NODE_ENV=production node dist/index.js",
+    "start:local": "npm run build && DATABASE_URL=mysql://kishore:localpass@127.0.0.1:3307/kishore_studio ADMIN_PASSWORD=KishoreStudio2026 JWT_SECRET=codex-local-test-secret DISABLE_AUTH=true DISABLE_JOB_PROCESSOR=true NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",

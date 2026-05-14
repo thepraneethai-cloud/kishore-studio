@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { nanoid } from "nanoid";
+import { ENV } from "./env";
 import { sdk } from "./sdk";
 import { uploadToR2, isR2Configured } from "./r2Storage";
 
@@ -27,10 +28,12 @@ export function registerUploadRoutes(app: Express) {
     express_raw_middleware,
     async (req: Request, res: Response) => {
       // Auth check
-      let authed = false;
+      let authed = ENV.disableAuth;
       try {
-        await sdk.authenticateRequest(req);
-        authed = true;
+        if (!authed) {
+          await sdk.authenticateRequest(req);
+          authed = true;
+        }
       } catch {
         authed = false;
       }

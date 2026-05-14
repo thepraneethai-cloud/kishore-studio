@@ -38,7 +38,9 @@ Production-like mode:
 npm run start:local
 ```
 
-Open `http://localhost:3000` and sign in with:
+Open `http://localhost:3000`. Local scripts set `DISABLE_AUTH=true`, so the app opens without the password screen.
+
+If you want to test password login locally again later, remove `DISABLE_AUTH=true` from the local script or environment and sign in with:
 
 ```text
 KishoreStudio2026
