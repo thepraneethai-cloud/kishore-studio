@@ -389,7 +389,6 @@ export default function Step2Lyrics() {
       }
       setCustomPrompt(res.data.prompt);
       setIsVisionDirective(true);
-      setVisionInput("");
       setPromptStatus("done");
       setPromptError("");
     },
