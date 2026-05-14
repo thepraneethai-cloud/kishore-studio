@@ -322,6 +322,41 @@ export default function Step6ImagePrompts() {
   const reviewedCount = approvedCount + rejectedCount;
   const scenesWithImages = project.scenes.filter((s) => s.imageUrl).length;
 
+  const panelStyle = {
+    background: "rgba(12,18,48,0.72)",
+    border: "1px solid rgba(0,212,255,0.16)",
+    borderRadius: "0.75rem",
+    boxShadow: "0 18px 50px rgba(0,0,0,0.18)",
+  } as const;
+
+  const labelStyle = {
+    fontSize: "0.7rem",
+    fontWeight: 600,
+    color: "rgba(255,255,255,0.5)",
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.05em",
+    display: "block",
+    marginBottom: "0.4rem",
+  } as const;
+
+  const fieldStyle = {
+    width: "100%",
+    padding: "0.75rem",
+    background: "rgba(4,8,24,0.82)",
+    border: "1px solid rgba(0,212,255,0.18)",
+    borderRadius: "0.5rem",
+    color: "rgba(255,255,255,0.88)",
+    fontSize: "0.875rem",
+    outline: "none",
+  } as const;
+
+  const selectStyle = {
+    ...fieldStyle,
+    color: "#00d4ff",
+    fontWeight: 600,
+    cursor: "pointer",
+  } as const;
+
   if (project.scenes.length === 0) {
     return (
       <div className="space-y-4">
@@ -391,7 +426,15 @@ export default function Step6ImagePrompts() {
       )}
 
       {/* Controls card — Style + Seed + Actions */}
-      <div className="rounded-xl space-y-4 p-4" style={{ background: "oklch(0.17 0.014 52)", border: "1px solid oklch(0.28 0.025 58)" }}>
+      <div className="space-y-4 p-4" style={panelStyle}>
+        <div>
+          <p className="text-sm font-semibold" style={{ color: "#00d4ff" }}>
+            Image setup
+          </p>
+          <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.42)" }}>
+            Choose style, provider, model, and consistency settings before generating.
+          </p>
+        </div>
 
         {/* Style Lock */}
         <div className="space-y-2">
@@ -418,10 +461,10 @@ export default function Step6ImagePrompts() {
             style={{
               width: "100%",
               padding: "0.5rem 0.625rem",
-              background: "oklch(0.13 0.012 52)",
-              border: "1px solid oklch(0.30 0.025 58)",
-              borderRadius: "0.5rem",
-              color: "#fff",
+              background: fieldStyle.background,
+              border: fieldStyle.border,
+              borderRadius: fieldStyle.borderRadius,
+              color: fieldStyle.color,
               fontSize: "0.78rem",
               lineHeight: "1.5",
               resize: "vertical",
@@ -432,7 +475,7 @@ export default function Step6ImagePrompts() {
 
         <div style={{ height: "1px", background: "oklch(0.25 0.020 55)" }} />
 
-        {/* Art Style pills + Scene Style label */}
+        {/* Art Style dropdown */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "oklch(0.55 0.012 65)" }}>
@@ -446,23 +489,15 @@ export default function Step6ImagePrompts() {
               {showNegative ? "▲" : "▼"} Negative prompt
             </button>
           </div>
-          <div className="flex flex-wrap gap-1.5">
+          <select
+            value={selectedStyle}
+            onChange={(e) => setSelectedStyle(Number(e.target.value))}
+            style={selectStyle}
+          >
             {STYLE_SUFFIXES.map((style, i) => (
-              <button
-                key={i}
-                onClick={() => setSelectedStyle(i)}
-                className="text-xs px-3 py-1.5 rounded-full transition-all"
-                style={{
-                  background: selectedStyle === i ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.20 0.016 52)",
-                  border: selectedStyle === i ? "1px solid oklch(0.72 0.12 75 / 0.6)" : "1px solid oklch(0.25 0.020 55)",
-                  color: selectedStyle === i ? "oklch(0.80 0.12 78)" : "oklch(0.55 0.012 65)",
-                  fontWeight: selectedStyle === i ? 600 : 400,
-                }}
-              >
-                {style.split(",")[0]}
-              </button>
+              <option key={style} value={i}>{style}</option>
             ))}
-          </div>
+          </select>
           {showNegative && (
             <p className="text-xs leading-relaxed" style={{ color: "oklch(0.45 0.010 60)", fontStyle: "italic" }}>
               {NEGATIVE_PROMPT}
@@ -486,10 +521,10 @@ export default function Step6ImagePrompts() {
             placeholder="random"
             style={{
               padding: "0.3rem 0.5rem",
-              background: "oklch(0.13 0.012 52)",
-              border: "1px solid oklch(0.30 0.025 58)",
-              borderRadius: "0.375rem",
-              color: "#fff",
+              background: fieldStyle.background,
+              border: fieldStyle.border,
+              borderRadius: "0.5rem",
+              color: fieldStyle.color,
               fontSize: "0.78rem",
               outline: "none",
               width: "100px",
@@ -555,126 +590,79 @@ export default function Step6ImagePrompts() {
       </div>
 
       {/* In-app Generation Panel */}
-      <div className="shrine-panel p-4 space-y-3">
-        {/* Provider tabs */}
-        <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: "oklch(0.16 0.014 52)" }}>
-          {([
-            { id: "flux",  label: "Flux",    sub: "Replicate · ~$0.001–$0.01/img", icon: "⚡" },
-            { id: "dalle", label: "ChatGPT", sub: "OpenAI · DALL-E 3",             icon: "✦" },
-          ] as { id: ImageProvider; label: string; sub: string; icon: string }[]).map((p) => (
-            <button
-              key={p.id}
-              onClick={() => setProvider(p.id)}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-semibold transition-all"
-              style={{
-                background: provider === p.id ? "oklch(0.24 0.020 55)" : "transparent",
-                color: provider === p.id ? "oklch(0.88 0.12 78)" : "oklch(0.50 0.012 65)",
-                border: provider === p.id ? "1px solid oklch(0.35 0.030 58)" : "1px solid transparent",
-              }}
-            >
-              <span>{p.icon}</span>
-              <span>{p.label}</span>
-              <span style={{ opacity: 0.6, fontWeight: 400 }}>— {p.sub}</span>
-            </button>
-          ))}
+      <div className="p-4 space-y-4" style={panelStyle}>
+        <div>
+          <p className="text-sm font-semibold" style={{ color: "#00d4ff" }}>
+            Generate in app
+          </p>
+          <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.42)" }}>
+            Pick a provider and model. Required keys can be added in Settings.
+          </p>
         </div>
 
-        {/* Flux model options */}
-        {provider === "flux" && (
-          <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg" style={{ background: "oklch(0.18 0.016 52)", border: "1px solid oklch(0.25 0.020 55)" }}>
-            <span className="text-xs" style={{ color: "oklch(0.55 0.012 65)" }}>Model</span>
-            <div className="flex gap-1">
-              {([
-                { id: "flux-dev",     label: "Flux Dev",     sub: "~$0.01/img · best quality" },
-                { id: "flux-schnell", label: "Flux Schnell", sub: "~$0.001/img · 10× faster" },
-              ] as { id: FluxModel; label: string; sub: string }[]).map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => setFluxModel(m.id)}
-                  className="text-xs px-2.5 py-1.5 rounded transition-all"
-                  style={{
-                    background: fluxModel === m.id ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.22 0.018 52)",
-                    color: fluxModel === m.id ? "oklch(0.80 0.12 78)" : "oklch(0.55 0.012 65)",
-                    border: `1px solid ${fluxModel === m.id ? "oklch(0.72 0.12 75 / 0.5)" : "oklch(0.28 0.025 58)"}`,
-                  }}
-                >
-                  {m.label} <span style={{ opacity: 0.6, fontWeight: 400 }}>— {m.sub}</span>
-                </button>
-              ))}
+        <div className="grid gap-3 md:grid-cols-2">
+          <div>
+            <label style={labelStyle}>Provider</label>
+            <select value={provider} onChange={(e) => setProvider(e.target.value as ImageProvider)} style={selectStyle}>
+              <option value="flux">Flux via Replicate</option>
+              <option value="dalle">ChatGPT / OpenAI images</option>
+            </select>
+          </div>
+
+          {provider === "flux" && (
+            <div>
+              <label style={labelStyle}>Model</label>
+              <select value={fluxModel} onChange={(e) => setFluxModel(e.target.value as FluxModel)} style={selectStyle}>
+                <option value="flux-dev">Flux Dev - best quality</option>
+                <option value="flux-schnell">Flux Schnell - faster, cheaper</option>
+              </select>
             </div>
+          )}
+
+          {provider === "dalle" && (
+            <div>
+              <label style={labelStyle}>Model</label>
+              <select value={dalleModel} onChange={(e) => setDalleModel(e.target.value as DalleModel)} style={selectStyle}>
+                <option value="dall-e-3">DALL-E 3</option>
+                <option value="gpt-image-1">GPT-image-1</option>
+              </select>
+            </div>
+          )}
+
+          {provider === "dalle" && dalleModel === "dall-e-3" && (
+            <>
+              <div>
+                <label style={labelStyle}>Quality</label>
+                <select value={dalleQuality} onChange={(e) => setDalleQuality(e.target.value as "standard" | "hd")} style={selectStyle}>
+                  <option value="standard">Standard - lower cost</option>
+                  <option value="hd">HD - higher detail</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Rendering style</label>
+                <select value={dalleStyle} onChange={(e) => setDalleStyle(e.target.value as "natural" | "vivid")} style={selectStyle}>
+                  <option value="natural">Natural</option>
+                  <option value="vivid">Vivid</option>
+                </select>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Flux model note */}
+        {provider === "flux" && (
+          <div className="p-3 rounded-lg" style={{ background: "rgba(4,8,24,0.45)", border: "1px solid rgba(0,212,255,0.10)" }}>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.48)" }}>
+              {fluxModel === "flux-dev"
+                ? "Flux Dev is better for final images. Use this when quality matters."
+                : "Flux Schnell is faster and cheaper. Use this for drafts or quick tests."}
+            </p>
           </div>
         )}
 
-        {/* DALL-E specific options */}
+        {/* DALL-E specific note */}
         {provider === "dalle" && (
-          <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg" style={{ background: "oklch(0.18 0.016 52)", border: "1px solid oklch(0.25 0.020 55)" }}>
-            {/* Model */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs" style={{ color: "oklch(0.55 0.012 65)" }}>Model</span>
-              <div className="flex gap-1">
-                {(["dall-e-3", "gpt-image-1"] as DalleModel[]).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setDalleModel(m)}
-                    className="text-xs px-2 py-1 rounded transition-all"
-                    style={{
-                      background: dalleModel === m ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.22 0.018 52)",
-                      color: dalleModel === m ? "oklch(0.80 0.12 78)" : "oklch(0.55 0.012 65)",
-                      border: `1px solid ${dalleModel === m ? "oklch(0.72 0.12 75 / 0.5)" : "oklch(0.28 0.025 58)"}`,
-                    }}
-                  >
-                    {m === "dall-e-3" ? "DALL-E 3" : "GPT-image-1"}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Quality (DALL-E 3 only) */}
-            {dalleModel === "dall-e-3" && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs" style={{ color: "oklch(0.55 0.012 65)" }}>Quality</span>
-                <div className="flex gap-1">
-                  {(["standard", "hd"] as const).map((q) => (
-                    <button
-                      key={q}
-                      onClick={() => setDalleQuality(q)}
-                      className="text-xs px-2 py-1 rounded transition-all"
-                      style={{
-                        background: dalleQuality === q ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.22 0.018 52)",
-                        color: dalleQuality === q ? "oklch(0.80 0.12 78)" : "oklch(0.55 0.012 65)",
-                        border: `1px solid ${dalleQuality === q ? "oklch(0.72 0.12 75 / 0.5)" : "oklch(0.28 0.025 58)"}`,
-                      }}
-                    >
-                      {q === "standard" ? "Standard ~$0.04" : "HD ~$0.08"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Style */}
-            {dalleModel === "dall-e-3" && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs" style={{ color: "oklch(0.55 0.012 65)" }}>Style</span>
-                <div className="flex gap-1">
-                  {(["natural", "vivid"] as const).map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setDalleStyle(s)}
-                      className="text-xs px-2 py-1 rounded transition-all"
-                      style={{
-                        background: dalleStyle === s ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.22 0.018 52)",
-                        color: dalleStyle === s ? "oklch(0.80 0.12 78)" : "oklch(0.55 0.012 65)",
-                        border: `1px solid ${dalleStyle === s ? "oklch(0.72 0.12 75 / 0.5)" : "oklch(0.28 0.025 58)"}`,
-                      }}
-                    >
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
+          <div className="p-3 rounded-lg" style={{ background: "rgba(4,8,24,0.45)", border: "1px solid rgba(0,212,255,0.10)" }}>
             <p className="w-full text-xs" style={{ color: "oklch(0.48 0.010 60)" }}>
               Note: DALL-E generates at 1792×1024 (16:9). Results return immediately — no polling needed.
               {dalleModel === "dall-e-3" && " Seed locking is not supported by DALL-E 3."}
