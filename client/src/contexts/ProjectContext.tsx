@@ -50,7 +50,12 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [project, setProject] = useState<Project>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : createEmptyProject();
+      const parsed = saved ? JSON.parse(saved) : createEmptyProject();
+      return {
+        ...parsed,
+        lyrics: "",
+        masterPrompt: "",
+      };
     } catch {
       return createEmptyProject();
     }

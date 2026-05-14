@@ -297,12 +297,9 @@ export default function Step2Lyrics() {
     setShowSunoPanel(false);
   }, [category]);
 
-  // On mount: clear stale generation outputs so refresh starts the concept page clean.
+  // On mount: clear stale deity so it can't silently drive generation.
   useEffect(() => {
     setDeity(null as any);  // force the user to re-type the subject every session
-    setLyrics("");
-    setMasterPrompt("");
-    setShowSunoPanel(false);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-mark step 1 complete whenever lyrics appear (e.g. after generation)
