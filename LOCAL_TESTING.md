@@ -41,7 +41,7 @@ npm run start:local
 Open `http://localhost:3000` and sign in with:
 
 ```text
-codex-test
+KishoreStudio2026
 ```
 
 The local scripts disable the background job processor so saved-project testing is not interrupted by queued-job polling.
