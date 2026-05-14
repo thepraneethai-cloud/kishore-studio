@@ -745,8 +745,8 @@ export const generationRouter = router({
         const trendingKeywords = getTrendingKeywords(input.deity);
 
         // Combine all keywords and hashtags
-        const allKeywords = Array.from(new Set([...seoMetadata.keywords, ...trendingKeywords]));
-        const allHashtags = Array.from(new Set(seoMetadata.hashtags));
+        const allKeywords = [...new Set([...seoMetadata.keywords, ...trendingKeywords])];
+        const allHashtags = [...new Set(seoMetadata.hashtags)];
 
         // Generate additional YouTube-specific content
         const llmModel = input.llmModel || "gemini-2.5-flash";
@@ -787,8 +787,8 @@ export const generationRouter = router({
         const finalMetadata = {
           title: llmMetadata.title || seoMetadata.title,
           description: llmMetadata.description || seoMetadata.description,
-          keywords: Array.from(new Set([...allKeywords, ...(llmMetadata.keywords || [])])),
-          hashtags: Array.from(new Set([...allHashtags, ...(llmMetadata.hashtags || [])])),
+          keywords: [...new Set([...allKeywords, ...(llmMetadata.keywords || [])])],
+          hashtags: [...new Set([...allHashtags, ...(llmMetadata.hashtags || [])])],
           seoScore: seoMetadata.seoScore,
         };
 
