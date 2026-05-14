@@ -19,6 +19,7 @@ export default function Step7VideoPrompts() {
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
   const [selectedMotion, setSelectedMotion] = useState(0);
+  const [sceneSource, setSceneSource] = useState<"approved" | "all">("approved");
   const [showMasterPrompt, setShowMasterPrompt] = useState(false);
 
   const buildMotionPrompt = (sceneDesc: string) => {
@@ -89,8 +90,44 @@ export default function Step7VideoPrompts() {
   }
 
   const approvedScenes = project.scenes.filter((s) => s.imageApproved === true);
-  const displayScenes = approvedScenes.length > 0 ? approvedScenes : project.scenes;
+  const displayScenes = sceneSource === "approved" && approvedScenes.length > 0 ? approvedScenes : project.scenes;
   const totalDuration = displayScenes.reduce((sum, s) => sum + s.duration, 0);
+  const usingApprovedScenes = sceneSource === "approved" && approvedScenes.length > 0;
+
+  const panelStyle = {
+    background: "rgba(12,18,48,0.72)",
+    border: "1px solid rgba(0,212,255,0.16)",
+    borderRadius: "0.75rem",
+    boxShadow: "0 18px 50px rgba(0,0,0,0.18)",
+  } as const;
+
+  const labelStyle = {
+    fontSize: "0.7rem",
+    fontWeight: 600,
+    color: "rgba(255,255,255,0.5)",
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.05em",
+    display: "block",
+    marginBottom: "0.4rem",
+  } as const;
+
+  const fieldStyle = {
+    width: "100%",
+    padding: "0.75rem",
+    background: "rgba(4,8,24,0.82)",
+    border: "1px solid rgba(0,212,255,0.18)",
+    borderRadius: "0.5rem",
+    color: "rgba(255,255,255,0.88)",
+    fontSize: "0.875rem",
+    outline: "none",
+  } as const;
+
+  const selectStyle = {
+    ...fieldStyle,
+    color: "#00d4ff",
+    fontWeight: 600,
+    cursor: "pointer",
+  } as const;
 
   return (
     <div className="space-y-5">
@@ -155,41 +192,60 @@ export default function Step7VideoPrompts() {
       )}
 
       {/* Controls card */}
-      <div className="rounded-xl space-y-3 p-4" style={{ background: "oklch(0.17 0.014 52)", border: "1px solid oklch(0.28 0.025 58)" }}>
-        {/* Motion type */}
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "oklch(0.55 0.012 65)" }}>
-            Motion Type
+      <div className="space-y-4 p-4" style={panelStyle}>
+        <div>
+          <p className="text-sm font-semibold" style={{ color: "#00d4ff" }}>
+            Video setup
           </p>
-          <div className="flex flex-wrap gap-2">
-            {MOTION_TYPES.map((mt, i) => (
-              <button
-                key={mt.id}
-                onClick={() => setSelectedMotion(i)}
-                className="text-xs px-3 py-1.5 rounded-full transition-all"
-                style={{
-                  background: selectedMotion === i ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.20 0.016 52)",
-                  border: selectedMotion === i ? "1px solid oklch(0.72 0.12 75 / 0.6)" : "1px solid oklch(0.25 0.020 55)",
-                  color: selectedMotion === i ? "oklch(0.82 0.12 78)" : "oklch(0.55 0.012 65)",
-                }}
-              >
-                {mt.label}
-              </button>
-            ))}
-          </div>
+          <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.42)" }}>
+            Choose which scenes to use and the motion style for every video prompt.
+          </p>
         </div>
 
-        {/* Template preview */}
-        <p className="text-xs leading-relaxed px-3 py-2 rounded-lg" style={{ color: "oklch(0.50 0.010 62)", background: "oklch(0.14 0.012 50)", border: "1px solid oklch(0.22 0.018 52)" }}>
-          <span style={{ color: "oklch(0.45 0.008 60)" }}>Template: </span>
-          {MOTION_TYPES[selectedMotion].template.replace("{scene}", "[scene description]")}
-        </p>
+        <div className="grid gap-3 md:grid-cols-2">
+          <label>
+            <span style={labelStyle}>Scene source</span>
+            <select
+              value={sceneSource}
+              onChange={(e) => setSceneSource(e.target.value as "approved" | "all")}
+              style={selectStyle}
+            >
+              <option value="approved">Approved images only, if available</option>
+              <option value="all">All scenes</option>
+            </select>
+          </label>
 
-        {/* Divider */}
+          <label>
+            <span style={labelStyle}>Motion type</span>
+            <select
+              value={selectedMotion}
+              onChange={(e) => setSelectedMotion(Number(e.target.value))}
+              style={selectStyle}
+            >
+              {MOTION_TYPES.map((motion, i) => (
+                <option key={motion.id} value={i}>
+                  {motion.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div
+          className="text-xs leading-relaxed p-3 rounded-lg"
+          style={{
+            background: fieldStyle.background,
+            border: fieldStyle.border,
+            color: "rgba(255,255,255,0.58)",
+          }}
+        >
+          <span style={{ color: "rgba(255,255,255,0.36)" }}>Template: </span>
+          {MOTION_TYPES[selectedMotion].template.replace("{scene}", "[scene description]")}
+        </div>
+
         <div style={{ height: "1px", background: "oklch(0.25 0.020 55)" }} />
 
-        {/* Actions row */}
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 flex-wrap">
           <button
             onClick={handleCopyAll}
             className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-colors"
@@ -214,7 +270,7 @@ export default function Step7VideoPrompts() {
       </div>
 
       {/* Approved-only notice */}
-      {approvedScenes.length > 0 && approvedScenes.length < project.scenes.length && (
+      {usingApprovedScenes && approvedScenes.length < project.scenes.length && (
         <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg"
           style={{ background: "oklch(0.18 0.08 145 / 0.3)", color: "oklch(0.65 0.15 145)", border: "1px solid oklch(0.45 0.12 145 / 0.3)" }}>
           ✓ Showing video prompts for {approvedScenes.length} approved scenes only ({project.scenes.length - approvedScenes.length} rejected scenes skipped)
