@@ -31,6 +31,8 @@ interface ProjectContextType {
   setImageSeed: (seed: number | null) => void;
   setCinematicStyle: (style: CinematicStyle | null) => void;
   resetProject: () => void;
+  loadProject: (serverProjectId: number) => Promise<void>;
+  currentServerProjectId: number | null;
   completedSteps: Set<number>;
   markStepComplete: (step: number) => void;
   // Undo
@@ -50,18 +52,17 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [project, setProject] = useState<Project>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      const parsed = saved ? JSON.parse(saved) : createEmptyProject();
-      return {
-        ...parsed,
-        lyrics: "",
-        masterPrompt: "",
-      };
+      return saved ? JSON.parse(saved) : createEmptyProject();
     } catch {
       return createEmptyProject();
     }
   });
 
   const [activeStep, setActiveStep] = useState(1);
+  const [currentServerProjectId, setCurrentServerProjectId] = useState<number | null>(() => {
+    const saved = localStorage.getItem(SERVER_ID_KEY);
+    return saved ? Number(saved) : null;
+  });
   const [sessionTitle, setSessionTitle] = useState<string | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -72,11 +73,14 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [canUndoScenes, setCanUndoScenes] = useState(false);
 
   const HISTORY_LIMIT = 5;
+  const utils = trpc.useUtils();
 
   const upsertProject = trpc.projects.upsert.useMutation({
     onSuccess: (data) => {
       if (data?.serverProjectId) {
         localStorage.setItem(SERVER_ID_KEY, String(data.serverProjectId));
+        setCurrentServerProjectId(data.serverProjectId);
+        void utils.projects.list.invalidate();
       }
     },
     onError: (err) => {
@@ -115,12 +119,14 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         youtubeDescription: project.youtubeDescription,
         youtubeTags: project.youtubeTags,
         thumbnailPrompt: project.thumbnailPrompt,
+        completedSteps: Array.from(completedSteps),
+        activeStep,
       });
     }, 500);
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
-  }, [project, upsertProject.mutate]);
+  }, [project, completedSteps, activeStep, upsertProject.mutate]);
 
   useEffect(() => {
     localStorage.setItem(STEPS_KEY, JSON.stringify(Array.from(completedSteps)));
@@ -214,6 +220,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   );
 
   const resetProject = useCallback(() => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     setProject(createEmptyProject());
     setCompletedSteps(new Set());
     setActiveStep(1);
@@ -223,7 +230,53 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     setCanUndoLyrics(false);
     setCanUndoScenes(false);
     localStorage.removeItem(SERVER_ID_KEY);
+    setCurrentServerProjectId(null);
   }, []);
+
+  const loadProject = useCallback(async (serverProjectId: number) => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    const loaded = await utils.projects.load.fetch({ serverProjectId });
+    if (!loaded) throw new Error("Project not found");
+
+    const metadata = (loaded.metadata ?? {}) as {
+      scenes?: Scene[];
+      youtubeTitle?: string;
+      youtubeDescription?: string;
+      youtubeTags?: string[];
+      thumbnailPrompt?: string;
+      masterPrompt?: string;
+      completedSteps?: number[];
+      activeStep?: number;
+    };
+    const empty = createEmptyProject();
+    const restored: Project = {
+      ...empty,
+      id: String(loaded.id),
+      title: loaded.name || "",
+      deity: loaded.deity as DeityKey | null,
+      lyrics: loaded.lyrics || "",
+      audioUrl: loaded.audioUrl || "",
+      masterPrompt: loaded.masterPrompt || metadata.masterPrompt || "",
+      sunoStyle: (loaded.sunoStyle as SunoStyle | null) || empty.sunoStyle,
+      scenes: metadata.scenes || [],
+      youtubeTitle: metadata.youtubeTitle || "",
+      youtubeDescription: metadata.youtubeDescription || "",
+      youtubeTags: metadata.youtubeTags || [],
+      thumbnailPrompt: metadata.thumbnailPrompt || "",
+      updatedAt: loaded.updatedAt ? new Date(loaded.updatedAt).getTime() : Date.now(),
+    };
+
+    setProject(restored);
+    setCompletedSteps(new Set(metadata.completedSteps || []));
+    setActiveStep(metadata.activeStep || 1);
+    setSessionTitle(restored.title.trim() || null);
+    lyricsHistoryRef.current = [];
+    scenesHistoryRef.current = [];
+    setCanUndoLyrics(false);
+    setCanUndoScenes(false);
+    localStorage.setItem(SERVER_ID_KEY, String(serverProjectId));
+    setCurrentServerProjectId(serverProjectId);
+  }, [utils]);
 
   const markStepComplete = useCallback((step: number) => {
     setCompletedSteps((prev) => new Set<number>(Array.from(prev).concat(step)));
@@ -250,6 +303,8 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         setImageSeed,
         setCinematicStyle,
         resetProject,
+        loadProject,
+        currentServerProjectId,
         completedSteps,
         markStepComplete,
         undoLyrics,

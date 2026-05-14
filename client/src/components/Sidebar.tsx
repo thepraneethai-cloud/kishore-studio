@@ -4,10 +4,12 @@
 // Mobile: slide-in drawer with backdrop tap-to-close
 // ============================================================
 import { useProject } from "@/contexts/ProjectContext";
+import { trpc } from "@/lib/trpc";
 import {
   Flame, Mic2, Film, Sparkles, Video, Scissors,
-  Youtube, CheckCircle2, RotateCcw, X,
+  Youtube, CheckCircle2, X, FolderOpen, Plus,
 } from "lucide-react";
+import { toast } from "sonner";
 
 const STEPS = [
   { id: 1, label: "Concept & Lyrics", icon: Flame, short: "Lyrics" },
@@ -24,11 +26,38 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ onClose }: SidebarProps) {
-  const { activeStep, setActiveStep, completedSteps, project, resetProject, sessionTitle } = useProject();
+  const {
+    activeStep,
+    setActiveStep,
+    completedSteps,
+    resetProject,
+    sessionTitle,
+    loadProject,
+    currentServerProjectId,
+  } = useProject();
+  const { data: savedProjects = [], isLoading: projectsLoading } = trpc.projects.list.useQuery();
 
   const handleStepClick = (stepId: number) => {
     setActiveStep(stepId);
     onClose?.();
+  };
+
+  const handleProjectSelect = async (value: string) => {
+    if (value === "new") {
+      resetProject();
+      onClose?.();
+      toast.success("Started a new project");
+      return;
+    }
+    const id = Number(value);
+    if (!id || id === currentServerProjectId) return;
+    try {
+      await loadProject(id);
+      onClose?.();
+      toast.success("Project loaded");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not load project");
+    }
   };
 
   return (
@@ -135,6 +164,59 @@ export default function Sidebar({ onClose }: SidebarProps) {
         )}
       </div>
 
+      {/* Project Picker */}
+      <div style={{ padding: "0.85rem 1rem", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
+        <label
+          style={{
+            display: "block",
+            fontSize: "0.68rem",
+            fontWeight: 700,
+            color: "rgba(255,255,255,0.45)",
+            letterSpacing: "0.08em",
+            marginBottom: "0.4rem",
+          }}
+        >
+          PROJECT
+        </label>
+        <div style={{ position: "relative" }}>
+          <FolderOpen
+            size={14}
+            style={{
+              position: "absolute",
+              left: "0.65rem",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#00d4ff",
+              pointerEvents: "none",
+            }}
+          />
+          <select
+            value={currentServerProjectId ?? "new"}
+            onChange={(e) => void handleProjectSelect(e.target.value)}
+            disabled={projectsLoading}
+            style={{
+              width: "100%",
+              padding: "0.65rem 0.6rem 0.65rem 2rem",
+              borderRadius: "0.5rem",
+              border: "1px solid rgba(0, 212, 255, 0.22)",
+              background: "rgba(4, 8, 24, 0.86)",
+              color: "#00d4ff",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              cursor: projectsLoading ? "wait" : "pointer",
+              outline: "none",
+            }}
+          >
+            <option value="new">{projectsLoading ? "Loading projects..." : "New unsaved project"}</option>
+            {savedProjects.map((saved) => (
+              <option key={saved.id} value={saved.id}>
+                {saved.name || "Untitled"}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* Step Navigator */}
       <nav style={{
         flex: 1,
@@ -229,7 +311,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
       {/* New Project Button */}
       <div style={{ padding: "1rem", borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
         <button
-          onClick={resetProject}
+          onClick={() => {
+            resetProject();
+            onClose?.();
+            toast.success("Started a new project");
+          }}
           style={{
             width: "100%",
             padding: "0.75rem",
@@ -247,7 +333,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             transition: "all 200ms",
           }}
         >
-          <RotateCcw size={14} />
+          <Plus size={14} />
           NEW PROJECT
         </button>
       </div>

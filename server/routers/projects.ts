@@ -23,6 +23,8 @@ export const projectsRouter = router({
         youtubeDescription: z.string().optional(),
         youtubeTags: z.array(z.string()).optional(),
         thumbnailPrompt: z.string().optional(),
+        completedSteps: z.array(z.number()).optional(),
+        activeStep: z.number().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -36,6 +38,8 @@ export const projectsRouter = router({
         youtubeTags: input.youtubeTags ?? [],
         thumbnailPrompt: input.thumbnailPrompt ?? "",
         masterPrompt: input.masterPrompt ?? "",
+        completedSteps: input.completedSteps ?? [],
+        activeStep: input.activeStep ?? 1,
       };
 
       if (input.serverProjectId) {
