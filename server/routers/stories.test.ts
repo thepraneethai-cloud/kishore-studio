@@ -59,15 +59,11 @@ describe("Stories Router", () => {
     it("should validate story title length", async () => {
       const caller = storiesRouter.createCaller(mockContext as any);
 
-      // This should fail validation
-      const result = await caller.createStoryProject({
+      await expect(caller.createStoryProject({
         storyTitle: "ab", // Too short
         storyDescription: "A valid description",
         storyType: "story",
-      });
-
-      // Zod validation happens before mutation
-      expect(result).toBeDefined();
+      })).rejects.toThrow("Too small");
     });
   });
 
@@ -111,7 +107,7 @@ Video Prompt: Camera follows through forest, sunlight filtering through leaves
         projectId: 1,
         storyDescription: "The story of Rama's exile",
         storyType: "story",
-        sceneCount: 2,
+        sceneCount: 3,
       });
 
       expect(result.success).toBe(true);
@@ -122,15 +118,12 @@ Video Prompt: Camera follows through forest, sunlight filtering through leaves
     it("should handle scene count limits", async () => {
       const caller = storiesRouter.createCaller(mockContext as any);
 
-      // Scene count should be between 3 and 20
-      const result = await caller.generateScenesFromStory({
+      await expect(caller.generateScenesFromStory({
         projectId: 1,
         storyDescription: "Test story",
         storyType: "story",
         sceneCount: 25, // Too many
-      });
-
-      expect(result).toBeDefined();
+      })).rejects.toThrow("Too big");
     });
 
     it("should use user's LLM model if provided", async () => {

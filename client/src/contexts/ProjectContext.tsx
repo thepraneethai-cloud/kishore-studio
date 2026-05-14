@@ -48,6 +48,18 @@ const STORAGE_KEY = "telugu-studio-project";
 const STEPS_KEY = "telugu-studio-steps";
 const SERVER_ID_KEY = "telugu-studio-server-id";
 
+function hasProjectWork(project: Project) {
+  return Boolean(
+    project.title.trim() ||
+    project.deity ||
+    project.lyrics.trim() ||
+    project.audioUrl ||
+    project.masterPrompt.trim() ||
+    project.scenes.length > 0 ||
+    project.youtubeTitle.trim()
+  );
+}
+
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [project, setProject] = useState<Project>(() => {
     try {
@@ -105,6 +117,8 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     saveTimeoutRef.current = setTimeout(() => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...project, updatedAt: Date.now() }));
 
+      if (!currentServerProjectId && !hasProjectWork(project)) return;
+
       const savedServerId = localStorage.getItem(SERVER_ID_KEY);
       upsertProject.mutate({
         serverProjectId: savedServerId ? Number(savedServerId) : undefined,
@@ -126,7 +140,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
-  }, [project, completedSteps, activeStep, upsertProject.mutate]);
+  }, [project, completedSteps, activeStep, currentServerProjectId, upsertProject.mutate]);
 
   useEffect(() => {
     localStorage.setItem(STEPS_KEY, JSON.stringify(Array.from(completedSteps)));

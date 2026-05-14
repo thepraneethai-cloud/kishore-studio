@@ -212,10 +212,12 @@ export default function Step7VideoPrompts() {
         .map((scene) => ({ scene, imageUrl: hostedBySceneId.get(scene.id) }))
         .filter((item): item is { scene: typeof candidateScenes[number]; imageUrl: string } => Boolean(item.imageUrl));
 
-      setScenes(project.scenes.map((scene) => {
+      const scenesWithHostedImages = project.scenes.map((scene) => {
         const hostedUrl = hostedBySceneId.get(scene.id);
         return hostedUrl ? { ...scene, imageUrl: hostedUrl } : scene;
-      }));
+      });
+
+      setScenes(scenesWithHostedImages);
 
       const result = await generateVideosMutation.mutateAsync({
         replicateApiKey,
@@ -238,7 +240,7 @@ export default function Step7VideoPrompts() {
         error: job.error,
       }));
 
-      setScenes(project.scenes.map((scene) => {
+      setScenes(scenesWithHostedImages.map((scene) => {
         const job = jobs.find((item) => item.sceneId === scene.id && item.status === "succeeded" && item.videoUrl);
         return job ? { ...scene, videoUrl: job.videoUrl } : scene;
       }));

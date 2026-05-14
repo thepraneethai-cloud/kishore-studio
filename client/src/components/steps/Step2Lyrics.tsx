@@ -297,10 +297,28 @@ export default function Step2Lyrics() {
     setShowSunoPanel(false);
   }, [category]);
 
-  // On mount: clear stale deity so it can't silently drive generation.
+  // Keep visible form fields in sync when switching or starting projects.
   useEffect(() => {
-    setDeity(null as any);  // force the user to re-type the subject every session
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    setSubjectInput(project.deity ? String(project.deity) : "");
+    setTitleInput(project.title || "");
+    setCategory((project.category as SongCategory) || "devotional");
+    setMood(project.mood || "");
+    setLanguageStyle(project.languageStyle || "pure_telugu");
+    setVisionInput("");
+    setCustomPrompt("");
+    setIsVisionDirective(false);
+    setPromptStatus("idle");
+    setPromptError("");
+    setIterateFeedback("");
+    setShowIterate(false);
+    setSunoFeedback("");
+    setShowSunoRefine(false);
+    setShowSunoPanel(false);
+    setHasPicked(false);
+    setMasterPromptEditable(project.masterPrompt || "");
+    setMasterPromptReady(Boolean(project.masterPrompt));
+    setShowMasterPromptPhase(Boolean(project.masterPrompt));
+  }, [project.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-mark step 1 complete whenever lyrics appear (e.g. after generation)
   useEffect(() => {

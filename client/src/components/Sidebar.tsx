@@ -35,7 +35,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
     loadProject,
     currentServerProjectId,
   } = useProject();
-  const { data: savedProjects = [], isLoading: projectsLoading } = trpc.projects.list.useQuery();
+  const { data: savedProjects = [], isLoading: projectsLoading, isError: projectsError } = trpc.projects.list.useQuery(undefined, {
+    retry: 1,
+  });
 
   const handleStepClick = (stepId: number) => {
     setActiveStep(stepId);
@@ -193,7 +195,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
           <select
             value={currentServerProjectId ?? "new"}
             onChange={(e) => void handleProjectSelect(e.target.value)}
-            disabled={projectsLoading}
+            disabled={projectsLoading || projectsError}
             style={{
               width: "100%",
               padding: "0.65rem 0.6rem 0.65rem 2rem",
@@ -203,11 +205,13 @@ export default function Sidebar({ onClose }: SidebarProps) {
               color: "#00d4ff",
               fontSize: "0.75rem",
               fontWeight: 600,
-              cursor: projectsLoading ? "wait" : "pointer",
+              cursor: projectsLoading ? "wait" : projectsError ? "not-allowed" : "pointer",
               outline: "none",
             }}
           >
-            <option value="new">{projectsLoading ? "Loading projects..." : "New unsaved project"}</option>
+            <option value="new">
+              {projectsLoading ? "Loading projects..." : projectsError ? "Saved projects unavailable" : "New unsaved project"}
+            </option>
             {savedProjects.map((saved) => (
               <option key={saved.id} value={saved.id}>
                 {saved.name || "Untitled"}
