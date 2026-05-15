@@ -136,7 +136,7 @@ export default function Step3SunoStyle() {
             <div
               className="text-xs leading-relaxed p-3 rounded"
               style={{
-                background: "oklch(0.14 0.016 52)",
+                background: "#2f2f2f",
                 color: "oklch(0.70 0.015 68)",
                 border: "1px solid oklch(0.24 0.020 55)",
               }}
@@ -161,7 +161,7 @@ export default function Step3SunoStyle() {
               style={{
                 background: sunoStyle.style === preset.style
                   ? "linear-gradient(135deg, oklch(0.72 0.12 75 / 0.2), oklch(0.65 0.14 65 / 0.2))"
-                  : "oklch(0.22 0.018 52)",
+                  : "#343434",
                 border: sunoStyle.style === preset.style
                   ? "1px solid oklch(0.72 0.12 75 / 0.5)"
                   : "1px solid oklch(0.28 0.025 58)",
@@ -196,7 +196,7 @@ export default function Step3SunoStyle() {
                     onClick={() => setSunoStyle({ tempo: opt.value })}
                   >
                     {sunoStyle.tempo === opt.value && (
-                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: "oklch(0.12 0.015 55)" }} />
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#2a2a2a" }} />
                     )}
                   </div>
                   <span
@@ -223,7 +223,7 @@ export default function Step3SunoStyle() {
                   onClick={() => setSunoStyle({ mood })}
                   className="text-xs px-2.5 py-1.5 rounded transition-all"
                   style={{
-                    background: sunoStyle.mood === mood ? "oklch(0.65 0.14 65 / 0.25)" : "oklch(0.22 0.018 52)",
+                    background: sunoStyle.mood === mood ? "oklch(0.65 0.14 65 / 0.25)" : "#343434",
                     border: sunoStyle.mood === mood ? "1px solid oklch(0.65 0.14 65 / 0.6)" : "1px solid oklch(0.28 0.025 58)",
                     color: sunoStyle.mood === mood ? "oklch(0.72 0.12 75)" : "oklch(0.60 0.015 68)",
                   }}
@@ -246,7 +246,7 @@ export default function Step3SunoStyle() {
               style={{ padding: "0.5rem 0.75rem" }}
             >
               {VOCAL_OPTIONS.map((v) => (
-                <option key={v} value={v} style={{ background: "oklch(0.18 0.016 52)" }}>
+                <option key={v} value={v} style={{ background: "#2a2a2a" }}>
                   {v}
                 </option>
               ))}
@@ -315,7 +315,7 @@ export default function Step3SunoStyle() {
               onClick={() => setShowPrompt(!showPrompt)}
               className="text-xs px-3 py-1.5 rounded transition-colors"
               style={{
-                background: "oklch(0.22 0.018 52)",
+                background: "#343434",
                 color: "oklch(0.65 0.015 68)",
                 border: "1px solid oklch(0.28 0.025 58)",
               }}
@@ -326,7 +326,7 @@ export default function Step3SunoStyle() {
               onClick={handleCopy}
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors"
               style={{
-                background: copied ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.22 0.018 52)",
+                background: copied ? "oklch(0.72 0.12 75 / 0.2)" : "#343434",
                 color: copied ? "oklch(0.72 0.12 75)" : "oklch(0.65 0.015 68)",
                 border: `1px solid ${copied ? "oklch(0.72 0.12 75 / 0.5)" : "oklch(0.28 0.025 58)"}`,
               }}
@@ -340,7 +340,7 @@ export default function Step3SunoStyle() {
           <pre
             className="text-xs whitespace-pre-wrap leading-relaxed p-3 rounded"
             style={{
-              background: "oklch(0.14 0.016 52)",
+              background: "#2f2f2f",
               color: "oklch(0.70 0.015 68)",
               border: "1px solid oklch(0.24 0.020 55)",
               fontFamily: "'Source Sans 3', sans-serif",
@@ -365,7 +365,7 @@ export default function Step3SunoStyle() {
         disabled={sunoStyle.instruments.length === 0}
         style={{
           background: "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
-          color: "oklch(0.12 0.015 55)",
+          color: "#2a2a2a",
         }}
       >
         Continue to Music Prompt

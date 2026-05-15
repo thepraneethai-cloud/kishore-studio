@@ -365,7 +365,7 @@ export default function Step8CapCut() {
                 <div
                   key={item.scene.id}
                   className="grid gap-3 p-3 rounded-lg sm:grid-cols-[72px_1fr_120px]"
-                  style={{ background: "#1c1c1c", border: "1px solid rgba(255,255,255,0.08)" }}
+                  style={{ background: "#2f2f2f", border: "1px solid rgba(255,255,255,0.08)" }}
                 >
                   <div>
                     <p className="text-xs font-bold" style={{ color: "rgba(236,236,241,0.82)" }}>

@@ -444,7 +444,7 @@ export default function Step5Scenes() {
             className="flex-1"
             style={{
               padding: "0.4rem 0.75rem",
-              background: "#181818",
+              background: "#2f2f2f",
               border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: "0.5rem",
               color: "#ececf1",
@@ -661,7 +661,7 @@ export default function Step5Scenes() {
 
                 {/* ── Image prompt ── */}
                 <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", textTransform: "uppercase", letterSpacing: "0.07em", marginTop: "0.625rem", marginBottom: "0.25rem" }}>Image prompt</p>
-                {ta("imagePrompt", scene.imagePrompt, 4, "AI image generator prompt…", "#ececf1", "rgba(255,255,255,0.14)", "#181818")}
+                {ta("imagePrompt", scene.imagePrompt, 4, "AI image generator prompt…", "#ececf1", "rgba(255,255,255,0.14)", "#2f2f2f")}
 
               </div>
             );

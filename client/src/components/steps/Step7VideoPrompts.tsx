@@ -376,7 +376,7 @@ export default function Step7VideoPrompts() {
   const videoReadyCount = displayScenes.filter((scene) => scene.videoUrl).length;
 
   const panelStyle = {
-    background: "rgba(12,18,48,0.72)",
+    background: "#2f2f2f",
     border: "1px solid rgba(0,212,255,0.16)",
     borderRadius: "0.75rem",
     boxShadow: "0 18px 50px rgba(0,0,0,0.18)",
@@ -395,7 +395,7 @@ export default function Step7VideoPrompts() {
   const fieldStyle = {
     width: "100%",
     padding: "0.75rem",
-    background: "rgba(4,8,24,0.82)",
+    background: "#2a2a2a",
     border: "1px solid rgba(0,212,255,0.18)",
     borderRadius: "0.5rem",
     color: "rgba(255,255,255,0.88)",
@@ -461,7 +461,7 @@ export default function Step7VideoPrompts() {
             <div
               className="text-xs leading-relaxed p-3 rounded"
               style={{
-                background: "#1c1c1c",
+                background: "#2f2f2f",
                 color: "rgba(236,236,241,0.62)",
                 border: "1px solid rgba(255,255,255,0.08)",
               }}
@@ -736,7 +736,7 @@ export default function Step7VideoPrompts() {
                       className="w-full rounded-lg"
                       style={{
                         maxHeight: "260px",
-                        background: "rgba(4,8,24,0.82)",
+                        background: "#2a2a2a",
                         border: "1px solid rgba(0,212,255,0.18)",
                       }}
                     />

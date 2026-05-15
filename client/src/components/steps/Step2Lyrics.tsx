@@ -506,7 +506,7 @@ export default function Step2Lyrics() {
 
   // ── Styles ────────────────────────────────────────────────
   const panel = {
-    background: "rgba(12,18,48,0.72)",
+    background: "#2f2f2f",
     border: "1px solid rgba(255,255,255,0.1)",
     borderRadius: "0.75rem",
     padding: "1.25rem",
@@ -516,7 +516,7 @@ export default function Step2Lyrics() {
   const inputStyle = {
     width: "100%",
     padding: "0.75rem",
-    background: "rgba(4,8,24,0.82)",
+    background: "#2a2a2a",
     border: "1px solid rgba(255,255,255,0.1)",
     borderRadius: "0.5rem",
     color: "rgba(255,255,255,0.88)",
@@ -1138,7 +1138,7 @@ export default function Step2Lyrics() {
             </p>
 
             {/* Style text first — read it, then act on it */}
-            <pre style={{ margin: 0, padding: "0.875rem", background: "rgba(4,8,24,0.82)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.5rem", color: "rgba(236,236,241,0.82)", fontSize: "0.875rem", fontFamily: "monospace", fontWeight: 600, lineHeight: "1.7", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+            <pre style={{ margin: 0, padding: "0.875rem", background: "#2a2a2a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.5rem", color: "rgba(236,236,241,0.82)", fontSize: "0.875rem", fontFamily: "monospace", fontWeight: 600, lineHeight: "1.7", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
               {sunoStyleText(sunoStyle)}
             </pre>
 

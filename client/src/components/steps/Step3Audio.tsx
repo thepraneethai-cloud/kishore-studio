@@ -97,7 +97,7 @@ export default function Step3Audio() {
 
   // ── Shared styles ─────────────────────────────────────────
   const panel = {
-    background: "oklch(0.13 0.013 52)",
+    background: "#2f2f2f",
     border: "1px solid oklch(0.26 0.022 58)",
     borderRadius: "0.75rem",
     padding: "1.25rem",
@@ -141,7 +141,7 @@ export default function Step3Audio() {
               fontWeight: 600,
               cursor: "pointer",
               border: `1px solid ${tab === t ? "oklch(0.72 0.12 75 / 0.55)" : "oklch(0.26 0.022 58)"}`,
-              background: tab === t ? "oklch(0.72 0.12 75 / 0.14)" : "oklch(0.13 0.013 52)",
+              background: tab === t ? "oklch(0.72 0.12 75 / 0.14)" : "#2f2f2f",
               color: tab === t ? "oklch(0.80 0.12 78)" : "oklch(0.52 0.012 65)",
             }}
           >
@@ -163,18 +163,18 @@ export default function Step3Audio() {
               padding: "2rem",
               borderRadius: "0.65rem",
               border: `2px dashed oklch(0.35 0.05 65 / 0.6)`,
-              background: "oklch(0.11 0.010 52)",
+              background: "#2a2a2a",
               cursor: "pointer",
               textAlign: "center",
               minHeight: "160px",
               transition: "all 200ms",
             }}
             onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "oklch(0.72 0.12 75 / 0.8)"; e.currentTarget.style.background = "oklch(0.15 0.018 58)"; }}
-            onDragLeave={(e) => { e.currentTarget.style.borderColor = "oklch(0.35 0.05 65 / 0.6)"; e.currentTarget.style.background = "oklch(0.11 0.010 52)"; }}
+            onDragLeave={(e) => { e.currentTarget.style.borderColor = "oklch(0.35 0.05 65 / 0.6)"; e.currentTarget.style.background = "#2a2a2a"; }}
             onDrop={(e) => {
               e.preventDefault();
               e.currentTarget.style.borderColor = "oklch(0.35 0.05 65 / 0.6)";
-              e.currentTarget.style.background = "oklch(0.11 0.010 52)";
+              e.currentTarget.style.background = "#2a2a2a";
               const files = e.dataTransfer.files;
               if (files.length > 0) {
                 const input = document.createElement("input");
@@ -234,7 +234,7 @@ export default function Step3Audio() {
               style={{
                 flex: 1,
                 padding: "0.65rem 0.75rem",
-                background: "oklch(0.11 0.010 52)",
+                background: "#2a2a2a",
                 border: "1px solid oklch(0.28 0.025 58)",
                 borderRadius: "0.5rem",
                 color: "oklch(0.85 0.018 75)",
