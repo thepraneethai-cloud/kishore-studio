@@ -372,10 +372,40 @@ export default function Step2Lyrics() {
 
   const effectiveSubject = subjectInput.trim();
 
+  // ── API key status ────────────────────────────────────────
+  const { data: envKeyStatus } = trpc.settings.getEnvKeyStatus.useQuery();
+  const { data: userSettings } = trpc.settings.getSettings.useQuery();
+
+  const modelNeedsKey = (model: string): "gemini" | "openai" | "claude" | "groq" | "mistral" => {
+    if (/^(gpt-|o1-|o3-)/.test(model)) return "openai";
+    if (model.startsWith("claude-")) return "claude";
+    if (/^(llama-|qwen|gemma|mixtral)/.test(model)) return "groq";
+    if (/^(mistral-|codestral-|open-mixtral-)/.test(model)) return "mistral";
+    return "gemini";
+  };
+
+  const keyForModel = modelNeedsKey(llmModel);
+  const isKeyConfigured = (() => {
+    if (keyForModel === "gemini")  return !!(envKeyStatus?.geminiApiKey  || userSettings?.geminiApiKey);
+    if (keyForModel === "openai")  return !!(envKeyStatus?.openaiApiKey  || userSettings?.openaiApiKey);
+    if (keyForModel === "claude")  return !!(envKeyStatus?.claudeApiKey  || userSettings?.claudeApiKey);
+    if (keyForModel === "groq")    return !!(envKeyStatus?.groqApiKey    || userSettings?.groqApiKey);
+    if (keyForModel === "mistral") return !!(envKeyStatus?.mistralApiKey || userSettings?.mistralApiKey);
+    return false;
+  })();
+
   // ── tRPC mutations ────────────────────────────────────────
   const generateMutation = trpc.generation.generateLyrics.useMutation({
     onSuccess: (res) => {
-      if (!res.success || !res.data) { toast.error(res.error ?? "Generation failed"); return; }
+      if (!res.success || !res.data) {
+        const errMsg = res.error ?? "Generation failed";
+        if (errMsg.toLowerCase().includes("api key") || errMsg.toLowerCase().includes("key configured")) {
+          toast.error("No API key — add your key in Settings ⚙️ (top-right gear icon)", { duration: 6000 });
+        } else {
+          toast.error(errMsg);
+        }
+        return;
+      }
       setLyrics(sanitizeLyrics(res.data.lyrics));
       if (res.data.sunoStyle) {
         setSunoStyle(res.data.sunoStyle);
@@ -409,8 +439,11 @@ export default function Step2Lyrics() {
   const promptGenMutation = trpc.generation.generateLyricsPrompt.useMutation({
     onSuccess: (res) => {
       if (!res.success || !res.data) {
+        const errMsg = res.error ?? "Prompt generation failed";
         setPromptStatus("error");
-        setPromptError(res.error ?? "Prompt generation failed");
+        setPromptError(errMsg.toLowerCase().includes("api key") || errMsg.toLowerCase().includes("key configured")
+          ? "No API key — add your key in Settings ⚙️"
+          : errMsg);
         return;
       }
       setCustomPrompt(res.data.prompt);
@@ -684,6 +717,12 @@ export default function Step2Lyrics() {
           <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.36)", whiteSpace: "nowrap" }}>
             Used for all generation on this page
           </span>
+          {/* Key status badge — shown once env/settings data is loaded */}
+          {envKeyStatus !== undefined && (
+            isKeyConfigured
+              ? <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "0.15rem 0.5rem", borderRadius: "999px", background: "rgba(16,163,127,0.15)", color: "#10a37f", border: "1px solid rgba(16,163,127,0.35)", whiteSpace: "nowrap" }}>✓ key ready</span>
+              : <a href="/settings" style={{ fontSize: "0.68rem", fontWeight: 700, padding: "0.15rem 0.5rem", borderRadius: "999px", background: "rgba(255,80,80,0.12)", color: "rgba(255,100,100,0.9)", border: "1px solid rgba(255,80,80,0.35)", whiteSpace: "nowrap", textDecoration: "none" }}>⚠ no API key — add in Settings</a>
+          )}
         </div>
 
         <CollapsibleSection
