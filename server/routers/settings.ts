@@ -23,6 +23,8 @@ export const settingsRouter = router({
         pikaApiKey: z.string().optional(),
         groqApiKey: z.string().optional(),
         mistralApiKey: z.string().optional(),
+        falApiKey: z.string().optional(),
+        togetherApiKey: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

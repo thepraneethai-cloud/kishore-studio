@@ -61,10 +61,13 @@ export default function Step7VideoPrompts() {
   const [videoJobs, setVideoJobs] = useState<VideoJob[]>([]);
   const [genStatus, setGenStatus] = useState<"idle" | "submitting" | "polling" | "done" | "error">("idle");
   const [isPolling, setIsPolling] = useState(false);
+  const [videoProvider, setVideoProvider] = useState<"replicate" | "fal">("fal");
+  const [falVideoModel, setFalVideoModel] = useState<"wan" | "kling">("wan");
 
   const utils = trpc.useUtils();
   const { data: userSettings } = trpc.settings.getSettings.useQuery();
   const generateVideosMutation = trpc.generation.generateVideos.useMutation();
+  const generateVideosFalMutation = trpc.generation.generateVideosFal.useMutation();
 
   useEffect(() => {
     if (!isPolling || videoJobs.length === 0) return;
@@ -81,6 +84,29 @@ export default function Step7VideoPrompts() {
     const timer = setTimeout(async () => {
       try {
         const replicateApiKey = userSettings?.replicateApiKey || "";
+        const falApiKey = (userSettings as any)?.falApiKey || "";
+
+        if (videoProvider === "fal") {
+          if (!falApiKey) return;
+          const falJobs = pending.map((j) => ({ requestId: j.jobId, model: falVideoModel, sceneId: j.sceneId }));
+          const result = await utils.generation.pollFalJobs.fetch({ jobs: falJobs, falApiKey });
+          if (!result.success || !result.data) return;
+          const updatedJobs = videoJobs.map((job) => {
+            const updated = result.data!.find((r) => r.requestId === job.jobId);
+            if (!updated) return job;
+            const statusMap = { completed: "succeeded", failed: "failed", processing: "processing", queued: "starting" } as const;
+            const status = statusMap[updated.status as keyof typeof statusMap] || "starting";
+            return { ...job, status: status as VideoJob["status"], videoUrl: updated.videoUrl || job.videoUrl, error: updated.error };
+          });
+          setVideoJobs(updatedJobs);
+          setScenes(project.scenes.map((scene) => {
+            const job = updatedJobs.find((item) => item.sceneId === scene.id && item.status === "succeeded" && item.videoUrl);
+            return job ? { ...scene, videoUrl: job.videoUrl } : scene;
+          }));
+          return;
+        }
+
+        // Replicate path
         if (!replicateApiKey) return;
         const result = await utils.generation.pollJobs.fetch({
           jobIds: pending.map((job) => job.jobId),
@@ -111,7 +137,7 @@ export default function Step7VideoPrompts() {
     }, 4000);
 
     return () => clearTimeout(timer);
-  }, [isPolling, videoJobs, userSettings?.replicateApiKey, utils, project.scenes, setScenes]);
+  }, [isPolling, videoJobs, userSettings?.replicateApiKey, (userSettings as any)?.falApiKey, videoProvider, falVideoModel, utils, project.scenes, setScenes]);
 
   const buildMotionPrompt = (sceneDesc: string) => {
     const template = MOTION_TYPES[selectedMotion].template;
@@ -162,7 +188,13 @@ export default function Step7VideoPrompts() {
 
   const handleGenerateVideos = async () => {
     const replicateApiKey = userSettings?.replicateApiKey || "";
-    if (!replicateApiKey) {
+    const falApiKey = (userSettings as any)?.falApiKey || "";
+
+    if (videoProvider === "fal" && !falApiKey) {
+      toast.error("Add your fal.ai API key in Settings (free signup at fal.ai)");
+      return;
+    }
+    if (videoProvider === "replicate" && !replicateApiKey) {
       toast.error("Add your Replicate API key in Settings first");
       return;
     }
@@ -219,26 +251,46 @@ export default function Step7VideoPrompts() {
 
       setScenes(scenesWithHostedImages);
 
-      const result = await generateVideosMutation.mutateAsync({
-        replicateApiKey,
-        videos: hostedScenes.map(({ scene, imageUrl }) => ({
-          imageUrl,
-          motionPrompt: buildMotionPrompt(scene.sceneDescription),
-          duration: Math.max(5, Math.min(30, scene.duration || 6)),
-        })),
-      });
+      let jobs: VideoJob[];
 
-      if (!result.success || !result.data) {
-        throw new Error(result.error || "Video generation failed to start");
+      if (videoProvider === "fal") {
+        const result = await generateVideosFalMutation.mutateAsync({
+          falApiKey,
+          model: falVideoModel,
+          videos: hostedScenes.map(({ scene, imageUrl }) => ({
+            imageUrl,
+            motionPrompt: buildMotionPrompt(scene.sceneDescription),
+            sceneId: scene.id,
+          })),
+        });
+        if (!result.success || !result.data) {
+          throw new Error(result.error || "fal.ai video generation failed to start");
+        }
+        jobs = result.data.map((job) => ({
+          jobId: job.requestId,
+          sceneId: job.sceneId,
+          status: "starting" as VideoJob["status"],
+        }));
+      } else {
+        const result = await generateVideosMutation.mutateAsync({
+          replicateApiKey,
+          videos: hostedScenes.map(({ scene, imageUrl }) => ({
+            imageUrl,
+            motionPrompt: buildMotionPrompt(scene.sceneDescription),
+            duration: Math.max(5, Math.min(30, scene.duration || 6)),
+          })),
+        });
+        if (!result.success || !result.data) {
+          throw new Error(result.error || "Video generation failed to start");
+        }
+        jobs = result.data.map((job, idx) => ({
+          jobId: job.id,
+          sceneId: hostedScenes[idx].scene.id,
+          status: job.status as VideoJob["status"],
+          videoUrl: normalizeVideoSrc(Array.isArray(job.output) ? job.output[0] : (job.output as string | undefined)),
+          error: job.error,
+        }));
       }
-
-      const jobs: VideoJob[] = result.data.map((job, idx) => ({
-        jobId: job.id,
-        sceneId: hostedScenes[idx].scene.id,
-        status: job.status as VideoJob["status"],
-        videoUrl: normalizeVideoSrc(Array.isArray(job.output) ? job.output[0] : (job.output as string | undefined)),
-        error: job.error,
-      }));
 
       setScenes(scenesWithHostedImages.map((scene) => {
         const job = jobs.find((item) => item.sceneId === scene.id && item.status === "succeeded" && item.videoUrl);
@@ -248,7 +300,8 @@ export default function Step7VideoPrompts() {
       setVideoJobs(jobs);
       setGenStatus("polling");
       setIsPolling(true);
-      toast.success(`Generating ${jobs.length} video clips...`);
+      const providerLabel = videoProvider === "fal" ? `fal.ai (${falVideoModel === "wan" ? "Wan2.1" : "Kling"})` : "MiniMax via Replicate";
+      toast.success(`Generating ${jobs.length} video clips via ${providerLabel}...`);
     } catch (error) {
       setGenStatus("error");
       toast.error(error instanceof Error ? error.message : "Failed to start video generation");
@@ -264,10 +317,10 @@ export default function Step7VideoPrompts() {
     return (
       <div className="space-y-4">
         <div>
-          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>Step 5</p>
-          <h2 className="text-2xl font-bold" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>Video Prompts</h2>
+          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(236,236,241,0.45)", letterSpacing: "0.08em" }}>Step 5</p>
+          <h2 className="text-2xl font-bold mb-1" style={{ color: "#ececf1", letterSpacing: "-0.01em" }}>Video Prompts</h2>
         </div>
-        <div className="text-center py-12 rounded-lg" style={{ border: "2px dashed oklch(0.28 0.025 58)", color: "oklch(0.45 0.010 60)" }}>
+        <div className="text-center py-12 rounded-lg" style={{ border: "2px dashed rgba(255,255,255,0.1)", color: "rgba(236,236,241,0.35)" }}>
           <Video size={32} className="mx-auto mb-3 opacity-40" />
           <p className="text-sm">Please complete Step 3 (Scene Breakdown) first</p>
         </div>
@@ -322,26 +375,26 @@ export default function Step7VideoPrompts() {
       {/* Header */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
+          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(236,236,241,0.45)", letterSpacing: "0.08em" }}>
             Step 7
           </p>
-          <h2 className="text-2xl font-bold mb-1" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
+          <h2 className="text-2xl font-bold mb-1" style={{ color: "#ececf1", letterSpacing: "-0.01em" }}>
             Video Motion Prompts
           </h2>
-          <p className="text-sm" style={{ color: "oklch(0.55 0.012 65)" }}>
+          <p className="text-sm" style={{ color: "rgba(236,236,241,0.6)" }}>
             Generate motion prompts for Runway, Pika, Kling, or similar tools. Master Prompt guides thematic consistency.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <span
             className="text-xs font-semibold px-3 py-1.5 rounded-full"
-            style={{ background: "oklch(0.65 0.14 65 / 0.15)", color: "oklch(0.72 0.14 68)", border: "1px solid oklch(0.65 0.14 65 / 0.3)" }}
+            style={{ background: "rgba(255,255,255,0.05)", color: "rgba(236,236,241,0.72)", border: "1px solid rgba(255,255,255,0.12)" }}
           >
             {displayScenes.length}{approvedScenes.length > 0 ? " approved" : ""} scenes
           </span>
           <span
             className="text-xs font-semibold px-3 py-1.5 rounded-full"
-            style={{ background: "oklch(0.55 0.10 250 / 0.15)", color: "oklch(0.70 0.10 250)", border: "1px solid oklch(0.55 0.10 250 / 0.3)" }}
+            style={{ background: "rgba(255,255,255,0.05)", color: "rgba(236,236,241,0.62)", border: "1px solid rgba(255,255,255,0.12)" }}
           >
             ~{Math.floor(totalDuration / 60)}:{String(totalDuration % 60).padStart(2, "0")} total
           </span>
@@ -355,22 +408,22 @@ export default function Step7VideoPrompts() {
             onClick={() => setShowMasterPrompt(!showMasterPrompt)}
             className="flex items-center justify-between w-full text-left"
           >
-            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
               📋 Master Creative Vision (Reference)
             </p>
             {showMasterPrompt ? (
-              <ChevronUp size={16} style={{ color: "oklch(0.65 0.14 65)" }} />
+              <ChevronUp size={16} style={{ color: "rgba(236,236,241,0.45)" }} />
             ) : (
-              <ChevronDown size={16} style={{ color: "oklch(0.65 0.14 65)" }} />
+              <ChevronDown size={16} style={{ color: "rgba(236,236,241,0.45)" }} />
             )}
           </button>
           {showMasterPrompt && (
             <div
               className="text-xs leading-relaxed p-3 rounded"
               style={{
-                background: "oklch(0.14 0.016 52)",
-                color: "oklch(0.70 0.015 68)",
-                border: "1px solid oklch(0.24 0.020 55)",
+                background: "#1c1c1c",
+                color: "rgba(236,236,241,0.62)",
+                border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
               {project.masterPrompt}
@@ -431,7 +484,44 @@ export default function Step7VideoPrompts() {
           {MOTION_TYPES[selectedMotion].template.replace("{scene}", "[scene description]")}
         </div>
 
-        <div style={{ height: "1px", background: "oklch(0.25 0.020 55)" }} />
+        <div style={{ height: "1px", background: "rgba(255,255,255,0.1)" }} />
+
+        {/* Video provider selector */}
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "flex-end" }}>
+          <div style={{ flex: "0 0 auto", minWidth: "200px" }}>
+            <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.35rem" }}>
+              Video Provider
+            </label>
+            <select
+              value={videoProvider}
+              onChange={(e) => setVideoProvider(e.target.value as "replicate" | "fal")}
+              style={{ padding: "0.55rem 0.75rem", background: "#222", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "0.5rem", color: "#ececf1", fontSize: "0.8rem", cursor: "pointer", outline: "none" }}
+            >
+              <option value="fal">fal.ai — FREE credits (Wan2.1 / Kling)</option>
+              <option value="replicate">MiniMax via Replicate (~$0.05/clip)</option>
+            </select>
+          </div>
+          {videoProvider === "fal" && (
+            <div style={{ flex: "0 0 auto", minWidth: "180px" }}>
+              <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.35rem" }}>
+                Model
+              </label>
+              <select
+                value={falVideoModel}
+                onChange={(e) => setFalVideoModel(e.target.value as "wan" | "kling")}
+                style={{ padding: "0.55rem 0.75rem", background: "#222", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "0.5rem", color: "#ececf1", fontSize: "0.8rem", cursor: "pointer", outline: "none" }}
+              >
+                <option value="wan">Wan2.1 — fast (~$0.025/clip)</option>
+                <option value="kling">Kling v1.5 — best quality (~$0.03/clip)</option>
+              </select>
+            </div>
+          )}
+          {videoProvider === "fal" && (
+            <p style={{ fontSize: "0.72rem", color: "rgba(16,163,127,0.85)", fontWeight: 600, alignSelf: "flex-end", paddingBottom: "0.55rem" }}>
+              ✓ Free credits on signup at fal.ai
+            </p>
+          )}
+        </div>
 
         <div className="flex items-center justify-end gap-2 flex-wrap">
           <button
@@ -439,8 +529,8 @@ export default function Step7VideoPrompts() {
             disabled={genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0}
             className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-semibold transition-colors"
             style={{
-              background: readyForVideoCount > 0 ? "linear-gradient(135deg, #00d4ff, #25f52f)" : "oklch(0.20 0.016 52)",
-              color: readyForVideoCount > 0 ? "oklch(0.08 0.015 55)" : "oklch(0.40 0.010 60)",
+              background: readyForVideoCount > 0 ? "linear-gradient(135deg, #00d4ff, #25f52f)" : "#2a2a2a",
+              color: readyForVideoCount > 0 ? "#111111" : "rgba(236,236,241,0.3)",
               border: "1px solid rgba(0,212,255,0.35)",
               cursor: genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0 ? "not-allowed" : "pointer",
               opacity: genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0 ? 0.7 : 1,
@@ -453,9 +543,9 @@ export default function Step7VideoPrompts() {
             onClick={handleCopyAll}
             className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-colors"
             style={{
-              background: copiedAll ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.22 0.018 52)",
-              color: copiedAll ? "oklch(0.82 0.12 78)" : "oklch(0.65 0.015 68)",
-              border: `1px solid ${copiedAll ? "oklch(0.72 0.12 75 / 0.5)" : "oklch(0.30 0.025 58)"}`,
+              background: copiedAll ? "rgba(255,255,255,0.08)" : "#2a2a2a",
+              color: copiedAll ? "rgba(236,236,241,0.82)" : "rgba(236,236,241,0.58)",
+              border: `1px solid ${copiedAll ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.12)"}`,
             }}
           >
             {copiedAll ? <Check size={12} /> : <Copy size={12} />}
@@ -464,7 +554,7 @@ export default function Step7VideoPrompts() {
           <button
             onClick={handleDownloadCSV}
             className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-colors"
-            style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.30 0.025 58)" }}
+            style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.12)" }}
           >
             <Download size={12} />
             Export CSV
@@ -502,14 +592,14 @@ export default function Step7VideoPrompts() {
               <div className="flex items-center gap-2">
                 <span
                   className="text-xs font-bold px-2 py-0.5 rounded"
-                  style={{ background: "oklch(0.65 0.14 65 / 0.15)", color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}
+                  style={{ background: "rgba(255,255,255,0.05)", color: "rgba(236,236,241,0.45)", fontFamily: "'Cinzel', serif" }}
                 >
                   {idx + 1}
                 </span>
-                <span className="text-xs telugu-text truncate max-w-[240px]" style={{ color: "oklch(0.65 0.015 68)" }}>
+                <span className="text-xs telugu-text truncate max-w-[240px]" style={{ color: "rgba(236,236,241,0.58)" }}>
                   {scene.lyricLine || "Scene " + (idx + 1)}
                 </span>
-                <span className="text-xs" style={{ color: "oklch(0.45 0.010 60)" }}>
+                <span className="text-xs" style={{ color: "rgba(236,236,241,0.35)" }}>
                   {scene.duration}s
                 </span>
               </div>
@@ -517,16 +607,16 @@ export default function Step7VideoPrompts() {
                 onClick={() => handleCopyOne(scene.id, buildMotionPrompt(scene.sceneDescription))}
                 className="flex items-center gap-1 text-xs px-2.5 py-1 rounded transition-colors"
                 style={{
-                  background: copiedId === scene.id ? "oklch(0.65 0.14 65 / 0.15)" : "oklch(0.22 0.018 52)",
-                  color: copiedId === scene.id ? "oklch(0.65 0.14 65)" : "oklch(0.55 0.012 65)",
-                  border: `1px solid ${copiedId === scene.id ? "oklch(0.65 0.14 65 / 0.4)" : "oklch(0.25 0.020 55)"}`,
+                  background: copiedId === scene.id ? "rgba(255,255,255,0.05)" : "#2a2a2a",
+                  color: copiedId === scene.id ? "rgba(236,236,241,0.45)" : "rgba(236,236,241,0.45)",
+                  border: `1px solid ${copiedId === scene.id ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.1)"}`,
                 }}
               >
                 {copiedId === scene.id ? <Check size={10} /> : <Copy size={10} />}
                 {copiedId === scene.id ? "Copied" : "Copy"}
               </button>
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: "oklch(0.60 0.015 68)" }}>
+            <p className="text-xs leading-relaxed" style={{ color: "rgba(236,236,241,0.52)" }}>
               {buildMotionPrompt(scene.sceneDescription)}
             </p>
             {(() => {
@@ -541,11 +631,11 @@ export default function Step7VideoPrompts() {
                         background:
                           job.status === "succeeded" ? "oklch(0.18 0.06 150)" :
                           job.status === "failed"    ? "oklch(0.18 0.05 20)"  :
-                                                       "oklch(0.22 0.018 52)",
+                                                       "#2a2a2a",
                         color:
                           job.status === "succeeded" ? "oklch(0.72 0.12 145)" :
                           job.status === "failed"    ? "oklch(0.70 0.15 25)"  :
-                                                       "oklch(0.55 0.012 65)",
+                                                       "rgba(236,236,241,0.45)",
                         border: "1px solid currentColor",
                         opacity: 0.85,
                       }}
@@ -583,8 +673,8 @@ export default function Step7VideoPrompts() {
         onClick={handleContinue}
         className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 hover:opacity-90"
         style={{
-          background: "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
-          color: "oklch(0.12 0.015 55)",
+          background: "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
+          color: "#181818",
           fontFamily: "'Cinzel', serif",
         }}
       >

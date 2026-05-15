@@ -253,7 +253,7 @@ function normalizeSubjectKey(name: string): string {
 
 // ── Component ─────────────────────────────────────────────────
 export default function Step2Lyrics() {
-  const { project, setDeity, setTitle, setLyrics, setSunoStyle, setMasterPrompt, setSongMeta, setActiveStep, markStepComplete, undoLyrics, canUndoLyrics, resetProject } = useProject();
+  const { project, setDeity, setTitle, setLyrics, setSunoStyle, setMasterPrompt, setCreativeBrief, setExtraDirection, setSongMeta, setActiveStep, markStepComplete, undoLyrics, canUndoLyrics, resetProject } = useProject();
   const { masterPrompt, showMasterPromptPanel, setShowMasterPromptPanel, masterPromptFeedback, setMasterPromptFeedback, generateMasterPrompt, refineMasterPrompt, isGenerating: isMasterPromptGenerating, isRefining: isMasterPromptRefining } = useMasterPrompt();
 
   const [subjectInput,    setSubjectInput]    = useState("");
@@ -268,9 +268,12 @@ export default function Step2Lyrics() {
   const [duration,      setDuration]      = useState(4);
   const [llmModel,      setLlmModel]      = useState("gemini-2.5-flash");
 
-  const [visionInput,       setVisionInput]       = useState("");
-  const [customPrompt,      setCustomPrompt]       = useState("");
+  const [visionInput,       setVisionInputLocal]  = useState(project.creativeBrief || "");
+  const [customPrompt,      setCustomPromptLocal] = useState(project.extraDirection || "");
   const [isVisionDirective, setIsVisionDirective] = useState(false);
+
+  const setVisionInput = (v: string) => { setVisionInputLocal(v); setCreativeBrief(v); };
+  const setCustomPrompt = (v: string) => { setCustomPromptLocal(v); setExtraDirection(v); };
 
   const [promptStatus,    setPromptStatus]    = useState<"idle" | "done" | "error">("idle");
   const [promptError,     setPromptError]     = useState("");
@@ -304,8 +307,8 @@ export default function Step2Lyrics() {
     setCategory((project.category as SongCategory) || "devotional");
     setMood(project.mood || "");
     setLanguageStyle(project.languageStyle || "pure_telugu");
-    setVisionInput("");
-    setCustomPrompt("");
+    setVisionInputLocal(project.creativeBrief || "");
+    setCustomPromptLocal(project.extraDirection || "");
     setIsVisionDirective(false);
     setPromptStatus("idle");
     setPromptError("");
@@ -504,7 +507,7 @@ export default function Step2Lyrics() {
   // ── Styles ────────────────────────────────────────────────
   const panel = {
     background: "rgba(12,18,48,0.72)",
-    border: "1px solid rgba(0,212,255,0.16)",
+    border: "1px solid rgba(255,255,255,0.1)",
     borderRadius: "0.75rem",
     padding: "1.25rem",
     boxShadow: "0 18px 50px rgba(0,0,0,0.18)",
@@ -514,7 +517,7 @@ export default function Step2Lyrics() {
     width: "100%",
     padding: "0.75rem",
     background: "rgba(4,8,24,0.82)",
-    border: "1px solid rgba(0,212,255,0.18)",
+    border: "1px solid rgba(255,255,255,0.1)",
     borderRadius: "0.5rem",
     color: "rgba(255,255,255,0.88)",
     fontSize: "0.9rem",
@@ -525,7 +528,7 @@ export default function Step2Lyrics() {
   const selectStyle = {
     ...inputStyle,
     resize: undefined,
-    color: "#00d4ff",
+    color: "rgba(236,236,241,0.82)",
     fontWeight: 600,
     cursor: "pointer",
   } as const;
@@ -541,25 +544,25 @@ export default function Step2Lyrics() {
   };
 
   const helperStyle = { fontSize: "0.72rem", color: "rgba(255,255,255,0.38)", marginTop: "0.35rem", lineHeight: "1.5" } as const;
-  const examplesBox = { marginTop: "0.75rem", padding: "0.75rem", background: "rgba(4,8,24,0.55)", border: "1px solid rgba(0,212,255,0.08)", borderRadius: "0.5rem" } as const;
+  const examplesBox = { marginTop: "0.75rem", padding: "0.75rem", background: "rgba(4,8,24,0.55)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "0.5rem" } as const;
 
-  const chip = (active: boolean, color = "rgba(0,212,255") => ({
+  const chip = (active: boolean, color = "rgba(236,236,241") => ({
     padding: "0.3rem 0.8rem",
     borderRadius: "999px",
     fontSize: "0.78rem",
     fontWeight: 600,
     cursor: "pointer",
     transition: "all 150ms",
-    background: active ? `${color},0.25)` : `${color},0.06)`,
-    color: active ? `${color},1)` : `${color},0.5)`,
-    border: `1px solid ${active ? `${color},0.55)` : `${color},0.18)`}`,
+    background: active ? `${color},0.25)` : "rgba(255,255,255,0.04)",
+    color: active ? "rgba(236,236,241,0.9)" : "rgba(236,236,241,0.5)",
+    border: `1px solid ${active ? `${color},0.55)` : "rgba(255,255,255,0.1)"}`,
     whiteSpace: "nowrap" as const,
   });
 
   const primaryBtn = (disabled: boolean) => ({
     display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
     padding: "0.875rem 1.5rem",
-    background: disabled ? "rgba(0,212,255,0.14)" : "linear-gradient(135deg, #00d4ff 0%, #39ff14 100%)",
+    background: disabled ? "rgba(255,255,255,0.07)" : "linear-gradient(135deg, #00d4ff 0%, #39ff14 100%)",
     color: disabled ? "rgba(255,255,255,0.3)" : "#000",
     border: "none", borderRadius: "0.65rem",
     fontWeight: "700" as const, fontSize: "0.95rem",
@@ -570,9 +573,9 @@ export default function Step2Lyrics() {
   const secondaryBtn = (disabled: boolean) => ({
     display: "flex", alignItems: "center", gap: "0.4rem",
     padding: "0.625rem 1.125rem",
-    background: disabled ? "rgba(0,212,255,0.08)" : "rgba(0,212,255,0.15)",
-    color: disabled ? "rgba(0,212,255,0.35)" : "#00d4ff",
-    border: `1px solid ${disabled ? "rgba(0,212,255,0.1)" : "rgba(0,212,255,0.4)"}`,
+    background: disabled ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.07)",
+    color: disabled ? "rgba(236,236,241,0.35)" : "rgba(236,236,241,0.82)",
+    border: `1px solid ${disabled ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.2)"}`,
     borderRadius: "0.375rem",
     fontWeight: "600" as const, fontSize: "0.8rem",
     cursor: disabled ? "not-allowed" : "pointer",
@@ -586,19 +589,19 @@ export default function Step2Lyrics() {
 
         {/* Header */}
         <div style={{ marginBottom: "1.25rem" }}>
-          <p style={{ fontSize: "0.7rem", fontWeight: 600, color: "rgba(0,212,255,0.7)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.4rem" }}>
-            Step 1 · Concept & Lyrics
+          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(236,236,241,0.45)", letterSpacing: "0.08em" }}>
+            Step 1
           </p>
-          <h1 style={{ fontSize: "1.7rem", fontWeight: 700, color: "rgba(255,255,255,0.92)", margin: "0 0 0.4rem" }}>
-            Song concept
-          </h1>
-          <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.54)", margin: 0 }}>
+          <h2 className="text-2xl font-bold mb-1" style={{ color: "#ececf1", letterSpacing: "-0.01em" }}>
+            Concept &amp; Lyrics
+          </h2>
+          <p className="text-sm" style={{ color: "rgba(236,236,241,0.6)" }}>
             Fill the brief once. The studio will create lyrics, SUNO style, and scene-ready direction from it.
           </p>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem", padding: "0.75rem 1rem", background: "rgba(0,212,255,0.05)", border: "1px solid rgba(0,212,255,0.18)", borderRadius: "0.75rem", flexWrap: "wrap" }}>
-          <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "rgba(0,212,255,0.7)", whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem", padding: "0.75rem 1rem", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.75rem", flexWrap: "wrap" }}>
+          <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "rgba(236,236,241,0.6)", whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.05em" }}>
             AI Model
           </span>
           <select
@@ -639,7 +642,7 @@ export default function Step2Lyrics() {
         </div>
 
         <div style={{ ...panel, marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "#00d4ff", marginBottom: "1rem" }}>
+          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", marginBottom: "1rem" }}>
             1. Basic details
           </p>
           <div className="concept-grid">
@@ -670,7 +673,7 @@ export default function Step2Lyrics() {
               {showSuggestions && suggestions.length > 0 && (
                 <div style={{
                   position: "absolute", top: "calc(100% + 0.25rem)", left: 0, right: 0, zIndex: 20,
-                  background: "#0d1230", border: "1px solid rgba(0,212,255,0.3)",
+                  background: "#0d1230", border: "1px solid rgba(255,255,255,0.14)",
                   borderRadius: "0.5rem", marginTop: "2px", overflow: "hidden",
                 }}>
                   {suggestions.map((s) => (
@@ -683,7 +686,7 @@ export default function Step2Lyrics() {
                         color: "rgba(255,255,255,0.75)", fontSize: "0.85rem",
                         border: "none", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.05)",
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,212,255,0.12)"; e.currentTarget.style.color = "#00d4ff"; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(236,236,241,0.82)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "rgba(255,255,255,0.75)"; }}
                     >
                       {s}
@@ -708,7 +711,7 @@ export default function Step2Lyrics() {
           {subjectInput && !project.deity && (
             <button
               onMouseDown={() => handleSelectSubject(subjectInput)}
-              style={{ marginTop: "0.75rem", padding: "0.5rem 1rem", background: "rgba(0,212,255,0.14)", color: "#00d4ff", border: "1px solid rgba(0,212,255,0.35)", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}
+              style={{ marginTop: "0.75rem", padding: "0.5rem 1rem", background: "rgba(255,255,255,0.07)", color: "rgba(236,236,241,0.82)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}
             >
               Use "{subjectInput}"
             </button>
@@ -717,7 +720,7 @@ export default function Step2Lyrics() {
 
         {/* ── GENERATION SETTINGS ──────────────────────── */}
         <div style={{ ...panel, marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "#00d4ff", marginBottom: "1rem" }}>
+          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", marginBottom: "1rem" }}>
             2. Generation settings
           </p>
 
@@ -764,7 +767,7 @@ export default function Step2Lyrics() {
           {!showSunoPanel && sunoStyle && outputType !== "lyrics_only" && (
             <button
               onClick={() => setShowSunoPanel(true)}
-              style={{ marginTop: "0.4rem", background: "none", border: "none", padding: 0, fontSize: "0.72rem", color: "rgba(0,212,255,0.68)", cursor: "pointer", fontWeight: 600, textDecoration: "underline" }}
+              style={{ marginTop: "0.4rem", background: "none", border: "none", padding: 0, fontSize: "0.72rem", color: "rgba(236,236,241,0.55)", cursor: "pointer", fontWeight: 600, textDecoration: "underline" }}
             >
               Show SUNO style from previous generation
             </button>
@@ -773,7 +776,7 @@ export default function Step2Lyrics() {
 
         {/* ── SONG BRIEF ───────────────────────────────── */}
         <div style={{ ...panel, marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "#00d4ff", marginBottom: "0.35rem" }}>
+          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", marginBottom: "0.35rem" }}>
             3. Creative brief
           </p>
           <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.42)", marginBottom: "1rem" }}>
@@ -813,9 +816,9 @@ export default function Step2Lyrics() {
                 style={{
                   display: "flex", alignItems: "center", gap: "0.5rem",
                   padding: "0.625rem 1.25rem",
-                  background: promptGenMutation.isPending ? "rgba(0,212,255,0.14)" : "rgba(0,212,255,0.15)",
-                  color: promptGenMutation.isPending ? "rgba(0,212,255,0.45)" : "#00d4ff",
-                  border: "1px solid rgba(0,212,255,0.35)", borderRadius: "0.5rem",
+                  background: promptGenMutation.isPending ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.07)",
+                  color: promptGenMutation.isPending ? "rgba(236,236,241,0.35)" : "rgba(236,236,241,0.82)",
+                  border: "1px solid rgba(255,255,255,0.16)", borderRadius: "0.5rem",
                   fontWeight: 600, fontSize: "0.875rem",
                   cursor: promptGenMutation.isPending || !visionInput.trim() ? "not-allowed" : "pointer",
                   opacity: !visionInput.trim() ? 0.5 : 1,
@@ -830,7 +833,7 @@ export default function Step2Lyrics() {
               </button>
 
               {promptGenMutation.isPending && (
-                <span style={{ fontSize: "0.78rem", color: "rgba(0,212,255,0.7)", fontStyle: "italic" }}>
+                <span style={{ fontSize: "0.78rem", color: "rgba(236,236,241,0.6)", fontStyle: "italic" }}>
                   In progress...
                 </span>
               )}
@@ -849,7 +852,7 @@ export default function Step2Lyrics() {
 
         {/* ── CUSTOM DIRECTION ─────────────────────────── */}
         <div style={{ ...panel, marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "#00d4ff", marginBottom: "0.25rem" }}>
+          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", marginBottom: "0.25rem" }}>
             4. Extra direction <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "rgba(255,255,255,0.35)" }}>(optional)</span>
           </p>
           <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.85rem" }}>
@@ -858,7 +861,7 @@ export default function Step2Lyrics() {
 
           {customPrompt && (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-              <p style={{ fontSize: "0.75rem", color: isVisionDirective ? "#a78bfa" : "rgba(255,255,255,0.35)", fontStyle: "italic", margin: 0 }}>
+              <p style={{ fontSize: "0.75rem", color: isVisionDirective ? "rgba(236,236,241,0.85)" : "rgba(255,255,255,0.35)", fontStyle: "italic", margin: 0 }}>
                 {isVisionDirective ? "✓ AI-generated directive — you can edit it here." : "Custom direction active"}
               </p>
               <button
@@ -890,7 +893,7 @@ export default function Step2Lyrics() {
                       <button
                         onClick={() => { setCustomPrompt(ex); setIsVisionDirective(false); }}
                         style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: "0.15rem 0", fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", lineHeight: "1.4", width: "100%", marginBottom: "0.15rem" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(0,212,255,0.75)"; }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(236,236,241,0.65)"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}
                       >
                         • {ex}
@@ -902,7 +905,7 @@ export default function Step2Lyrics() {
                       <button
                         onClick={() => { setCustomPrompt(ex.text); setIsVisionDirective(false); }}
                         style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: "0.15rem 0", fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", lineHeight: "1.4", width: "100%", marginBottom: "0.15rem", display: "flex", gap: "0.4rem" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(0,212,255,0.75)"; }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(236,236,241,0.65)"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}
                       >
                         <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", flexShrink: 0, paddingTop: "1px" }}>[{ex.cat}]</span>
@@ -916,25 +919,27 @@ export default function Step2Lyrics() {
 
           {project.lyrics && customPrompt.trim() && (
             <p style={{ ...helperStyle, marginTop: "0.5rem" }}>
-              Direction saved — click <strong style={{ color: "rgba(0,212,255,0.7)" }}>Regenerate lyrics</strong> above to apply it.
+              Direction saved — click <strong style={{ color: "rgba(236,236,241,0.6)" }}>Regenerate lyrics</strong> above to apply it.
             </p>
           )}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.85rem", paddingTop: "0.85rem", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ marginTop: "0.85rem", paddingTop: "0.85rem", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
             <button
               onClick={handleGenerateMasterPrompt}
               disabled={isMasterPromptGenerating || !effectiveSubject}
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "0.45rem",
-                fontSize: "0.8rem",
-                fontWeight: 700,
-                color: isMasterPromptGenerating || !effectiveSubject ? "rgba(0,212,255,0.35)" : "#00d4ff",
-                background: isMasterPromptGenerating || !effectiveSubject ? "rgba(0,212,255,0.06)" : "rgba(0,212,255,0.12)",
-                border: "1px solid rgba(0,212,255,0.25)",
+                gap: "0.5rem",
+                padding: "0.625rem 1.25rem",
+                background: isMasterPromptGenerating || !effectiveSubject ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.07)",
+                color: isMasterPromptGenerating || !effectiveSubject ? "rgba(236,236,241,0.35)" : "rgba(236,236,241,0.82)",
+                border: "1px solid rgba(255,255,255,0.16)",
                 borderRadius: "0.5rem",
-                padding: "0.6rem 1rem",
+                fontWeight: 600,
+                fontSize: "0.875rem",
                 cursor: isMasterPromptGenerating || !effectiveSubject ? "not-allowed" : "pointer",
+                opacity: !effectiveSubject ? 0.5 : 1,
+                transition: "all 200ms",
               }}
             >
               {isMasterPromptGenerating
@@ -948,7 +953,7 @@ export default function Step2Lyrics() {
         <div style={{ ...panel, marginBottom: "1rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
             <div>
-              <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "#00d4ff", margin: 0 }}>5. Creative Direction (Master Prompt)</p>
+              <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", margin: 0 }}>5. Creative Direction (Master Prompt)</p>
               <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", margin: "0.25rem 0 0" }}>
                 Generate or edit the master direction before lyrics.
               </p>
@@ -963,7 +968,7 @@ export default function Step2Lyrics() {
                       });
                   }}
                   disabled={isMasterPromptGenerating}
-                  style={{ fontSize: "0.78rem", fontWeight: 700, color: "rgba(0,212,255,0.8)", background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.25)", borderRadius: "0.5rem", padding: "0.55rem 0.9rem", cursor: "pointer" }}
+                  style={{ fontSize: "0.78rem", fontWeight: 700, color: "rgba(236,236,241,0.7)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "0.5rem", padding: "0.55rem 0.9rem", cursor: "pointer" }}
                 >
                   {isMasterPromptGenerating ? "Regenerating..." : "Regenerate"}
                 </button>
@@ -978,7 +983,7 @@ export default function Step2Lyrics() {
             }}
             rows={8}
             placeholder="Creative Direction will appear here. You can also write your own direction manually."
-            style={{ ...inputStyle, color: "#a8d8ea", fontFamily: "monospace", fontSize: "0.875rem", lineHeight: "1.6", minHeight: "200px" }}
+            style={{ ...inputStyle, color: "#ececf1", fontFamily: "monospace", fontSize: "0.875rem", lineHeight: "1.6", minHeight: "200px" }}
           />
           {!effectiveSubject && (
             <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", margin: "0.75rem 0 0" }}>
@@ -1031,7 +1036,7 @@ export default function Step2Lyrics() {
             </div>
 
             <div style={{ ...panel, marginBottom: "0.75rem" }}>
-              <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "#00d4ff", margin: "0 0 0.25rem" }}>6. Generated Lyrics</p>
+              <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", margin: "0 0 0.25rem" }}>6. Generated Lyrics</p>
               <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", margin: "0 0 0.75rem" }}>
                 Edit freely — changes save automatically.
               </p>
@@ -1039,7 +1044,7 @@ export default function Step2Lyrics() {
                 value={sanitizeLyrics(project.lyrics)}
                 onChange={(e) => setLyrics(e.target.value)}
                 rows={14}
-                style={{ ...inputStyle, color: "#a8d8ea", fontFamily: "monospace", fontSize: "0.875rem", lineHeight: "1.7", minHeight: "260px" }}
+                style={{ ...inputStyle, color: "#ececf1", fontFamily: "monospace", fontSize: "0.875rem", lineHeight: "1.7", minHeight: "260px" }}
               />
               {/* Action row — below the content so the flow is: read → act */}
               <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.85rem", paddingTop: "0.75rem", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
@@ -1053,7 +1058,7 @@ export default function Step2Lyrics() {
                 )}
                 <button
                   onClick={() => copyToClipboard(sanitizeLyrics(project.lyrics), "Lyrics")}
-                  style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.5rem 0.9rem", background: "rgba(0,212,255,0.12)", color: "#00d4ff", border: "1px solid rgba(0,212,255,0.35)", borderRadius: "0.5rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}
+                  style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.5rem 0.9rem", background: "rgba(255,255,255,0.06)", color: "rgba(236,236,241,0.82)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: "0.5rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}
                 >
                   <Copy size={13} /> Copy lyrics
                 </button>
@@ -1070,7 +1075,7 @@ export default function Step2Lyrics() {
             <div style={{ ...panel, marginBottom: "1rem" }}>
               <button
                 onClick={() => setShowIterate(!showIterate)}
-                style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "none", border: "none", color: showIterate ? "#00d4ff" : "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer", fontWeight: 700, padding: 0, width: "100%", textAlign: "left" }}
+                style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "none", border: "none", color: showIterate ? "rgba(236,236,241,0.82)" : "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer", fontWeight: 700, padding: 0, width: "100%", textAlign: "left" }}
               >
                 {showIterate ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
                 Iterate with feedback
@@ -1125,15 +1130,15 @@ export default function Step2Lyrics() {
           <div style={{ ...panel, marginBottom: "1.75rem" }}>
             {/* Header — title + description only */}
             <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.25rem" }}>
-              <Music size={17} style={{ color: "#00d4ff" }} />
-              <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "#00d4ff", margin: 0 }}>SUNO music style</p>
+              <Music size={17} style={{ color: "rgba(236,236,241,0.82)" }} />
+              <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", margin: 0 }}>SUNO music style</p>
             </div>
             <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.75rem" }}>
               A ready-to-paste style prompt for SUNO. Refine to localize instruments or tempo.
             </p>
 
             {/* Style text first — read it, then act on it */}
-            <pre style={{ margin: 0, padding: "0.875rem", background: "rgba(4,8,24,0.82)", border: "1px solid rgba(0,212,255,0.16)", borderRadius: "0.5rem", color: "#00d4ff", fontSize: "0.875rem", fontFamily: "monospace", fontWeight: 600, lineHeight: "1.7", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+            <pre style={{ margin: 0, padding: "0.875rem", background: "rgba(4,8,24,0.82)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.5rem", color: "rgba(236,236,241,0.82)", fontSize: "0.875rem", fontFamily: "monospace", fontWeight: 600, lineHeight: "1.7", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
               {sunoStyleText(sunoStyle)}
             </pre>
 
@@ -1141,7 +1146,7 @@ export default function Step2Lyrics() {
             <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
               <button
                 onClick={() => copyToClipboard(sunoStyleText(sunoStyle), "SUNO style")}
-                style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.5rem 1rem", background: "rgba(0,212,255,0.12)", color: "#00d4ff", border: "1px solid rgba(0,212,255,0.35)", borderRadius: "0.5rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}
+                style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.5rem 1rem", background: "rgba(255,255,255,0.06)", color: "rgba(236,236,241,0.82)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: "0.5rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}
               >
                 <Copy size={13} /> Copy for SUNO
               </button>
@@ -1155,7 +1160,7 @@ export default function Step2Lyrics() {
             </div>
 
             {showSunoRefine && (
-              <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid rgba(0,212,255,0.12)" }}>
+              <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                 <label style={{ ...labelStyle, marginBottom: "0.5rem" }}>What would you like to change in the music style?</label>
                 <textarea
                   value={sunoFeedback}

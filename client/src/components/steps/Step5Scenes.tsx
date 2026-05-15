@@ -185,8 +185,8 @@ function generateScenesFromLyrics(lyrics: string, deityKey: string): Scene[] {
 // ── Emotional weight display config ──────────────────────────
 const WEIGHT_CONFIG: Record<EmotionalWeight, { label: string; color: string; bg: string }> = {
   reverent:    { label: "Reverent",    color: "oklch(0.65 0.08 230)", bg: "oklch(0.18 0.04 230 / 0.5)" },
-  longing:     { label: "Longing",     color: "oklch(0.72 0.12 55)",  bg: "oklch(0.18 0.06 55 / 0.5)"  },
-  devotional:  { label: "Devotional",  color: "oklch(0.75 0.12 75)",  bg: "oklch(0.18 0.06 75 / 0.5)"  },
+  longing:     { label: "Longing",     color: "rgba(236,236,241,0.75)",  bg: "rgba(255,255,255,0.06)"  },
+  devotional:  { label: "Devotional",  color: "rgba(236,236,241,0.82)",  bg: "rgba(255,255,255,0.06)"  },
   ecstatic:    { label: "Ecstatic",    color: "oklch(0.88 0.15 85)",  bg: "oklch(0.20 0.08 85 / 0.5)"  },
   surrendered: { label: "Surrendered", color: "oklch(0.60 0.06 180)", bg: "oklch(0.16 0.03 180 / 0.5)" },
 };
@@ -340,22 +340,22 @@ export default function Step5Scenes() {
       {/* Header */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
+          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(236,236,241,0.45)", letterSpacing: "0.08em" }}>
             Step 3
           </p>
-          <h2 className="text-2xl font-bold" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
+          <h2 className="text-2xl font-bold mb-1" style={{ color: "#ececf1", letterSpacing: "-0.01em" }}>
             Scene Breakdown
           </h2>
-          <p className="text-sm mt-1" style={{ color: "oklch(0.60 0.015 68)" }}>
+          <p className="text-sm mt-1" style={{ color: "rgba(236,236,241,0.6)" }}>
             Each lyric line becomes one visual scene. Run Director Analysis to apply cinematic shot vocabulary.
           </p>
         </div>
         {project.scenes.length > 0 && (
           <div className="flex items-center gap-2 flex-shrink-0 mt-1">
-            <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "oklch(0.72 0.12 75 / 0.15)", color: "oklch(0.80 0.12 78)", border: "1px solid oklch(0.72 0.12 75 / 0.3)" }}>
+            <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "rgba(255,255,255,0.06)", color: "#ececf1", border: "1px solid rgba(255,255,255,0.12)" }}>
               {project.scenes.length} scenes
             </span>
-            <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: "oklch(0.18 0.016 52)", color: "oklch(0.60 0.012 65)", border: "1px solid oklch(0.28 0.025 58)" }}>
+            <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: "#222222", color: "rgba(236,236,241,0.52)", border: "1px solid rgba(255,255,255,0.1)" }}>
               ~{Math.floor(totalDuration / 60)}:{String(totalDuration % 60).padStart(2, "0")} total
             </span>
           </div>
@@ -370,28 +370,28 @@ export default function Step5Scenes() {
             className="flex items-center justify-between w-full text-left"
           >
             <div className="flex items-center gap-2">
-              <Clapperboard size={14} style={{ color: "oklch(0.72 0.12 75)" }} />
-              <span className="text-sm font-semibold" style={{ color: "oklch(0.80 0.12 78)", fontFamily: "'Cinzel', serif" }}>
+              <Clapperboard size={14} style={{ color: "rgba(236,236,241,0.82)" }} />
+              <span className="text-sm font-semibold" style={{ color: "#ececf1", fontFamily: "'Cinzel', serif" }}>
                 Cinematic Style Sheet
               </span>
             </div>
-            <span className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>
+            <span className="text-xs" style={{ color: "rgba(236,236,241,0.4)" }}>
               {showStyleSheet ? "▼" : "▶"}
             </span>
           </button>
           {showStyleSheet && (
             <div className="space-y-2 pt-1">
               <div>
-                <p className="text-xs font-semibold mb-0.5" style={{ color: "oklch(0.65 0.10 75)" }}>Color Palette</p>
-                <p className="text-xs" style={{ color: "oklch(0.70 0.015 68)" }}>{project.cinematicStyle.colorPalette}</p>
+                <p className="text-xs font-semibold mb-0.5" style={{ color: "rgba(236,236,241,0.7)" }}>Color Palette</p>
+                <p className="text-xs" style={{ color: "rgba(236,236,241,0.62)" }}>{project.cinematicStyle.colorPalette}</p>
               </div>
               <div>
-                <p className="text-xs font-semibold mb-0.5" style={{ color: "oklch(0.65 0.10 75)" }}>Lighting Style</p>
-                <p className="text-xs" style={{ color: "oklch(0.70 0.015 68)" }}>{project.cinematicStyle.lightingStyle}</p>
+                <p className="text-xs font-semibold mb-0.5" style={{ color: "rgba(236,236,241,0.7)" }}>Lighting Style</p>
+                <p className="text-xs" style={{ color: "rgba(236,236,241,0.62)" }}>{project.cinematicStyle.lightingStyle}</p>
               </div>
               <div>
-                <p className="text-xs font-semibold mb-0.5" style={{ color: "oklch(0.65 0.10 75)" }}>Mood Arc</p>
-                <p className="text-xs" style={{ color: "oklch(0.70 0.015 68)" }}>{project.cinematicStyle.moodArc}</p>
+                <p className="text-xs font-semibold mb-0.5" style={{ color: "rgba(236,236,241,0.7)" }}>Mood Arc</p>
+                <p className="text-xs" style={{ color: "rgba(236,236,241,0.62)" }}>{project.cinematicStyle.moodArc}</p>
               </div>
             </div>
           )}
@@ -401,7 +401,7 @@ export default function Step5Scenes() {
       {/* Emotional Arc Visualization */}
       {hasDirectorData && (
         <div className="shrine-panel p-4 space-y-2">
-          <p className="text-xs font-semibold" style={{ color: "oklch(0.65 0.10 75)", fontFamily: "'Cinzel', serif" }}>
+          <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.7)", fontFamily: "'Cinzel', serif" }}>
             Emotional Arc
           </p>
           <div className="flex gap-0.5 rounded overflow-hidden" style={{ height: "8px" }}>
@@ -423,7 +423,7 @@ export default function Step5Scenes() {
               return (
                 <div key={w} className="flex items-center gap-1 text-xs">
                   <div style={{ width: "8px", height: "8px", borderRadius: "2px", background: arcColors[w] }} />
-                  <span style={{ color: "oklch(0.55 0.012 65)" }}>{WEIGHT_CONFIG[w].label} ({count})</span>
+                  <span style={{ color: "rgba(236,236,241,0.45)" }}>{WEIGHT_CONFIG[w].label} ({count})</span>
                 </div>
               );
             })}
@@ -432,10 +432,10 @@ export default function Step5Scenes() {
       )}
 
       {/* Controls panel */}
-      <div className="rounded-xl p-4" style={{ background: "oklch(0.17 0.014 52)", border: "1px solid oklch(0.28 0.025 58)", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <div className="rounded-xl p-4" style={{ background: "#1e1e1e", border: "1px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
         {/* Row 1: LLM Model */}
         <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold flex-shrink-0" style={{ color: "oklch(0.55 0.012 65)", textTransform: "uppercase", letterSpacing: "0.06em", minWidth: "72px" }}>
+          <span className="text-xs font-semibold flex-shrink-0" style={{ color: "rgba(236,236,241,0.45)", textTransform: "uppercase", letterSpacing: "0.06em", minWidth: "72px" }}>
             LLM Model
           </span>
           <select
@@ -444,10 +444,10 @@ export default function Step5Scenes() {
             className="flex-1"
             style={{
               padding: "0.4rem 0.75rem",
-              background: "oklch(0.13 0.012 52)",
-              border: "1px solid oklch(0.30 0.025 58)",
+              background: "#181818",
+              border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: "0.5rem",
-              color: "oklch(0.80 0.12 78)",
+              color: "#ececf1",
               fontSize: "0.8rem",
               cursor: "pointer",
               outline: "none",
@@ -483,7 +483,7 @@ export default function Step5Scenes() {
         </div>
 
         {/* Divider */}
-        <div style={{ height: "1px", background: "oklch(0.25 0.020 55)" }} />
+        <div style={{ height: "1px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Row 2: Primary + secondary actions */}
         <div className="flex items-center gap-2 flex-wrap">
@@ -493,8 +493,8 @@ export default function Step5Scenes() {
             disabled={isGenerating}
             className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
             style={{
-              background: "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
-              color: "oklch(0.12 0.015 55)",
+              background: "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
+              color: "#181818",
               fontFamily: "'Cinzel', serif",
             }}
           >
@@ -508,8 +508,8 @@ export default function Step5Scenes() {
               disabled={isAnalyzing}
               className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
               style={{
-                background: isAnalyzing ? "oklch(0.22 0.018 52)" : "linear-gradient(135deg, oklch(0.55 0.10 270), oklch(0.45 0.12 280))",
-                color: isAnalyzing ? "oklch(0.55 0.012 65)" : "#fff",
+                background: isAnalyzing ? "#2a2a2a" : "linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.12))",
+                color: isAnalyzing ? "rgba(236,236,241,0.45)" : "#fff",
               }}
               title="Analyze emotional arc and apply professional shot vocabulary (WS/MS/CU/ECU)"
             >
@@ -526,7 +526,7 @@ export default function Step5Scenes() {
             <button
               onClick={() => { undoScenes(); toast.success("Restored previous scenes"); }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all hover:opacity-80"
-              style={{ background: "oklch(0.20 0.04 35)", color: "oklch(0.72 0.12 55)", border: "1px solid oklch(0.35 0.07 45)" }}
+              style={{ background: "#252525", color: "rgba(236,236,241,0.75)", border: "1px solid rgba(255,255,255,0.12)" }}
             >
               <Undo2 size={13} />
               Undo
@@ -535,7 +535,7 @@ export default function Step5Scenes() {
           <button
             onClick={handleAddScene}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all hover:opacity-80"
-            style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.28 0.025 58)" }}
+            style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.1)" }}
           >
             <Plus size={13} />
             Add Scene
@@ -550,9 +550,9 @@ export default function Step5Scenes() {
             onClick={() => setShowDirectorNotes(!showDirectorNotes)}
             className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded transition-colors"
             style={{
-              background: showDirectorNotes ? "oklch(0.55 0.10 270 / 0.15)" : "oklch(0.22 0.018 52)",
-              color: showDirectorNotes ? "oklch(0.75 0.10 270)" : "oklch(0.55 0.012 65)",
-              border: `1px solid ${showDirectorNotes ? "oklch(0.55 0.10 270 / 0.4)" : "oklch(0.28 0.025 58)"}`,
+              background: showDirectorNotes ? "rgba(255,255,255,0.05)" : "#2a2a2a",
+              color: showDirectorNotes ? "rgba(236,236,241,0.7)" : "rgba(236,236,241,0.45)",
+              border: `1px solid ${showDirectorNotes ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.1)"}`,
             }}
           >
             <Info size={10} />
@@ -563,12 +563,12 @@ export default function Step5Scenes() {
 
       {/* Stats */}
       {project.scenes.length > 0 && (
-        <div className="flex gap-4 text-xs" style={{ color: "oklch(0.55 0.012 65)" }}>
-          <span style={{ color: "oklch(0.72 0.12 75)" }}>{project.scenes.length} scenes</span>
+        <div className="flex gap-4 text-xs" style={{ color: "rgba(236,236,241,0.45)" }}>
+          <span style={{ color: "rgba(236,236,241,0.82)" }}>{project.scenes.length} scenes</span>
           <span>~{totalDuration}s total</span>
           <span>~{Math.round(totalDuration / 60)}:{String(totalDuration % 60).padStart(2, "0")} video length</span>
           {hasDirectorData && (
-            <span style={{ color: "oklch(0.65 0.10 270)" }}>✓ Director analyzed</span>
+            <span style={{ color: "rgba(236,236,241,0.58)" }}>✓ Director analyzed</span>
           )}
         </div>
       )}
@@ -577,7 +577,7 @@ export default function Step5Scenes() {
       {project.scenes.length === 0 ? (
         <div
           className="text-center py-12 rounded-lg"
-          style={{ border: "2px dashed oklch(0.28 0.025 58)", color: "oklch(0.45 0.010 60)" }}
+          style={{ border: "2px dashed rgba(255,255,255,0.1)", color: "rgba(236,236,241,0.35)" }}
         >
           <Wand2 size={32} className="mx-auto mb-3 opacity-40" />
           <p className="text-sm">No scenes yet — click "Auto-Generate" to create scenes from your lyrics</p>
@@ -619,27 +619,27 @@ export default function Step5Scenes() {
                 {/* ── Header: scene number + badges + delete ── */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.625rem", flexWrap: "wrap", gap: "0.4rem" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-                    <span style={{ background: "oklch(0.72 0.12 75 / 0.15)", color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif", fontWeight: 700, fontSize: "0.75rem", padding: "0.2rem 0.5rem", borderRadius: "0.25rem" }}>
+                    <span style={{ background: "rgba(255,255,255,0.06)", color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif", fontWeight: 700, fontSize: "0.75rem", padding: "0.2rem 0.5rem", borderRadius: "0.25rem" }}>
                       {idx + 1}
                     </span>
                     {weightConfig && <span className="text-xs px-2 py-0.5 rounded" style={{ background: weightConfig.bg, color: weightConfig.color, border: `1px solid ${weightConfig.color}40` }}>{weightConfig.label}</span>}
-                    {shotConfig   && <span className="text-xs px-2 py-0.5 rounded font-mono font-semibold" style={{ background: "oklch(0.55 0.10 270 / 0.15)", color: "oklch(0.75 0.10 270)", border: "1px solid oklch(0.55 0.10 270 / 0.3)" }} title={shotConfig.label}>{shotConfig.abbr}</span>}
-                    {moveConfig   && <span className="text-xs px-2 py-0.5 rounded" style={{ background: "oklch(0.18 0.016 52)", color: "oklch(0.55 0.012 65)", border: "1px solid oklch(0.28 0.025 58)" }}>{moveConfig.label}</span>}
-                    <span style={{ fontSize: "0.68rem", color: "oklch(0.45 0.010 60)" }}>
+                    {shotConfig   && <span className="text-xs px-2 py-0.5 rounded font-mono font-semibold" style={{ background: "rgba(255,255,255,0.05)", color: "rgba(236,236,241,0.7)", border: "1px solid rgba(255,255,255,0.1)" }} title={shotConfig.label}>{shotConfig.abbr}</span>}
+                    {moveConfig   && <span className="text-xs px-2 py-0.5 rounded" style={{ background: "#222222", color: "rgba(236,236,241,0.45)", border: "1px solid rgba(255,255,255,0.1)" }}>{moveConfig.label}</span>}
+                    <span style={{ fontSize: "0.68rem", color: "rgba(236,236,241,0.35)" }}>
                       Duration:
                     </span>
                     <select
                       value={scene.duration}
                       onChange={(e) => handleUpdateScene(scene.id, "duration", Number(e.target.value))}
-                      style={{ padding: "0.15rem 0.4rem", background: "oklch(0.16 0.016 52)", border: "1px solid oklch(0.28 0.025 58)", borderRadius: "0.25rem", color: "oklch(0.72 0.12 75)", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", outline: "none" }}
+                      style={{ padding: "0.15rem 0.4rem", background: "#1e1e1e", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.25rem", color: "rgba(236,236,241,0.82)", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", outline: "none" }}
                     >
-                      {[3, 4, 5, 6, 7, 8, 10].map((d) => <option key={d} value={d} style={{ background: "oklch(0.18 0.016 52)" }}>{d}s</option>)}
+                      {[3, 4, 5, 6, 7, 8, 10].map((d) => <option key={d} value={d} style={{ background: "#222222" }}>{d}s</option>)}
                     </select>
                   </div>
                   <button
                     onClick={() => handleDeleteScene(scene.id)}
                     className="p-1.5 rounded transition-colors hover:bg-red-500/10"
-                    style={{ color: "oklch(0.45 0.010 60)", flexShrink: 0 }}
+                    style={{ color: "rgba(236,236,241,0.35)", flexShrink: 0 }}
                   >
                     <Trash2 size={13} />
                   </button>
@@ -647,22 +647,22 @@ export default function Step5Scenes() {
 
                 {/* Director note */}
                 {showDirectorNotes && scene.directorNote && (
-                  <p className="text-xs italic" style={{ color: "oklch(0.60 0.08 270)", borderLeft: "2px solid oklch(0.55 0.10 270 / 0.4)", paddingLeft: "0.5rem", marginBottom: "0.5rem" }}>
+                  <p className="text-xs italic" style={{ color: "rgba(236,236,241,0.52)", borderLeft: "2px solid rgba(255,255,255,0.16)", paddingLeft: "0.5rem", marginBottom: "0.5rem" }}>
                     {scene.directorNote}
                   </p>
                 )}
 
                 {/* ── Lyric ── */}
-                <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "oklch(0.50 0.012 65)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "0.25rem" }}>Lyric</p>
-                {ta("lyricLine", scene.lyricLine, 2, "Lyric line…", "#fff", "oklch(0.32 0.025 58)", "oklch(0.15 0.012 52)")}
+                <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "rgba(236,236,241,0.4)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "0.25rem" }}>Lyric</p>
+                {ta("lyricLine", scene.lyricLine, 2, "Lyric line…", "#fff", "rgba(255,255,255,0.12)", "#1a1a1a")}
 
                 {/* ── Scene description ── */}
-                <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "oklch(0.65 0.10 270)", textTransform: "uppercase", letterSpacing: "0.07em", marginTop: "0.625rem", marginBottom: "0.25rem" }}>Scene description</p>
-                {ta("sceneDescription", scene.sceneDescription, 3, "What the camera sees…", "oklch(0.82 0.012 68)", "oklch(0.28 0.025 58)", "oklch(0.15 0.012 52)")}
+                <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "rgba(236,236,241,0.58)", textTransform: "uppercase", letterSpacing: "0.07em", marginTop: "0.625rem", marginBottom: "0.25rem" }}>Scene description</p>
+                {ta("sceneDescription", scene.sceneDescription, 3, "What the camera sees…", "rgba(236,236,241,0.82)", "rgba(255,255,255,0.1)", "#1a1a1a")}
 
                 {/* ── Image prompt ── */}
-                <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", textTransform: "uppercase", letterSpacing: "0.07em", marginTop: "0.625rem", marginBottom: "0.25rem" }}>Image prompt</p>
-                {ta("imagePrompt", scene.imagePrompt, 4, "AI image generator prompt…", "oklch(0.84 0.10 78)", "oklch(0.72 0.12 75 / 0.35)", "oklch(0.13 0.014 60)")}
+                <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", textTransform: "uppercase", letterSpacing: "0.07em", marginTop: "0.625rem", marginBottom: "0.25rem" }}>Image prompt</p>
+                {ta("imagePrompt", scene.imagePrompt, 4, "AI image generator prompt…", "#ececf1", "rgba(255,255,255,0.14)", "#181818")}
 
               </div>
             );
@@ -676,8 +676,8 @@ export default function Step5Scenes() {
         disabled={project.scenes.length === 0}
         className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
         style={{
-          background: "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
-          color: "oklch(0.12 0.015 55)",
+          background: "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
+          color: "#181818",
           fontFamily: "'Cinzel', serif",
         }}
       >

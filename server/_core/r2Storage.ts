@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { ENV } from "./env";
 
 function getR2Client() {
@@ -36,6 +36,26 @@ export async function uploadToR2(
   );
 
   return `${r2PublicUrl.replace(/\/$/, "")}/${key}`;
+}
+
+/** Delete one or more R2 objects by key. Silently skips if R2 is not configured or list is empty. */
+export async function deleteFromR2(keys: string[]): Promise<void> {
+  if (!keys.length || !isR2Configured()) return;
+  const { r2BucketName } = ENV;
+  const client = getR2Client();
+  await client.send(
+    new DeleteObjectsCommand({
+      Bucket: r2BucketName!,
+      Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true },
+    }),
+  );
+}
+
+/** Extract the R2 storage key from a full public URL, or return null if it's not an R2 URL. */
+export function r2KeyFromUrl(url: string): string | null {
+  const base = ENV.r2PublicUrl?.replace(/\/$/, "");
+  if (!base || !url.startsWith(base + "/")) return null;
+  return url.slice(base.length + 1);
 }
 
 export function isR2Configured(): boolean {

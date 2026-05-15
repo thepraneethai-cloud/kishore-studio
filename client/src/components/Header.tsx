@@ -44,16 +44,14 @@ export default function Header({ sidebarOpen, onToggleSidebar, activeStep }: Hea
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            width: isMobile ? "40px" : "48px",
-            height: isMobile ? "40px" : "48px",
+            width: isMobile ? "36px" : "36px",
+            height: isMobile ? "36px" : "36px",
             borderRadius: "8px",
-            border: "2px solid #00d4ff",
-            background: "rgba(0, 212, 255, 0.15)",
-            color: "#00d4ff",
+            border: "1px solid rgba(255,255,255,0.15)",
+            background: "rgba(255,255,255,0.06)",
+            color: "#ececf1",
             cursor: "pointer",
-            transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
-            backdropFilter: "blur(10px)",
-            boxShadow: "0 0 20px rgba(0, 212, 255, 0.3)",
+            transition: "all 200ms",
             flexShrink: 0,
           }}
           title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
@@ -75,8 +73,7 @@ export default function Header({ sidebarOpen, onToggleSidebar, activeStep }: Hea
             style={{
               fontSize: isMobile ? "0.8rem" : "0.875rem",
               fontWeight: "600",
-              color: "#00d4ff",
-              fontFamily: "'Space Grotesk', sans-serif",
+              color: "#ececf1",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -92,15 +89,13 @@ export default function Header({ sidebarOpen, onToggleSidebar, activeStep }: Hea
         <div
           style={{
             fontSize: "0.75rem",
-            padding: "0.5rem 1rem",
+            padding: "0.35rem 0.85rem",
             borderRadius: "6px",
-            background: "rgba(0, 212, 255, 0.1)",
-            color: "#00d4ff",
-            border: "1px solid rgba(0, 212, 255, 0.3)",
-            fontFamily: "'Inter', sans-serif",
-            fontWeight: "600",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
+            background: "rgba(255,255,255,0.06)",
+            color: "rgba(236,236,241,0.6)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            fontWeight: "500",
+            letterSpacing: "0.03em",
             flexShrink: 0,
           }}
         >
@@ -116,19 +111,18 @@ export default function Header({ sidebarOpen, onToggleSidebar, activeStep }: Hea
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: isMobile ? "0" : "0.75rem",
-            padding: isMobile ? "0.5rem" : "0.5rem 1rem",
+            gap: isMobile ? "0" : "0.5rem",
+            padding: isMobile ? "0.45rem" : "0.45rem 0.85rem",
             borderRadius: "8px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            background: "rgba(255, 255, 255, 0.05)",
-            color: "#00d4ff",
+            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgba(255,255,255,0.06)",
+            color: "#ececf1",
             cursor: "pointer",
-            transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
-            backdropFilter: "blur(10px)",
-            fontSize: "0.875rem",
-            fontWeight: "600",
-            width: isMobile ? "40px" : "auto",
-            height: isMobile ? "40px" : "auto",
+            transition: "all 200ms",
+            fontSize: "0.8rem",
+            fontWeight: "500",
+            width: isMobile ? "36px" : "auto",
+            height: isMobile ? "36px" : "auto",
           }}
         >
           <User size={18} />
@@ -149,8 +143,8 @@ export default function Header({ sidebarOpen, onToggleSidebar, activeStep }: Hea
                 top: "100%",
                 right: 0,
                 marginTop: "0.5rem",
-                background: "rgba(10, 10, 20, 0.98)",
-                border: "1px solid rgba(0, 212, 255, 0.3)",
+                background: "#2f2f2f",
+                border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: "8px",
                 backdropFilter: "blur(10px)",
                 boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)",
@@ -162,10 +156,10 @@ export default function Header({ sidebarOpen, onToggleSidebar, activeStep }: Hea
               <div
                 style={{
                   padding: "1rem",
-                  borderBottom: "1px solid rgba(0, 212, 255, 0.2)",
+                  borderBottom: "1px solid rgba(255,255,255,0.08)",
                 }}
               >
-                <div style={{ color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>
+                <div style={{ color: "#ececf1", fontSize: "0.875rem", fontWeight: "600" }}>
                   {user?.name}
                 </div>
                 <div style={{ color: "rgba(255, 255, 255, 0.5)", fontSize: "0.75rem" }}>
@@ -187,12 +181,12 @@ export default function Header({ sidebarOpen, onToggleSidebar, activeStep }: Hea
                   gap: "0.75rem",
                   background: "transparent",
                   border: "none",
-                  color: "#00d4ff",
+                  color: "#ececf1",
                   cursor: "pointer",
-                  transition: "all 250ms",
+                  transition: "all 200ms",
                   fontSize: "0.875rem",
                   fontWeight: "500",
-                  borderBottom: "1px solid rgba(0, 212, 255, 0.1)",
+                  borderBottom: "1px solid rgba(255,255,255,0.07)",
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0, 212, 255, 0.1)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}

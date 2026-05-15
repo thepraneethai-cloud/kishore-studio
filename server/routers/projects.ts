@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { projects } from "../../drizzle/schema";
+import { projects, scenes as scenesTable, jobs } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
+import { deleteFromR2, r2KeyFromUrl } from "../_core/r2Storage";
 
 export const projectsRouter = router({
   // ============================================================
@@ -17,6 +18,8 @@ export const projectsRouter = router({
         lyrics: z.string().optional(),
         audioUrl: z.string().optional(),
         masterPrompt: z.string().optional(),
+        creativeBrief: z.string().optional(),
+        extraDirection: z.string().optional(),
         sunoStyle: z.record(z.string(), z.unknown()).optional(),
         scenes: z.array(z.unknown()).optional(),
         youtubeTitle: z.string().optional(),
@@ -52,6 +55,8 @@ export const projectsRouter = router({
             lyrics: input.lyrics ?? "",
             audioUrl: input.audioUrl ?? "",
             masterPrompt: input.masterPrompt ?? "",
+            creativeBrief: input.creativeBrief ?? "",
+            extraDirection: input.extraDirection ?? "",
             sunoStyle: input.sunoStyle,
             metadata,
             updatedAt: new Date(),
@@ -76,6 +81,8 @@ export const projectsRouter = router({
           lyrics: input.lyrics ?? "",
           audioUrl: input.audioUrl ?? "",
           masterPrompt: input.masterPrompt ?? "",
+          creativeBrief: input.creativeBrief ?? "",
+          extraDirection: input.extraDirection ?? "",
           sunoStyle: input.sunoStyle,
           metadata,
         })
@@ -105,6 +112,67 @@ export const projectsRouter = router({
         .limit(1);
 
       return project ?? null;
+    }),
+
+  // ============================================================
+  // DELETE — remove a project and all associated data (ownership-checked)
+  // ============================================================
+  delete: protectedProcedure
+    .input(z.object({ serverProjectId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database connection failed");
+
+      // Fetch project first so we can gather R2 keys to clean up
+      const [project] = await db
+        .select()
+        .from(projects)
+        .where(
+          and(
+            eq(projects.id, input.serverProjectId),
+            eq(projects.userId, ctx.user.id)
+          )
+        )
+        .limit(1);
+
+      if (!project) return { success: true }; // already gone
+
+      // Collect R2 keys from project-level fields
+      const r2Keys: string[] = [];
+      for (const url of [project.audioUrl]) {
+        if (url) { const k = r2KeyFromUrl(url); if (k) r2Keys.push(k); }
+      }
+
+      // Collect R2 keys from scenes stored in metadata JSON
+      const meta = (project.metadata ?? {}) as { scenes?: Array<{ imageUrl?: string; videoUrl?: string }> };
+      for (const scene of meta.scenes ?? []) {
+        for (const url of [scene.imageUrl, scene.videoUrl]) {
+          if (url) { const k = r2KeyFromUrl(url); if (k) r2Keys.push(k); }
+        }
+      }
+
+      // Collect R2 keys from scenes table rows
+      const sceneRows = await db
+        .select({ imageUrl: scenesTable.imageUrl, videoUrl: scenesTable.videoUrl })
+        .from(scenesTable)
+        .where(eq(scenesTable.projectId, input.serverProjectId));
+      for (const row of sceneRows) {
+        for (const url of [row.imageUrl, row.videoUrl]) {
+          if (url) { const k = r2KeyFromUrl(url); if (k) r2Keys.push(k); }
+        }
+      }
+
+      // Delete R2 objects (best effort — don't block project deletion if this fails)
+      try { await deleteFromR2(r2Keys); } catch (e) {
+        console.error("[projects.delete] R2 cleanup failed (ignored):", e);
+      }
+
+      // Delete child rows first, then the project
+      await db.delete(jobs).where(eq(jobs.projectId, input.serverProjectId));
+      await db.delete(scenesTable).where(eq(scenesTable.projectId, input.serverProjectId));
+      await db.delete(projects).where(eq(projects.id, input.serverProjectId));
+
+      return { success: true };
     }),
 
   // ============================================================

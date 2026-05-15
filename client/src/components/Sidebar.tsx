@@ -7,8 +7,9 @@ import { useProject } from "@/contexts/ProjectContext";
 import { trpc } from "@/lib/trpc";
 import {
   Flame, Mic2, Film, Sparkles, Video, Scissors,
-  Youtube, CheckCircle2, X, FolderOpen, Plus,
+  Youtube, CheckCircle2, X, FolderOpen, Plus, Trash2,
 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 const STEPS = [
@@ -31,10 +32,12 @@ export default function Sidebar({ onClose }: SidebarProps) {
     setActiveStep,
     completedSteps,
     resetProject,
+    deleteProject,
     sessionTitle,
     loadProject,
     currentServerProjectId,
   } = useProject();
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const { data: savedProjects = [], isLoading: projectsLoading, isError: projectsError } = trpc.projects.list.useQuery(undefined, {
     retry: 1,
   });
@@ -42,6 +45,21 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const handleStepClick = (stepId: number) => {
     setActiveStep(stepId);
     onClose?.();
+  };
+
+  const handleDeleteProject = async () => {
+    if (!currentServerProjectId) return;
+    const confirmed = window.confirm("Delete this project? This cannot be undone.");
+    if (!confirmed) return;
+    setDeletingId(currentServerProjectId);
+    try {
+      await deleteProject(currentServerProjectId);
+      toast.success("Project deleted");
+    } catch {
+      toast.error("Could not delete project");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleProjectSelect = async (value: string) => {
@@ -65,17 +83,22 @@ export default function Sidebar({ onClose }: SidebarProps) {
   return (
     <aside
       style={{
-        position: "fixed",
-        left: 0,
-        top: 0,
-        height: "100vh",
+        /* When onClose is set the sidebar is a mobile fixed overlay;
+           otherwise it's an in-flow desktop panel sized by its parent. */
+        ...(onClose ? {
+          position: "fixed" as const,
+          left: 0,
+          top: 0,
+          height: "100vh",
+          zIndex: 40,
+        } : {
+          position: "relative" as const,
+          height: "100%",
+        }),
         width: "224px",
         display: "flex",
         flexDirection: "column",
-        zIndex: 40,
-        background: "rgba(10, 10, 20, 0.97)",
-        backdropFilter: "blur(10px)",
-        borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+        background: "#171717",
       }}
     >
       {/* Logo / Brand */}
@@ -99,8 +122,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 justifyContent: "center",
                 fontSize: "14px",
                 fontWeight: "700",
-                background: "linear-gradient(135deg, #00d4ff, #00f0ff)",
-                color: "#000",
+                background: "rgba(255,255,255,0.1)",
+                color: "#ececf1",
                 flexShrink: 0,
               }}
             >
@@ -110,30 +133,28 @@ export default function Sidebar({ onClose }: SidebarProps) {
               style={{
                 fontSize: "0.875rem",
                 fontWeight: "600",
-                letterSpacing: "0.05em",
-                color: "#00d4ff",
-                fontFamily: "'Space Grotesk', sans-serif",
+                color: "#ececf1",
               }}
             >
               Studio
             </span>
           </div>
           <p style={{
-            fontSize: "0.75rem",
-            color: "rgba(255, 255, 255, 0.6)",
+            fontSize: "0.72rem",
+            color: "rgba(236,236,241,0.45)",
           }}>
             Kishore's Studio
           </p>
           {sessionTitle && (
             <p
               style={{
-                fontSize: "0.75rem",
-                marginTop: "0.25rem",
+                fontSize: "0.72rem",
+                marginTop: "0.2rem",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
                 maxWidth: "150px",
-                color: "#ff006e",
+                color: "rgba(236,236,241,0.7)",
                 fontWeight: "500",
               }}
             >
@@ -180,44 +201,69 @@ export default function Sidebar({ onClose }: SidebarProps) {
         >
           PROJECT
         </label>
-        <div style={{ position: "relative" }}>
-          <FolderOpen
-            size={14}
-            style={{
-              position: "absolute",
-              left: "0.65rem",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#00d4ff",
-              pointerEvents: "none",
-            }}
-          />
-          <select
-            value={currentServerProjectId ?? "new"}
-            onChange={(e) => void handleProjectSelect(e.target.value)}
-            disabled={projectsLoading || projectsError}
-            style={{
-              width: "100%",
-              padding: "0.65rem 0.6rem 0.65rem 2rem",
-              borderRadius: "0.5rem",
-              border: "1px solid rgba(0, 212, 255, 0.22)",
-              background: "rgba(4, 8, 24, 0.86)",
-              color: "#00d4ff",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              cursor: projectsLoading ? "wait" : projectsError ? "not-allowed" : "pointer",
-              outline: "none",
-            }}
-          >
-            <option value="new">
-              {projectsLoading ? "Loading projects..." : projectsError ? "Saved projects unavailable" : "New unsaved project"}
-            </option>
-            {savedProjects.map((saved) => (
-              <option key={saved.id} value={saved.id}>
-                {saved.name || "Untitled"}
+        <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+          <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+            <FolderOpen
+              size={14}
+              style={{
+                position: "absolute",
+                left: "0.65rem",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "rgba(236,236,241,0.4)",
+                pointerEvents: "none",
+              }}
+            />
+            <select
+              value={currentServerProjectId ?? "new"}
+              onChange={(e) => void handleProjectSelect(e.target.value)}
+              disabled={projectsLoading || projectsError}
+              style={{
+                width: "100%",
+                padding: "0.65rem 0.6rem 0.65rem 2rem",
+                borderRadius: "0.5rem",
+                border: "1px solid rgba(255,255,255,0.1)",
+                background: "rgba(255,255,255,0.05)",
+                color: "#ececf1",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                cursor: projectsLoading ? "wait" : projectsError ? "not-allowed" : "pointer",
+                outline: "none",
+              }}
+            >
+              <option value="new">
+                {projectsLoading ? "Loading projects..." : projectsError ? "Saved projects unavailable" : "New unsaved project"}
               </option>
-            ))}
-          </select>
+              {savedProjects.map((saved) => (
+                <option key={saved.id} value={saved.id}>
+                  {saved.name || "Untitled"}
+                </option>
+              ))}
+            </select>
+          </div>
+          {currentServerProjectId && (
+            <button
+              onClick={() => void handleDeleteProject()}
+              disabled={deletingId === currentServerProjectId}
+              title="Delete this project"
+              style={{
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "32px",
+                height: "32px",
+                borderRadius: "0.5rem",
+                border: "1px solid rgba(255, 60, 60, 0.35)",
+                background: "rgba(255, 40, 40, 0.08)",
+                color: deletingId === currentServerProjectId ? "rgba(255,100,100,0.4)" : "#ff4444",
+                cursor: deletingId === currentServerProjectId ? "wait" : "pointer",
+                transition: "all 150ms",
+              }}
+            >
+              <Trash2 size={13} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -244,12 +290,10 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 alignItems: "center",
                 gap: "0.75rem",
                 padding: "0.75rem 1rem",
-                background: isActive
-                  ? "linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(255, 0, 110, 0.1))"
-                  : "transparent",
-                border: isActive ? "1px solid rgba(0, 212, 255, 0.3)" : "none",
-                borderLeft: isActive ? "3px solid #00d4ff" : "3px solid transparent",
-                color: isActive ? "#00d4ff" : "rgba(255, 255, 255, 0.6)",
+                background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
+                border: "none",
+                borderLeft: isActive ? "2px solid #ececf1" : "2px solid transparent",
+                color: isActive ? "#ececf1" : "rgba(236,236,241,0.5)",
                 cursor: "pointer",
                 transition: "all 200ms",
                 fontSize: "0.875rem",
@@ -266,14 +310,14 @@ export default function Sidebar({ onClose }: SidebarProps) {
                       position: "absolute",
                       right: "-4px",
                       bottom: "-4px",
-                      color: "#39ff14",
-                      fill: "#39ff14",
+                      color: "#10a37f",
+                      fill: "#10a37f",
                     }}
                   />
                 )}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.4)" }}>
+                <div style={{ fontSize: "0.65rem", color: "rgba(236,236,241,0.3)", letterSpacing: "0.04em" }}>
                   STEP {step.id} OF 7
                 </div>
                 <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -288,10 +332,10 @@ export default function Sidebar({ onClose }: SidebarProps) {
       {/* Progress Bar */}
       <div style={{ padding: "1rem", borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
         <div style={{ marginBottom: "0.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(255, 255, 255, 0.6)" }}>
+          <span style={{ fontSize: "0.68rem", fontWeight: "600", color: "rgba(236,236,241,0.4)", letterSpacing: "0.06em" }}>
             PROGRESS
           </span>
-          <span style={{ fontSize: "0.75rem", fontWeight: "600", color: "#00d4ff" }}>
+          <span style={{ fontSize: "0.75rem", fontWeight: "600", color: "rgba(236,236,241,0.7)" }}>
             {completedSteps.size}/7
           </span>
         </div>
@@ -304,7 +348,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
           <div
             style={{
               height: "100%",
-              background: "linear-gradient(90deg, #00d4ff, #ff006e)",
+              background: "#10a37f",
               width: `${(completedSteps.size / 7) * 100}%`,
               transition: "width 300ms ease-out",
             }}
@@ -324,11 +368,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
             width: "100%",
             padding: "0.75rem",
             borderRadius: "0.5rem",
-            background: "rgba(255, 0, 110, 0.1)",
-            color: "#ff006e",
-            border: "1px solid rgba(255, 0, 110, 0.3)",
-            fontWeight: "600",
-            fontSize: "0.75rem",
+            background: "rgba(255,255,255,0.06)",
+            color: "rgba(236,236,241,0.7)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            fontWeight: "500",
+            fontSize: "0.78rem",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -338,7 +382,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
           }}
         >
           <Plus size={14} />
-          NEW PROJECT
+          New project
         </button>
       </div>
     </aside>

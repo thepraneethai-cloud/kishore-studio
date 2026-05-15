@@ -15,6 +15,8 @@ export default function Settings() {
     replicateApiKey: "",
     groqApiKey: "",
     mistralApiKey: "",
+    falApiKey: "",
+    togetherApiKey: "",
   });
   const [showKeys, setShowKeys] = useState({
     openaiApiKey: false,
@@ -23,6 +25,8 @@ export default function Settings() {
     replicateApiKey: false,
     groqApiKey: false,
     mistralApiKey: false,
+    falApiKey: false,
+    togetherApiKey: false,
   });
   const [providers, setProviders] = useState({
     lyricsProvider: "chatgpt",
@@ -52,6 +56,8 @@ export default function Settings() {
         replicateApiKey: settings.replicateApiKey || "",
         groqApiKey: settings.groqApiKey || "",
         mistralApiKey: settings.mistralApiKey || "",
+        falApiKey: (settings as any).falApiKey || "",
+        togetherApiKey: (settings as any).togetherApiKey || "",
       });
       setProviders({
         lyricsProvider: (settings.lyricsProvider as any) || "chatgpt",
@@ -239,8 +245,20 @@ export default function Settings() {
         {/* API Keys Tab */}
         {activeTab === "api-keys" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-            {(["openaiApiKey", "claudeApiKey", "geminiApiKey", "replicateApiKey", "groqApiKey", "mistralApiKey"] as const).map((key) => {
-              const meta: Record<string, { label: string; hint: string; placeholder: string }> = {
+            {(["falApiKey", "togetherApiKey", "openaiApiKey", "claudeApiKey", "geminiApiKey", "replicateApiKey", "groqApiKey", "mistralApiKey"] as const).map((key) => {
+              const meta: Record<string, { label: string; hint: string; placeholder: string; badge?: string }> = {
+                falApiKey: {
+                  label: "fal.ai API Key",
+                  hint: "Free credits on signup. Powers FLUX image generation (~$0.003/image) and Wan2.1 / Kling video generation (~$0.025/clip). Get yours at fal.ai/dashboard/keys",
+                  placeholder: "...",
+                  badge: "FREE credits",
+                },
+                togetherApiKey: {
+                  label: "Together AI API Key",
+                  hint: "Free tier includes FLUX.1-schnell-Free for image generation at no cost. Get yours at api.together.ai",
+                  placeholder: "...",
+                  badge: "FREE tier",
+                },
                 openaiApiKey: {
                   label: "OpenAI API Key",
                   hint: "Powers GPT-4o lyrics + DALL-E 3 / GPT-image-1 image generation. Get yours at platform.openai.com/api-keys",
@@ -258,25 +276,32 @@ export default function Settings() {
                 },
                 replicateApiKey: {
                   label: "Replicate API Key",
-                  hint: "Powers Flux Dev / Schnell image generation and MiniMax video generation in Step 6. Get yours at replicate.com/account/api-tokens",
+                  hint: "Powers Flux Dev / Schnell image generation and MiniMax video generation. Get yours at replicate.com/account/api-tokens",
                   placeholder: "r8_...",
                 },
                 groqApiKey: {
                   label: "Groq API Key",
                   hint: "Powers Llama 3.1 8B and Qwen 2.5 lyrics — extremely fast and free tier available. Get yours at console.groq.com",
                   placeholder: "gsk_...",
+                  badge: "FREE tier",
                 },
                 mistralApiKey: {
                   label: "Mistral API Key",
                   hint: "Powers Mistral Small lyrics — great multilingual quality. Get yours at console.mistral.ai",
                   placeholder: "...",
+                  badge: "FREE tier",
                 },
               };
-              const { label, hint, placeholder } = meta[key];
+              const { label, hint, placeholder, badge } = meta[key];
               return (
               <div key={key}>
-                <label style={{ display: "block", marginBottom: "0.25rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem", fontSize: "0.875rem", fontWeight: "600", color: "#ececf1" }}>
                   {label}
+                  {badge && (
+                    <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "0.1rem 0.45rem", borderRadius: "999px", background: "rgba(16,163,127,0.15)", color: "#10a37f", border: "1px solid rgba(16,163,127,0.35)" }}>
+                      {badge}
+                    </span>
+                  )}
                 </label>
                 <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.45)", marginBottom: "0.5rem" }}>
                   {hint}
@@ -439,40 +464,52 @@ export default function Settings() {
 
             {/* Images */}
             <div>
-              <label style={{ display: "block", marginBottom: "0.5rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>Image Provider</label>
+              <label style={{ display: "block", marginBottom: "0.5rem", color: "#ececf1", fontSize: "0.875rem", fontWeight: "600" }}>Image Generation</label>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "rgba(57,255,20,0.07)", border: "1px solid rgba(57,255,20,0.4)", borderRadius: "0.5rem" }}>
-                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#39ff14", flexShrink: 0 }} />
-                  <span style={{ flex: 1, color: "#fff", fontSize: "0.875rem" }}>Flux Dev / Pro (Replicate)</span>
-                  <span style={{ fontSize: "0.7rem", color: "#39ff14", fontWeight: "600" }}>ACTIVE</span>
-                </div>
-                {["DALL-E 3 (OpenAI)", "Midjourney"].map((label) => (
-                  <div key={label} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.5rem", opacity: 0.5 }}>
-                    <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
-                    <span style={{ flex: 1, color: "rgba(255,255,255,0.6)", fontSize: "0.875rem" }}>{label}</span>
-                    <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.4)", fontWeight: "600" }}>COMING SOON</span>
+                {[
+                  { label: "Pollinations.ai (Flux)", badge: "FREE · no key", note: "No setup needed. Works immediately.", active: true },
+                  { label: "Together AI — FLUX.1-schnell-Free", badge: "FREE tier", note: "Needs Together API key (free signup).", active: true },
+                  { label: "fal.ai — FLUX Schnell / Dev", badge: "Free credits", note: "~$0.003/image after free credits.", active: true },
+                  { label: "Flux Dev / Schnell (Replicate)", badge: "Paid", note: "~$0.003–$0.01/image.", active: false },
+                  { label: "DALL-E 3 / GPT-image-1 (OpenAI)", badge: "Paid", note: "~$0.04/image.", active: false },
+                ].map(({ label, badge, note, active }) => (
+                  <div key={label} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: active ? "rgba(16,163,127,0.07)" : "rgba(255,255,255,0.03)", border: `1px solid ${active ? "rgba(16,163,127,0.3)" : "rgba(255,255,255,0.08)"}`, borderRadius: "0.5rem" }}>
+                    <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: active ? "#10a37f" : "rgba(255,255,255,0.2)", flexShrink: 0 }} />
+                    <span style={{ flex: 1, color: active ? "#ececf1" : "rgba(255,255,255,0.5)", fontSize: "0.875rem" }}>{label}</span>
+                    <div style={{ textAlign: "right", flexShrink: 0 }}>
+                      <div style={{ fontSize: "0.65rem", fontWeight: 700, color: active ? "#10a37f" : "rgba(255,255,255,0.3)", letterSpacing: "0.04em" }}>{badge}</div>
+                      <div style={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.3)", marginTop: "1px" }}>{note}</div>
+                    </div>
                   </div>
                 ))}
               </div>
+              <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", marginTop: "0.5rem" }}>
+                Select the provider in Step 6 (Image Prompts) each time you generate.
+              </p>
             </div>
 
             {/* Video */}
             <div>
-              <label style={{ display: "block", marginBottom: "0.5rem", color: "#00d4ff", fontSize: "0.875rem", fontWeight: "600" }}>Video Provider</label>
+              <label style={{ display: "block", marginBottom: "0.5rem", color: "#ececf1", fontSize: "0.875rem", fontWeight: "600" }}>Video Generation</label>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "rgba(57,255,20,0.07)", border: "1px solid rgba(57,255,20,0.4)", borderRadius: "0.5rem" }}>
-                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#39ff14", flexShrink: 0 }} />
-                  <span style={{ flex: 1, color: "#fff", fontSize: "0.875rem" }}>MiniMax Video-01-Live (Replicate)</span>
-                  <span style={{ fontSize: "0.7rem", color: "#39ff14", fontWeight: "600" }}>ACTIVE</span>
-                </div>
-                {["Runway Gen-3", "Pika"].map((label) => (
-                  <div key={label} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.5rem", opacity: 0.5 }}>
-                    <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
-                    <span style={{ flex: 1, color: "rgba(255,255,255,0.6)", fontSize: "0.875rem" }}>{label}</span>
-                    <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.4)", fontWeight: "600" }}>COMING SOON</span>
+                {[
+                  { label: "fal.ai — Wan2.1 (1.3B)", badge: "Free credits", note: "~$0.025/clip after free credits.", active: true },
+                  { label: "fal.ai — Kling v1.5", badge: "Free credits", note: "~$0.03/clip. Best quality.", active: true },
+                  { label: "MiniMax Video-01-Live (Replicate)", badge: "Paid", note: "~$0.05/clip.", active: false },
+                ].map(({ label, badge, note, active }) => (
+                  <div key={label} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: active ? "rgba(16,163,127,0.07)" : "rgba(255,255,255,0.03)", border: `1px solid ${active ? "rgba(16,163,127,0.3)" : "rgba(255,255,255,0.08)"}`, borderRadius: "0.5rem" }}>
+                    <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: active ? "#10a37f" : "rgba(255,255,255,0.2)", flexShrink: 0 }} />
+                    <span style={{ flex: 1, color: active ? "#ececf1" : "rgba(255,255,255,0.5)", fontSize: "0.875rem" }}>{label}</span>
+                    <div style={{ textAlign: "right", flexShrink: 0 }}>
+                      <div style={{ fontSize: "0.65rem", fontWeight: 700, color: active ? "#10a37f" : "rgba(255,255,255,0.3)", letterSpacing: "0.04em" }}>{badge}</div>
+                      <div style={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.3)", marginTop: "1px" }}>{note}</div>
+                    </div>
                   </div>
                 ))}
               </div>
+              <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", marginTop: "0.5rem" }}>
+                Select the provider in Step 5 (Video Prompts). Add your fal.ai key above.
+              </p>
             </div>
 
             {/* Save button */}

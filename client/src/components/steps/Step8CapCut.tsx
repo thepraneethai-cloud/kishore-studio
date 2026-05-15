@@ -211,13 +211,13 @@ export default function Step8CapCut() {
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
+          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(236,236,241,0.45)", letterSpacing: "0.08em" }}>
             Step 6
           </p>
-          <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
+          <h2 className="text-2xl font-bold mb-2" style={{ color: "#ececf1", letterSpacing: "-0.01em" }}>
             Auto Assembly Kit
           </h2>
-          <p className="text-sm" style={{ color: "oklch(0.60 0.015 68)" }}>
+          <p className="text-sm" style={{ color: "rgba(236,236,241,0.6)" }}>
             Generate a ready edit plan, subtitle file, and shot list from your approved scenes.
           </p>
         </div>
@@ -228,8 +228,8 @@ export default function Step8CapCut() {
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 text-xs px-3 py-2 rounded font-semibold transition-all hover:opacity-90"
           style={{
-            background: "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
-            color: "oklch(0.12 0.015 55)",
+            background: "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
+            color: "#181818",
             fontFamily: "'Cinzel', serif",
           }}
         >
@@ -241,26 +241,26 @@ export default function Step8CapCut() {
         <div className="shrine-panel p-4 space-y-3 lg:col-span-2">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+              <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
                 Producer Readiness
               </p>
-              <p className="text-xs mt-1" style={{ color: "oklch(0.50 0.012 65)" }}>
+              <p className="text-xs mt-1" style={{ color: "rgba(236,236,241,0.4)" }}>
                 {timeline.length} scenes · ~{Math.floor(totalDuration / 60)}:{String(Math.round(totalDuration % 60)).padStart(2, "0")} runtime
               </p>
             </div>
-            <span className="text-2xl font-bold" style={{ color: readiness.percent >= 80 ? "oklch(0.70 0.14 145)" : "oklch(0.72 0.12 75)" }}>
+            <span className="text-2xl font-bold" style={{ color: readiness.percent >= 80 ? "oklch(0.70 0.14 145)" : "rgba(236,236,241,0.82)" }}>
               {readiness.percent}%
             </span>
           </div>
 
-          <div className="h-2 rounded-full overflow-hidden" style={{ background: "oklch(0.22 0.018 52)" }}>
+          <div className="h-2 rounded-full overflow-hidden" style={{ background: "#2a2a2a" }}>
             <div
               className="h-full transition-all duration-500"
               style={{
                 width: `${readiness.percent}%`,
                 background: readiness.percent >= 80
                   ? "linear-gradient(90deg, oklch(0.60 0.14 145), oklch(0.75 0.14 145))"
-                  : "linear-gradient(90deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
+                  : "linear-gradient(90deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
               }}
             />
           </div>
@@ -270,9 +270,9 @@ export default function Step8CapCut() {
               <div key={check.label} className="flex items-center gap-2 text-xs">
                 <CheckCircle2
                   size={14}
-                  style={{ color: check.done ? "oklch(0.70 0.14 145)" : "oklch(0.38 0.015 58)" }}
+                  style={{ color: check.done ? "oklch(0.70 0.14 145)" : "rgba(236,236,241,0.3)" }}
                 />
-                <span style={{ color: check.done ? "oklch(0.72 0.015 70)" : "oklch(0.50 0.012 65)" }}>
+                <span style={{ color: check.done ? "rgba(236,236,241,0.72)" : "rgba(236,236,241,0.4)" }}>
                   {check.label}
                 </span>
               </div>
@@ -281,21 +281,21 @@ export default function Step8CapCut() {
         </div>
 
         <div className="shrine-panel p-4 space-y-3">
-          <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+          <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
             Scene Source
           </p>
           <button
             onClick={() => setUseApprovedOnly((value) => !value)}
             className="w-full text-left p-3 rounded-lg transition-all"
             style={{
-              background: useApprovedOnly ? "oklch(0.72 0.12 75 / 0.12)" : "oklch(0.18 0.014 52)",
-              border: "1px solid oklch(0.30 0.025 58)",
+              background: useApprovedOnly ? "rgba(255,255,255,0.05)" : "#222222",
+              border: "1px solid rgba(255,255,255,0.12)",
             }}
           >
-            <p className="text-sm font-semibold" style={{ color: "oklch(0.78 0.12 78)" }}>
+            <p className="text-sm font-semibold" style={{ color: "rgba(236,236,241,0.82)" }}>
               {useApprovedOnly ? "Approved scenes first" : "Use all scenes"}
             </p>
-            <p className="text-xs mt-1" style={{ color: "oklch(0.50 0.012 65)" }}>
+            <p className="text-xs mt-1" style={{ color: "rgba(236,236,241,0.4)" }}>
               {approvedCount > 0 ? `${approvedCount} approved of ${project.scenes.length}` : "Approve images in Step 4 for a cleaner edit"}
             </p>
           </button>
@@ -308,7 +308,7 @@ export default function Step8CapCut() {
             <div
               key={warning}
               className="flex items-start gap-2 text-xs px-3 py-2 rounded-lg"
-              style={{ background: "oklch(0.58 0.14 55 / 0.12)", color: "oklch(0.78 0.12 70)", border: "1px solid oklch(0.58 0.14 55 / 0.25)" }}
+              style={{ background: "rgba(255,255,255,0.05)", color: "rgba(236,236,241,0.72)", border: "1px solid rgba(255,255,255,0.1)" }}
             >
               <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
               {warning}
@@ -322,7 +322,7 @@ export default function Step8CapCut() {
           onClick={downloadAssemblyJson}
           disabled={timeline.length === 0}
           className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.75 0.015 70)", border: "1px solid oklch(0.30 0.025 58)" }}
+          style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.72)", border: "1px solid rgba(255,255,255,0.12)" }}
         >
           <FileJson size={16} />
           Assembly JSON
@@ -331,7 +331,7 @@ export default function Step8CapCut() {
           onClick={downloadShotCsv}
           disabled={timeline.length === 0}
           className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.75 0.015 70)", border: "1px solid oklch(0.30 0.025 58)" }}
+          style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.72)", border: "1px solid rgba(255,255,255,0.12)" }}
         >
           <Scissors size={16} />
           Edit CSV
@@ -340,7 +340,7 @@ export default function Step8CapCut() {
           onClick={downloadSrt}
           disabled={timeline.length === 0}
           className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.75 0.015 70)", border: "1px solid oklch(0.30 0.025 58)" }}
+          style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.72)", border: "1px solid rgba(255,255,255,0.12)" }}
         >
           <FileText size={16} />
           Telugu SRT
@@ -350,15 +350,15 @@ export default function Step8CapCut() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 shrine-panel p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} style={{ color: "oklch(0.72 0.12 75)" }} />
-            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+            <Sparkles size={16} style={{ color: "rgba(236,236,241,0.82)" }} />
+            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
               Auto Timeline
             </p>
           </div>
 
           <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
             {timeline.length === 0 ? (
-              <p className="text-sm text-center py-10" style={{ color: "oklch(0.50 0.012 65)" }}>
+              <p className="text-sm text-center py-10" style={{ color: "rgba(236,236,241,0.4)" }}>
                 Scene breakdown is needed before the assembly kit can build a timeline.
               </p>
             ) : (
@@ -366,25 +366,25 @@ export default function Step8CapCut() {
                 <div
                   key={item.scene.id}
                   className="grid gap-3 p-3 rounded-lg sm:grid-cols-[72px_1fr_120px]"
-                  style={{ background: "oklch(0.15 0.014 52)", border: "1px solid oklch(0.24 0.020 55)" }}
+                  style={{ background: "#1c1c1c", border: "1px solid rgba(255,255,255,0.08)" }}
                 >
                   <div>
-                    <p className="text-xs font-bold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+                    <p className="text-xs font-bold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
                       Scene {item.sceneNumber}
                     </p>
-                    <p className="text-[11px] mt-1" style={{ color: "oklch(0.45 0.010 60)" }}>
+                    <p className="text-[11px] mt-1" style={{ color: "rgba(236,236,241,0.35)" }}>
                       {formatTimestamp(item.start, ".")}
                     </p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs telugu-text truncate" style={{ color: "oklch(0.75 0.015 70)" }}>
+                    <p className="text-xs telugu-text truncate" style={{ color: "rgba(236,236,241,0.72)" }}>
                       {item.scene.lyricLine || "Untitled lyric line"}
                     </p>
-                    <p className="text-[11px] mt-1 line-clamp-2" style={{ color: "oklch(0.52 0.012 65)" }}>
+                    <p className="text-[11px] mt-1 line-clamp-2" style={{ color: "rgba(236,236,241,0.45)" }}>
                       {item.scene.sceneDescription}
                     </p>
                   </div>
-                  <div className="text-[11px] space-y-1" style={{ color: "oklch(0.55 0.012 65)" }}>
+                  <div className="text-[11px] space-y-1" style={{ color: "rgba(236,236,241,0.45)" }}>
                     <div className="flex justify-between gap-2"><span>Duration</span><span>{item.duration}s</span></div>
                     <div className="flex justify-between gap-2"><span>Transition</span><span>{item.transition}</span></div>
                     <div className="flex justify-between gap-2"><span>Effect</span><span>{item.effect}</span></div>
@@ -397,27 +397,27 @@ export default function Step8CapCut() {
 
         <div className="space-y-3">
           <div className="shrine-panel p-3 space-y-3">
-            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
               Recommended Effects
             </p>
             {CAPCUT_EFFECTS.map((effect) => (
               <div key={effect.name}>
-                <p className="text-xs font-medium" style={{ color: "oklch(0.75 0.015 70)" }}>{effect.name}</p>
-                <p className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>{effect.use}</p>
+                <p className="text-xs font-medium" style={{ color: "rgba(236,236,241,0.72)" }}>{effect.name}</p>
+                <p className="text-xs" style={{ color: "rgba(236,236,241,0.4)" }}>{effect.use}</p>
               </div>
             ))}
           </div>
 
           <div className="shrine-panel p-3 space-y-2">
-            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
               Color Grade
             </p>
-            <div className="space-y-1.5 text-xs" style={{ color: "oklch(0.60 0.015 68)" }}>
-              <div className="flex justify-between"><span>Warmth</span><span style={{ color: "oklch(0.72 0.12 75)" }}>+20</span></div>
-              <div className="flex justify-between"><span>Saturation</span><span style={{ color: "oklch(0.72 0.12 75)" }}>+10</span></div>
-              <div className="flex justify-between"><span>Contrast</span><span style={{ color: "oklch(0.72 0.12 75)" }}>+5</span></div>
-              <div className="flex justify-between"><span>Shadows</span><span style={{ color: "oklch(0.72 0.12 75)" }}>-10</span></div>
-              <div className="flex justify-between"><span>Highlights</span><span style={{ color: "oklch(0.72 0.12 75)" }}>+5</span></div>
+            <div className="space-y-1.5 text-xs" style={{ color: "rgba(236,236,241,0.52)" }}>
+              <div className="flex justify-between"><span>Warmth</span><span style={{ color: "rgba(236,236,241,0.82)" }}>+20</span></div>
+              <div className="flex justify-between"><span>Saturation</span><span style={{ color: "rgba(236,236,241,0.82)" }}>+10</span></div>
+              <div className="flex justify-between"><span>Contrast</span><span style={{ color: "rgba(236,236,241,0.82)" }}>+5</span></div>
+              <div className="flex justify-between"><span>Shadows</span><span style={{ color: "rgba(236,236,241,0.82)" }}>-10</span></div>
+              <div className="flex justify-between"><span>Highlights</span><span style={{ color: "rgba(236,236,241,0.82)" }}>+5</span></div>
             </div>
           </div>
         </div>
@@ -427,8 +427,8 @@ export default function Step8CapCut() {
         onClick={handleContinue}
         className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 hover:opacity-90"
         style={{
-          background: "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
-          color: "oklch(0.12 0.015 55)",
+          background: "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
+          color: "#181818",
           fontFamily: "'Cinzel', serif",
         }}
       >

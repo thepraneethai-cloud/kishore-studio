@@ -219,6 +219,8 @@ export interface Project {
   languageStyle: string;
   sunoStyle: SunoStyle;
   masterPrompt: string; // Master creative directive for consistency across all AI generations
+  creativeBrief: string; // Section 3 — visual setting / mood description
+  extraDirection: string; // Section 4 — must-have phrases, structure rules
   scenes: Scene[];
   youtubeTitle: string;
   youtubeDescription: string;
@@ -251,6 +253,8 @@ export function createEmptyProject(): Project {
       vocals: "Male devotional tenor",
     },
     masterPrompt: "",
+    creativeBrief: "",
+    extraDirection: "",
     scenes: [],
     youtubeTitle: "",
     youtubeDescription: "",

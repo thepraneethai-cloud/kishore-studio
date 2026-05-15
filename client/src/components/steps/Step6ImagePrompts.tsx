@@ -12,8 +12,10 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 
-type ImageProvider = "flux" | "dalle";
+type ImageProvider = "flux" | "dalle" | "pollinations" | "together" | "fal";
 type FluxModel = "flux-dev" | "flux-schnell";
+type FalImageModel = "flux-schnell" | "flux-dev";
+type PollinationsModel = "flux" | "flux-realism" | "turbo";
 type DalleModel = "dall-e-3" | "gpt-image-1";
 
 const STYLE_SUFFIXES = [
@@ -54,11 +56,13 @@ export default function Step6ImagePrompts() {
   const [seedLocked, setSeedLocked] = useState(project.imageSeed !== null);
 
   // Provider selection
-  const [provider, setProvider] = useState<ImageProvider>("flux");
+  const [provider, setProvider] = useState<ImageProvider>("pollinations");
   const [fluxModel, setFluxModel] = useState<FluxModel>("flux-dev");
   const [dalleModel, setDalleModel] = useState<DalleModel>("dall-e-3");
   const [dalleQuality, setDalleQuality] = useState<"standard" | "hd">("standard");
   const [dalleStyle, setDalleStyle] = useState<"natural" | "vivid">("natural");
+  const [falImageModel, setFalImageModel] = useState<FalImageModel>("flux-schnell");
+  const [pollinationsModel, setPollinationsModel] = useState<PollinationsModel>("flux");
 
   // Generation state
   const [imageJobs, setImageJobs] = useState<ImageJob[]>([]);
@@ -82,9 +86,15 @@ export default function Step6ImagePrompts() {
   });
   const replicateApiKey = userSettings?.replicateApiKey || "";
   const openaiApiKey = userSettings?.openaiApiKey || "";
+  const falApiKey = (userSettings as any)?.falApiKey || "";
+  const togetherApiKey = (userSettings as any)?.togetherApiKey || "";
 
-  // Derived: which key is needed for selected provider
-  const activeApiKey = provider === "dalle" ? openaiApiKey : replicateApiKey;
+  // Derived: which key is needed for selected provider (Pollinations needs none)
+  const activeApiKey = provider === "dalle" ? openaiApiKey
+    : provider === "together" ? togetherApiKey
+    : provider === "fal" ? falApiKey
+    : provider === "pollinations" ? "free"
+    : replicateApiKey;
   const missingKeyRoute = "/settings";
 
   const generateImagesMutation = trpc.generation.generateImages.useMutation();
@@ -150,12 +160,15 @@ export default function Step6ImagePrompts() {
   }, [isPolling, imageJobs, replicateApiKey, utils]);
 
   const handleGenerateImages = async () => {
-    if (!activeApiKey) {
-      toast.error(
-        provider === "dalle"
-          ? "Add your OpenAI API key in Settings first"
-          : "Add your Replicate API key in Settings first"
-      );
+    if (provider !== "pollinations" && !activeApiKey) {
+      const msgs: Record<ImageProvider, string> = {
+        dalle: "Add your OpenAI API key in Settings",
+        flux: "Add your Replicate API key in Settings",
+        together: "Add your Together AI key in Settings (free at api.together.ai)",
+        fal: "Add your fal.ai key in Settings (free at fal.ai)",
+        pollinations: "",
+      };
+      toast.error(msgs[provider]);
       return;
     }
 
@@ -167,27 +180,17 @@ export default function Step6ImagePrompts() {
         s.imagePrompt || buildImagePrompt(s.sceneDescription)
       );
 
+      const stylePrefix = project.characterPrefix || undefined;
       const mutationInput =
         provider === "dalle"
-          ? {
-              prompts,
-              provider: "dalle" as const,
-              openaiApiKey,
-              dalleModel,
-              dalleQuality,
-              dalleStyle,
-              stylePrefix: project.characterPrefix || undefined,
-            }
-          : {
-              prompts,
-              provider: "flux" as const,
-              replicateApiKey,
-              model: fluxModel,
-              width: 1024,
-              height: 576,
-              stylePrefix: project.characterPrefix || undefined,
-              seed: project.imageSeed ?? undefined,
-            };
+          ? { prompts, provider: "dalle" as const, openaiApiKey, dalleModel, dalleQuality, dalleStyle, stylePrefix }
+          : provider === "pollinations"
+          ? { prompts, provider: "pollinations" as const, pollinationsModel, stylePrefix }
+          : provider === "together"
+          ? { prompts, provider: "together" as const, togetherApiKey, stylePrefix }
+          : provider === "fal"
+          ? { prompts, provider: "fal" as const, falApiKey, falModel: falImageModel, stylePrefix }
+          : { prompts, provider: "flux" as const, replicateApiKey, model: fluxModel, width: 1024, height: 576, stylePrefix, seed: project.imageSeed ?? undefined };
 
       const result = await generateImagesMutation.mutateAsync(mutationInput);
 
@@ -212,11 +215,15 @@ export default function Step6ImagePrompts() {
 
       setImageJobs(jobs);
 
-      // DALL-E returns completed results immediately — no polling needed
-      if (provider === "dalle") {
+      const immediateProviders: ImageProvider[] = ["dalle", "pollinations", "together", "fal"];
+      if (immediateProviders.includes(provider)) {
         setGenStatus("done");
         const succeeded = jobs.filter((j) => j.status === "succeeded").length;
-        toast.success(`${succeeded}/${jobs.length} images generated via ${dalleModel}!`);
+        const label = provider === "pollinations" ? "Pollinations (free)"
+          : provider === "together" ? "Together AI (free)"
+          : provider === "fal" ? "fal.ai"
+          : dalleModel;
+        toast.success(`${succeeded}/${jobs.length} images ready via ${label}!`);
       } else {
         setGenStatus("polling");
         setIsPolling(true);
@@ -370,10 +377,10 @@ export default function Step6ImagePrompts() {
     return (
       <div className="space-y-4">
         <div>
-          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>Step 6</p>
-          <h2 className="text-2xl font-bold" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>Image Prompts</h2>
+          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(236,236,241,0.45)", letterSpacing: "0.08em" }}>Step 6</p>
+          <h2 className="text-2xl font-bold mb-1" style={{ color: "#ececf1", letterSpacing: "-0.01em" }}>Image Prompts</h2>
         </div>
-        <div className="text-center py-12 rounded-lg" style={{ border: "2px dashed oklch(0.28 0.025 58)", color: "oklch(0.45 0.010 60)" }}>
+        <div className="text-center py-12 rounded-lg" style={{ border: "2px dashed rgba(255,255,255,0.1)", color: "rgba(236,236,241,0.35)" }}>
           <Sparkles size={32} className="mx-auto mb-3 opacity-40" />
           <p className="text-sm">Please complete Step 3 (Scene Breakdown) first</p>
         </div>
@@ -386,18 +393,18 @@ export default function Step6ImagePrompts() {
       {/* Header */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
+          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(236,236,241,0.45)", letterSpacing: "0.08em" }}>
             Step 4
           </p>
-          <h2 className="text-2xl font-bold" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
+          <h2 className="text-2xl font-bold mb-1" style={{ color: "#ececf1", letterSpacing: "-0.01em" }}>
             Image Prompts
           </h2>
-          <p className="text-sm mt-1" style={{ color: "oklch(0.60 0.015 68)" }}>
+          <p className="text-sm mt-1" style={{ color: "rgba(236,236,241,0.6)" }}>
             Generate images in-app or copy prompts for Leonardo AI / Midjourney. Master Prompt guides visual consistency.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 mt-1">
-          <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "oklch(0.72 0.12 75 / 0.15)", color: "oklch(0.80 0.12 78)", border: "1px solid oklch(0.72 0.12 75 / 0.3)" }}>
+          <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "rgba(255,255,255,0.06)", color: "#ececf1", border: "1px solid rgba(255,255,255,0.12)" }}>
             {project.scenes.length} scenes
           </span>
         </div>
@@ -410,22 +417,22 @@ export default function Step6ImagePrompts() {
             onClick={() => setShowMasterPrompt(!showMasterPrompt)}
             className="flex items-center justify-between w-full text-left"
           >
-            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
               📋 Master Creative Vision (Reference)
             </p>
             {showMasterPrompt ? (
-              <ChevronUp size={16} style={{ color: "oklch(0.65 0.14 65)" }} />
+              <ChevronUp size={16} style={{ color: "rgba(236,236,241,0.45)" }} />
             ) : (
-              <ChevronDown size={16} style={{ color: "oklch(0.65 0.14 65)" }} />
+              <ChevronDown size={16} style={{ color: "rgba(236,236,241,0.45)" }} />
             )}
           </button>
           {showMasterPrompt && (
             <div
               className="text-xs leading-relaxed p-3 rounded"
               style={{
-                background: "oklch(0.14 0.016 52)",
-                color: "oklch(0.70 0.015 68)",
-                border: "1px solid oklch(0.24 0.020 55)",
+                background: "#1c1c1c",
+                color: "rgba(236,236,241,0.62)",
+                border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
               {project.masterPrompt}
@@ -448,14 +455,14 @@ export default function Step6ImagePrompts() {
         {/* Style Lock */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "oklch(0.55 0.012 65)" }}>
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(236,236,241,0.45)" }}>
               Style Lock
             </span>
             {deity && (
               <button
                 onClick={() => setCharacterPrefix(getDefaultCharacterPrefix(deity))}
                 className="flex items-center gap-1 text-xs px-2.5 py-1 rounded transition-colors"
-                style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.28 0.025 58)" }}
+                style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.1)" }}
               >
                 <Sparkles size={9} />
                 Reset to {deity.name} default
@@ -482,18 +489,18 @@ export default function Step6ImagePrompts() {
           />
         </div>
 
-        <div style={{ height: "1px", background: "oklch(0.25 0.020 55)" }} />
+        <div style={{ height: "1px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Art Style dropdown */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "oklch(0.55 0.012 65)" }}>
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(236,236,241,0.45)" }}>
               Art Style
             </span>
             <button
               onClick={() => setShowNegative(!showNegative)}
               className="text-xs"
-              style={{ color: "oklch(0.45 0.010 60)" }}
+              style={{ color: "rgba(236,236,241,0.35)" }}
             >
               {showNegative ? "▲" : "▼"} Negative prompt
             </button>
@@ -508,17 +515,17 @@ export default function Step6ImagePrompts() {
             ))}
           </select>
           {showNegative && (
-            <p className="text-xs leading-relaxed" style={{ color: "oklch(0.45 0.010 60)", fontStyle: "italic" }}>
+            <p className="text-xs leading-relaxed" style={{ color: "rgba(236,236,241,0.35)", fontStyle: "italic" }}>
               {NEGATIVE_PROMPT}
             </p>
           )}
         </div>
 
-        <div style={{ height: "1px", background: "oklch(0.25 0.020 55)" }} />
+        <div style={{ height: "1px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Seed + Actions row */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-semibold" style={{ color: "oklch(0.55 0.012 65)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Seed</span>
+          <span className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.45)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Seed</span>
           <input
             type="number"
             value={project.imageSeed ?? ""}
@@ -542,7 +549,7 @@ export default function Step6ImagePrompts() {
           <button
             onClick={handleRandomSeed}
             className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded transition-colors"
-            style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.28 0.025 58)" }}
+            style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.1)" }}
             title="Roll a random seed"
           >
             <Shuffle size={10} />
@@ -552,9 +559,9 @@ export default function Step6ImagePrompts() {
             onClick={handleToggleSeedLock}
             className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded transition-colors"
             style={{
-              background: seedLocked ? "oklch(0.18 0.06 150 / 0.3)" : "oklch(0.22 0.018 52)",
-              color: seedLocked ? "oklch(0.72 0.12 145)" : "oklch(0.50 0.012 65)",
-              border: `1px solid ${seedLocked ? "oklch(0.50 0.12 145 / 0.5)" : "oklch(0.28 0.025 58)"}`,
+              background: seedLocked ? "oklch(0.18 0.06 150 / 0.3)" : "#2a2a2a",
+              color: seedLocked ? "oklch(0.72 0.12 145)" : "rgba(236,236,241,0.4)",
+              border: `1px solid ${seedLocked ? "oklch(0.50 0.12 145 / 0.5)" : "rgba(255,255,255,0.1)"}`,
             }}
             title={seedLocked ? "Unlock seed" : "Lock seed"}
           >
@@ -565,7 +572,7 @@ export default function Step6ImagePrompts() {
           <button
             onClick={handleRegenerateAll}
             className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
-            style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.28 0.025 58)" }}
+            style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.1)" }}
           >
             <Sparkles size={11} />
             Restyle All
@@ -574,9 +581,9 @@ export default function Step6ImagePrompts() {
             onClick={handleCopyAll}
             className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
             style={{
-              background: copiedAll ? "oklch(0.72 0.12 75 / 0.2)" : "oklch(0.22 0.018 52)",
-              color: copiedAll ? "oklch(0.72 0.12 75)" : "oklch(0.65 0.015 68)",
-              border: `1px solid ${copiedAll ? "oklch(0.72 0.12 75 / 0.5)" : "oklch(0.28 0.025 58)"}`,
+              background: copiedAll ? "rgba(255,255,255,0.08)" : "#2a2a2a",
+              color: copiedAll ? "rgba(236,236,241,0.82)" : "rgba(236,236,241,0.58)",
+              border: `1px solid ${copiedAll ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.1)"}`,
             }}
           >
             {copiedAll ? <Check size={11} /> : <Copy size={11} />}
@@ -585,14 +592,14 @@ export default function Step6ImagePrompts() {
           <button
             onClick={handleDownloadCSV}
             className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
-            style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.015 68)", border: "1px solid oklch(0.28 0.025 58)" }}
+            style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.1)" }}
           >
             <Download size={11} />
             CSV
           </button>
         </div>
         {seedLocked && project.imageSeed !== null && (
-          <p className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>
+          <p className="text-xs" style={{ color: "rgba(236,236,241,0.4)" }}>
             Seed <span style={{ color: "oklch(0.72 0.12 145)", fontFamily: "monospace" }}>{project.imageSeed}</span> locked — all {project.scenes.length} images will share the same visual style.
           </p>
         )}
@@ -601,11 +608,11 @@ export default function Step6ImagePrompts() {
       {/* In-app Generation Panel */}
       <div className="p-4 space-y-4" style={panelStyle}>
         <div>
-          <p className="text-sm font-semibold" style={{ color: "#00d4ff" }}>
+          <p className="text-sm font-semibold" style={{ color: "rgba(236,236,241,0.82)" }}>
             Generate in app
           </p>
           <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.42)" }}>
-            Pick a provider and model. Required keys can be added in Settings.
+            Pick a provider. Free options need no API key or just a free account.
           </p>
         </div>
 
@@ -613,17 +620,47 @@ export default function Step6ImagePrompts() {
           <div>
             <label style={labelStyle}>Provider</label>
             <select value={provider} onChange={(e) => setProvider(e.target.value as ImageProvider)} style={selectStyle}>
-              <option value="flux">Flux via Replicate</option>
-              <option value="dalle">ChatGPT / OpenAI images</option>
+              <optgroup label="🆓 Free — no cost">
+                <option value="pollinations">Pollinations.ai — FREE, no key needed</option>
+                <option value="together">Together AI — FREE tier (FLUX.1-schnell)</option>
+              </optgroup>
+              <optgroup label="💳 Free credits on signup">
+                <option value="fal">fal.ai — free credits (FLUX Schnell / Dev)</option>
+              </optgroup>
+              <optgroup label="Paid (pay per image)">
+                <option value="flux">Flux via Replicate (~$0.01/image)</option>
+                <option value="dalle">DALL-E / GPT-image (OpenAI)</option>
+              </optgroup>
             </select>
           </div>
+
+          {provider === "pollinations" && (
+            <div>
+              <label style={labelStyle}>Model</label>
+              <select value={pollinationsModel} onChange={(e) => setPollinationsModel(e.target.value as PollinationsModel)} style={selectStyle}>
+                <option value="flux">Flux — best quality (default)</option>
+                <option value="flux-realism">Flux Realism — photorealistic</option>
+                <option value="turbo">Turbo — fastest</option>
+              </select>
+            </div>
+          )}
+
+          {provider === "fal" && (
+            <div>
+              <label style={labelStyle}>Model</label>
+              <select value={falImageModel} onChange={(e) => setFalImageModel(e.target.value as FalImageModel)} style={selectStyle}>
+                <option value="flux-schnell">FLUX Schnell — fast, free-tier friendly</option>
+                <option value="flux-dev">FLUX Dev — higher quality</option>
+              </select>
+            </div>
+          )}
 
           {provider === "flux" && (
             <div>
               <label style={labelStyle}>Model</label>
               <select value={fluxModel} onChange={(e) => setFluxModel(e.target.value as FluxModel)} style={selectStyle}>
-                <option value="flux-dev">Flux Dev - best quality</option>
-                <option value="flux-schnell">Flux Schnell - faster, cheaper</option>
+                <option value="flux-dev">Flux Dev — best quality</option>
+                <option value="flux-schnell">Flux Schnell — faster, cheaper</option>
               </select>
             </div>
           )}
@@ -643,8 +680,8 @@ export default function Step6ImagePrompts() {
               <div>
                 <label style={labelStyle}>Quality</label>
                 <select value={dalleQuality} onChange={(e) => setDalleQuality(e.target.value as "standard" | "hd")} style={selectStyle}>
-                  <option value="standard">Standard - lower cost</option>
-                  <option value="hd">HD - higher detail</option>
+                  <option value="standard">Standard — lower cost</option>
+                  <option value="hd">HD — higher detail</option>
                 </select>
               </div>
               <div>
@@ -658,22 +695,41 @@ export default function Step6ImagePrompts() {
           )}
         </div>
 
-        {/* Flux model note */}
-        {provider === "flux" && (
-          <div className="p-3 rounded-lg" style={{ background: "rgba(4,8,24,0.45)", border: "1px solid rgba(0,212,255,0.10)" }}>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.48)" }}>
-              {fluxModel === "flux-dev"
-                ? "Flux Dev is better for final images. Use this when quality matters."
-                : "Flux Schnell is faster and cheaper. Use this for drafts or quick tests."}
+        {/* Provider info note */}
+        {provider === "pollinations" && (
+          <div className="p-3 rounded-lg" style={{ background: "rgba(16, 163, 127, 0.07)", border: "1px solid rgba(16,163,127,0.25)" }}>
+            <p className="text-xs" style={{ color: "rgba(236,236,241,0.6)" }}>
+              ✓ <strong style={{ color: "#10a37f" }}>Completely free</strong> — powered by Flux internally. No API key needed. Images return in ~3–8 seconds each.
             </p>
           </div>
         )}
-
-        {/* DALL-E specific note */}
+        {provider === "together" && (
+          <div className="p-3 rounded-lg" style={{ background: "rgba(16, 163, 127, 0.07)", border: "1px solid rgba(16,163,127,0.25)" }}>
+            <p className="text-xs" style={{ color: "rgba(236,236,241,0.6)" }}>
+              ✓ <strong style={{ color: "#10a37f" }}>Free tier</strong> — FLUX.1-schnell-Free is available at no cost. Add your Together AI key in Settings (free signup at <strong>api.together.ai</strong>).
+            </p>
+          </div>
+        )}
+        {provider === "fal" && (
+          <div className="p-3 rounded-lg" style={{ background: "rgba(16, 163, 127, 0.07)", border: "1px solid rgba(16,163,127,0.25)" }}>
+            <p className="text-xs" style={{ color: "rgba(236,236,241,0.6)" }}>
+              ✓ <strong style={{ color: "#10a37f" }}>Free credits on signup</strong> — fast FLUX generation via fal.ai. Add your fal.ai key in Settings (free at <strong>fal.ai</strong>). Then ~$0.003/image after credits.
+            </p>
+          </div>
+        )}
+        {provider === "flux" && (
+          <div className="p-3 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.48)" }}>
+              {fluxModel === "flux-dev"
+                ? "Flux Dev — best quality for final images (~$0.01/image via Replicate)."
+                : "Flux Schnell — faster and cheaper. Good for drafts (~$0.003/image via Replicate)."}
+            </p>
+          </div>
+        )}
         {provider === "dalle" && (
-          <div className="p-3 rounded-lg" style={{ background: "rgba(4,8,24,0.45)", border: "1px solid rgba(0,212,255,0.10)" }}>
-            <p className="w-full text-xs" style={{ color: "oklch(0.48 0.010 60)" }}>
-              Note: DALL-E generates at 1792×1024 (16:9). Results return immediately — no polling needed.
+          <div className="p-3 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <p className="text-xs" style={{ color: "rgba(236,236,241,0.35)" }}>
+              DALL-E generates at 1792×1024 (16:9). Results return immediately — no polling needed.
               {dalleModel === "dall-e-3" && " Seed locking is not supported by DALL-E 3."}
             </p>
           </div>
@@ -681,20 +737,22 @@ export default function Step6ImagePrompts() {
 
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold" style={{ color: "oklch(0.80 0.12 78)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-sm font-semibold" style={{ color: "#ececf1" }}>
               Generate in App
             </p>
-            <p className="text-xs mt-0.5" style={{ color: "oklch(0.50 0.012 65)" }}>
-              {provider === "dalle"
-                ? `${dalleModel === "dall-e-3" ? "DALL-E 3" : "GPT-image-1"} via OpenAI — results ready in ~${Math.ceil(project.scenes.length / 3) * 5}s`
-                : `Flux Dev via Replicate — ~$0.01/image${project.imageSeed !== null ? ` · seed ${project.imageSeed}` : ""}`}
+            <p className="text-xs mt-0.5" style={{ color: "rgba(236,236,241,0.4)" }}>
+              {provider === "pollinations" ? "Free · Pollinations.ai (Flux)"
+                : provider === "together" ? "Free tier · Together AI (FLUX.1-schnell)"
+                : provider === "fal" ? `fal.ai (${falImageModel}) · free credits`
+                : provider === "dalle" ? `${dalleModel === "dall-e-3" ? "DALL-E 3" : "GPT-image-1"} via OpenAI — ~${Math.ceil(project.scenes.length / 3) * 5}s`
+                : `Flux ${fluxModel === "flux-dev" ? "Dev" : "Schnell"} via Replicate · ~$0.01/image${project.imageSeed !== null ? ` · seed ${project.imageSeed}` : ""}`}
             </p>
           </div>
-          {!activeApiKey ? (
+          {provider !== "pollinations" && !activeApiKey ? (
             <button
               onClick={() => navigate(missingKeyRoute)}
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors"
-              style={{ background: "oklch(0.22 0.018 52)", color: "oklch(0.65 0.10 65)", border: "1px solid oklch(0.35 0.07 65)" }}
+              style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.12)" }}
             >
               <Settings size={11} />
               {provider === "dalle" ? "Add OpenAI Key" : "Add Replicate Key"}
@@ -707,12 +765,12 @@ export default function Step6ImagePrompts() {
               style={{
                 background:
                   genStatus === "submitting" || genStatus === "polling"
-                    ? "oklch(0.28 0.025 58)"
-                    : "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
+                    ? "rgba(255,255,255,0.1)"
+                    : "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
                 color:
                   genStatus === "submitting" || genStatus === "polling"
-                    ? "oklch(0.55 0.012 65)"
-                    : "oklch(0.12 0.015 55)",
+                    ? "rgba(236,236,241,0.45)"
+                    : "#181818",
                 border: "none",
                 cursor: genStatus === "submitting" || genStatus === "polling" ? "not-allowed" : "pointer",
               }}
@@ -731,16 +789,16 @@ export default function Step6ImagePrompts() {
         {/* Generation progress bar */}
         {imageJobs.length > 0 && (
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs" style={{ color: "oklch(0.55 0.012 65)" }}>
+            <div className="flex items-center justify-between text-xs" style={{ color: "rgba(236,236,241,0.45)" }}>
               <span>{doneCount} generated · {pendingCount} pending · {imageJobs.filter(j => j.status === "failed").length} failed</span>
-              {genStatus === "done" && <span style={{ color: "oklch(0.72 0.12 75)" }}>✓ Complete</span>}
+              {genStatus === "done" && <span style={{ color: "rgba(236,236,241,0.82)" }}>✓ Complete</span>}
             </div>
-            <div className="rounded-full overflow-hidden" style={{ height: "4px", background: "oklch(0.22 0.018 52)" }}>
+            <div className="rounded-full overflow-hidden" style={{ height: "4px", background: "#2a2a2a" }}>
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{
                   width: `${(doneCount / imageJobs.length) * 100}%`,
-                  background: "linear-gradient(90deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
+                  background: "linear-gradient(90deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
                 }}
               />
             </div>
@@ -765,13 +823,13 @@ export default function Step6ImagePrompts() {
                 <div className="flex items-center gap-2">
                   <span
                     className="text-xs font-bold px-2 py-0.5 rounded"
-                    style={{ background: "oklch(0.72 0.12 75 / 0.15)", color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}
+                    style={{ background: "rgba(255,255,255,0.06)", color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}
                   >
                     {idx + 1}
                   </span>
                   <span
                     className="text-sm telugu-text truncate max-w-[240px]"
-                    style={{ color: "oklch(0.75 0.015 70)" }}
+                    style={{ color: "rgba(236,236,241,0.72)" }}
                   >
                     {scene.lyricLine || "Scene " + (idx + 1)}
                   </span>
@@ -785,11 +843,11 @@ export default function Step6ImagePrompts() {
                         background:
                           job.status === "succeeded" ? "oklch(0.18 0.06 150)" :
                           job.status === "failed"    ? "oklch(0.18 0.05 20)"  :
-                                                       "oklch(0.22 0.018 52)",
+                                                       "#2a2a2a",
                         color:
                           job.status === "succeeded" ? "oklch(0.72 0.12 145)" :
                           job.status === "failed"    ? "oklch(0.70 0.15 25)"  :
-                                                       "oklch(0.55 0.012 65)",
+                                                       "rgba(236,236,241,0.45)",
                         border: "1px solid currentColor",
                         opacity: 0.8,
                       }}
@@ -804,9 +862,9 @@ export default function Step6ImagePrompts() {
                     onClick={() => handleCopyOne(scene.id, scene.imagePrompt || buildImagePrompt(scene.sceneDescription))}
                     className="flex items-center gap-1 text-xs px-2.5 py-1 rounded transition-colors"
                     style={{
-                      background: copiedId === scene.id ? "oklch(0.72 0.12 75 / 0.15)" : "oklch(0.22 0.018 52)",
-                      color: copiedId === scene.id ? "oklch(0.72 0.12 75)" : "oklch(0.55 0.012 65)",
-                      border: `1px solid ${copiedId === scene.id ? "oklch(0.72 0.12 75 / 0.4)" : "oklch(0.25 0.020 55)"}`,
+                      background: copiedId === scene.id ? "rgba(255,255,255,0.06)" : "#2a2a2a",
+                      color: copiedId === scene.id ? "rgba(236,236,241,0.82)" : "rgba(236,236,241,0.45)",
+                      border: `1px solid ${copiedId === scene.id ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.1)"}`,
                     }}
                   >
                     {copiedId === scene.id ? <Check size={10} /> : <Copy size={10} />}
@@ -824,7 +882,7 @@ export default function Step6ImagePrompts() {
                     <div
                       className="rounded overflow-hidden relative"
                       style={{
-                        border: `2px solid ${approved === true ? "oklch(0.60 0.18 145)" : approved === false ? "oklch(0.55 0.18 25)" : "oklch(0.28 0.025 58)"}`,
+                        border: `2px solid ${approved === true ? "oklch(0.60 0.18 145)" : approved === false ? "oklch(0.55 0.18 25)" : "rgba(255,255,255,0.1)"}`,
                         transition: "border-color 200ms",
                       }}
                     >
@@ -853,9 +911,9 @@ export default function Step6ImagePrompts() {
                         onClick={() => updateScene(scene.id, { imageApproved: true })}
                         className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold transition-all"
                         style={{
-                          background: approved === true ? "oklch(0.20 0.10 145)" : "oklch(0.18 0.016 52)",
-                          color: approved === true ? "oklch(0.72 0.18 145)" : "oklch(0.55 0.012 65)",
-                          border: `1px solid ${approved === true ? "oklch(0.50 0.15 145 / 0.6)" : "oklch(0.28 0.025 58)"}`,
+                          background: approved === true ? "oklch(0.20 0.10 145)" : "#222222",
+                          color: approved === true ? "oklch(0.72 0.18 145)" : "rgba(236,236,241,0.45)",
+                          border: `1px solid ${approved === true ? "oklch(0.50 0.15 145 / 0.6)" : "rgba(255,255,255,0.1)"}`,
                         }}
                       >
                         <ThumbsUp size={12} /> Approve
@@ -864,9 +922,9 @@ export default function Step6ImagePrompts() {
                         onClick={() => updateScene(scene.id, { imageApproved: false, imageUrl: undefined })}
                         className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold transition-all"
                         style={{
-                          background: approved === false ? "oklch(0.18 0.08 25)" : "oklch(0.18 0.016 52)",
-                          color: approved === false ? "oklch(0.70 0.18 25)" : "oklch(0.55 0.012 65)",
-                          border: `1px solid ${approved === false ? "oklch(0.45 0.12 25 / 0.6)" : "oklch(0.28 0.025 58)"}`,
+                          background: approved === false ? "oklch(0.18 0.08 25)" : "#222222",
+                          color: approved === false ? "oklch(0.70 0.18 25)" : "rgba(236,236,241,0.45)",
+                          border: `1px solid ${approved === false ? "oklch(0.45 0.12 25 / 0.6)" : "rgba(255,255,255,0.1)"}`,
                         }}
                       >
                         <ThumbsDown size={12} /> Reject & Clear
@@ -877,7 +935,7 @@ export default function Step6ImagePrompts() {
                   /* No image yet — URL paste + file upload */
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
-                      <Link size={12} style={{ color: "oklch(0.45 0.010 60)", flexShrink: 0 }} />
+                      <Link size={12} style={{ color: "rgba(236,236,241,0.35)", flexShrink: 0 }} />
                       <input
                         type="url"
                         placeholder="Paste image URL from Leonardo AI…"
@@ -905,8 +963,8 @@ export default function Step6ImagePrompts() {
                         cursor: uploadingSceneId === scene.id ? "not-allowed" : "pointer",
                         padding: "0.35rem 0.75rem",
                         borderRadius: "0.375rem",
-                        border: "1px dashed oklch(0.35 0.025 58)",
-                        color: "oklch(0.50 0.012 65)",
+                        border: "1px dashed rgba(255,255,255,0.12)",
+                        color: "rgba(236,236,241,0.4)",
                         fontSize: "0.72rem",
                         transition: "all 150ms",
                         width: "fit-content",
@@ -945,19 +1003,19 @@ export default function Step6ImagePrompts() {
 
       {/* Approval summary + Continue */}
       {scenesWithImages > 0 && (
-        <div className="rounded-lg p-4 space-y-3" style={{ background: "oklch(0.15 0.014 52)", border: "1px solid oklch(0.25 0.020 55)" }}>
+        <div className="rounded-lg p-4 space-y-3" style={{ background: "#1c1c1c", border: "1px solid rgba(255,255,255,0.1)" }}>
           <div className="flex items-center justify-between text-xs">
-            <span style={{ color: "oklch(0.60 0.012 65)" }}>Image Approval</span>
-            <span style={{ color: approvedCount > 0 ? "oklch(0.72 0.18 145)" : "oklch(0.55 0.012 65)" }}>
+            <span style={{ color: "rgba(236,236,241,0.52)" }}>Image Approval</span>
+            <span style={{ color: approvedCount > 0 ? "oklch(0.72 0.18 145)" : "rgba(236,236,241,0.45)" }}>
               {approvedCount} approved · {rejectedCount} rejected · {scenesWithImages - reviewedCount} pending review
             </span>
           </div>
-          <div className="rounded-full overflow-hidden" style={{ height: "6px", background: "oklch(0.22 0.018 52)" }}>
+          <div className="rounded-full overflow-hidden" style={{ height: "6px", background: "#2a2a2a" }}>
             <div className="h-full rounded-full transition-all duration-500"
               style={{ width: `${(approvedCount / project.scenes.length) * 100}%`, background: "linear-gradient(90deg, oklch(0.60 0.18 145), oklch(0.72 0.18 145))" }} />
           </div>
           {approvedCount === 0 && scenesWithImages > 0 && (
-            <p className="text-xs" style={{ color: "oklch(0.60 0.12 65)" }}>
+            <p className="text-xs" style={{ color: "rgba(236,236,241,0.52)" }}>
               👆 Review each image above — approve the ones you want to use in the video
             </p>
           )}
@@ -970,9 +1028,9 @@ export default function Step6ImagePrompts() {
         className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200"
         style={{
           background: approvedCount > 0
-            ? "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))"
-            : "oklch(0.20 0.016 52)",
-          color: approvedCount > 0 ? "oklch(0.12 0.015 55)" : "oklch(0.40 0.010 60)",
+            ? "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))"
+            : "#2a2a2a",
+          color: approvedCount > 0 ? "#181818" : "rgba(236,236,241,0.3)",
           cursor: approvedCount > 0 ? "pointer" : "not-allowed",
           fontFamily: "'Cinzel', serif",
           opacity: approvedCount > 0 ? 1 : 0.6,

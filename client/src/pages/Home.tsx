@@ -43,8 +43,7 @@ export default function Home() {
     <div
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #0a0a14 0%, #1a1a2e 50%, #16213e 100%)",
-        backgroundAttachment: "fixed",
+        background: "#212121",
         display: "flex",
         flexDirection: "column",
       }}
@@ -55,39 +54,45 @@ export default function Home() {
       {/* Mobile Bottom Navigation */}
       {isMobile && <MobileBottomNav />}
 
-      {/* Main content area */}
+      {/* Content area — starts directly below the header, no overlap */}
       <div
         style={{
-          display: "grid",
-          // On mobile the sidebar floats as an overlay — don't reserve column space
-          gridTemplateColumns: (!isMobile && sidebarOpen) ? "224px 1fr" : "1fr",
           flex: 1,
-          transition: "grid-template-columns 250ms ease-out",
+          display: "flex",
+          minHeight: 0,
+          overflow: "hidden",
         }}
       >
-        {/* Sidebar — rendered when open; on mobile it floats as a fixed drawer */}
-        {sidebarOpen && (
+        {/* Desktop sidebar — in normal document flow, starts below the header */}
+        {sidebarOpen && !isMobile && (
+          <div
+            style={{
+              width: "224px",
+              flexShrink: 0,
+              height: "100%",
+              overflowY: "auto",
+              animation: "slideInLeft 250ms ease-out",
+              borderRight: "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            <Sidebar />
+          </div>
+        )}
+
+        {/* Mobile sidebar — fixed overlay drawn over the full screen */}
+        {sidebarOpen && isMobile && (
           <>
-            {/* Mobile: tap-away backdrop */}
-            {isMobile && (
-              <div
-                onClick={() => setSidebarOpen(false)}
-                style={{
-                  position: "fixed",
-                  inset: 0,
-                  background: "rgba(0, 0, 0, 0.6)",
-                  zIndex: 35,
-                  backdropFilter: "blur(2px)",
-                }}
-              />
-            )}
             <div
+              onClick={() => setSidebarOpen(false)}
               style={{
-                animation: "slideInLeft 250ms ease-out",
+                position: "fixed",
+                inset: 0,
+                background: "rgba(0, 0, 0, 0.6)",
+                zIndex: 35,
+                backdropFilter: "blur(2px)",
               }}
-            >
-              <Sidebar onClose={isMobile ? () => setSidebarOpen(false) : undefined} />
-            </div>
+            />
+            <Sidebar onClose={() => setSidebarOpen(false)} />
           </>
         )}
 
@@ -95,16 +100,12 @@ export default function Home() {
         <main
           style={{
             flex: 1,
-            display: "flex",
-            flexDirection: "column",
             overflowY: "auto",
-            transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
             paddingBottom: isMobile ? "70px" : "0",
           }}
         >
           <div
             style={{
-              flex: 1,
               padding: isMobile ? "1rem" : "2rem",
               maxWidth: "1200px",
               margin: "0 auto",

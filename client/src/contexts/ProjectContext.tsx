@@ -23,6 +23,8 @@ interface ProjectContextType {
   setAudioUrl: (audioUrl: string) => void;
   setSunoStyle: (style: Partial<SunoStyle>) => void;
   setMasterPrompt: (prompt: string) => void;
+  setCreativeBrief: (brief: string) => void;
+  setExtraDirection: (direction: string) => void;
   setScenes: (scenes: Scene[]) => void;
   updateScene: (id: number, updates: Partial<Scene>) => void;
   setYouTubeData: (data: Partial<Pick<Project, "youtubeTitle" | "youtubeDescription" | "youtubeTags" | "thumbnailPrompt">>) => void;
@@ -31,6 +33,7 @@ interface ProjectContextType {
   setImageSeed: (seed: number | null) => void;
   setCinematicStyle: (style: CinematicStyle | null) => void;
   resetProject: () => void;
+  deleteProject: (serverProjectId: number) => Promise<void>;
   loadProject: (serverProjectId: number) => Promise<void>;
   currentServerProjectId: number | null;
   completedSteps: Set<number>;
@@ -87,6 +90,12 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const HISTORY_LIMIT = 5;
   const utils = trpc.useUtils();
 
+  const deleteProjectMutation = trpc.projects.delete.useMutation({
+    onSuccess: () => {
+      void utils.projects.list.invalidate();
+    },
+  });
+
   const upsertProject = trpc.projects.upsert.useMutation({
     onSuccess: (data) => {
       if (data?.serverProjectId) {
@@ -127,6 +136,8 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         lyrics: project.lyrics,
         audioUrl: project.audioUrl,
         masterPrompt: project.masterPrompt,
+        creativeBrief: project.creativeBrief,
+        extraDirection: project.extraDirection,
         sunoStyle: project.sunoStyle as unknown as Record<string, unknown>,
         scenes: project.scenes,
         youtubeTitle: project.youtubeTitle,
@@ -183,6 +194,14 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
 
   const setMasterPrompt = useCallback((prompt: string) => {
     setProject((p) => ({ ...p, masterPrompt: prompt }));
+  }, []);
+
+  const setCreativeBrief = useCallback((brief: string) => {
+    setProject((p) => ({ ...p, creativeBrief: brief }));
+  }, []);
+
+  const setExtraDirection = useCallback((direction: string) => {
+    setProject((p) => ({ ...p, extraDirection: direction }));
   }, []);
 
   const setScenes = useCallback((scenes: Scene[]) => {
@@ -271,6 +290,8 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       lyrics: loaded.lyrics || "",
       audioUrl: loaded.audioUrl || "",
       masterPrompt: loaded.masterPrompt || metadata.masterPrompt || "",
+      creativeBrief: loaded.creativeBrief || "",
+      extraDirection: loaded.extraDirection || "",
       sunoStyle: (loaded.sunoStyle as SunoStyle | null) || empty.sunoStyle,
       scenes: metadata.scenes || [],
       youtubeTitle: metadata.youtubeTitle || "",
@@ -292,6 +313,13 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     setCurrentServerProjectId(serverProjectId);
   }, [utils]);
 
+  const deleteProject = useCallback(async (serverProjectId: number) => {
+    await deleteProjectMutation.mutateAsync({ serverProjectId });
+    if (currentServerProjectId === serverProjectId) {
+      resetProject();
+    }
+  }, [deleteProjectMutation, currentServerProjectId, resetProject]);
+
   const markStepComplete = useCallback((step: number) => {
     setCompletedSteps((prev) => new Set<number>(Array.from(prev).concat(step)));
   }, []);
@@ -309,6 +337,8 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         setAudioUrl,
         setSunoStyle,
         setMasterPrompt,
+        setCreativeBrief,
+        setExtraDirection,
         setScenes,
         updateScene,
         setYouTubeData,
@@ -317,6 +347,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         setImageSeed,
         setCinematicStyle,
         resetProject,
+        deleteProject,
         loadProject,
         currentServerProjectId,
         completedSteps,

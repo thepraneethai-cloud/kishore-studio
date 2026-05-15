@@ -17,16 +17,23 @@ import {
 } from "../_core/replicate";
 import { analyzeSceneArc } from "../_core/sceneDirector";
 import { generateImagesWithOpenAI } from "../_core/openaiImages";
+import { generateImagesWithPollinations, generateImagesWithTogether, generateImagesWithFal } from "../_core/providers/images";
+import { submitFalVideoJob, pollFalVideoJob, FalVideoModel } from "../_core/providers/fal";
 import { invokeLLM } from "../_core/llm";
 import { isR2Configured, uploadToR2 } from "../_core/r2Storage";
 
 // Per-unit cost estimates in USD
 const UNIT_COSTS = {
-  lyrics:       0.0001, // gemini-2.5-flash is extremely cheap
-  image:        0.0100, // flux-dev ~$0.01/image
-  image_dalle3: 0.0400, // dall-e-3 standard ~$0.04/image, hd ~$0.08
-  image_gpt:    0.0167, // gpt-image-1 medium ~$0.0167/image
-  video:        0.0500, // minimax video-01 ~$0.05/clip
+  lyrics:           0.0001,
+  image:            0.0100, // flux-dev via Replicate ~$0.01
+  image_dalle3:     0.0400, // dall-e-3 standard ~$0.04, hd ~$0.08
+  image_gpt:        0.0167, // gpt-image-1 ~$0.0167
+  image_pollinations: 0.0000, // free
+  image_together:   0.0000, // free tier (FLUX.1-schnell-Free)
+  image_fal:        0.0030, // fal.ai flux-schnell ~$0.003
+  video:            0.0500, // minimax via Replicate ~$0.05
+  video_fal_wan:    0.0250, // fal.ai Wan2.1 ~$0.025
+  video_fal_kling:  0.0300, // fal.ai Kling ~$0.03
 };
 
 async function recordCost(
@@ -393,11 +400,16 @@ export const generationRouter = router({
         stylePrefix: z.string().optional(),
         seed: z.number().optional(),
         // OpenAI (DALL-E) options
-        provider: z.enum(["flux", "dalle"]).optional(),
+        provider: z.enum(["flux", "dalle", "pollinations", "together", "fal"]).optional(),
         openaiApiKey: z.string().optional(),
         dalleModel: z.enum(["dall-e-3", "gpt-image-1"]).optional(),
         dalleQuality: z.enum(["standard", "hd"]).optional(),
         dalleStyle: z.enum(["natural", "vivid"]).optional(),
+        // Free / fal.ai options
+        togetherApiKey: z.string().optional(),
+        falApiKey: z.string().optional(),
+        falModel: z.enum(["flux-schnell", "flux-dev"]).optional(),
+        pollinationsModel: z.enum(["flux", "flux-realism", "turbo"]).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -433,6 +445,50 @@ export const generationRouter = router({
 
           const unitCost = dalleModel === "gpt-image-1" ? UNIT_COSTS.image_gpt : UNIT_COSTS.image_dalle3;
           void recordCost(ctx.user.id, "image", dalleModel, unitCost, input.prompts.length);
+          return { success: true, data: jobs };
+        }
+
+        // ── Pollinations path (free, no key) ─────────────────
+        if (input.provider === "pollinations") {
+          const urls = generateImagesWithPollinations(resolvedPrompts, input.pollinationsModel ?? "flux");
+          const jobs = urls.map((url, i) => ({
+            id: `pollinations-${Date.now()}-${i}`,
+            status: "succeeded" as const,
+            output: url,
+            createdAt: new Date().toISOString(),
+            completedAt: new Date().toISOString(),
+          }));
+          void recordCost(ctx.user.id, "image", "pollinations", UNIT_COSTS.image_pollinations, input.prompts.length);
+          return { success: true, data: jobs };
+        }
+
+        // ── Together AI path (free tier) ──────────────────────
+        if (input.provider === "together") {
+          if (!input.togetherApiKey) throw new Error("Together AI API key is required. Sign up free at api.together.ai");
+          const urls = await generateImagesWithTogether(resolvedPrompts, input.togetherApiKey);
+          const jobs = urls.map((url, i) => ({
+            id: `together-${Date.now()}-${i}`,
+            status: "succeeded" as const,
+            output: url,
+            createdAt: new Date().toISOString(),
+            completedAt: new Date().toISOString(),
+          }));
+          void recordCost(ctx.user.id, "image", "together", UNIT_COSTS.image_together, input.prompts.length);
+          return { success: true, data: jobs };
+        }
+
+        // ── fal.ai image path ─────────────────────────────────
+        if (input.provider === "fal") {
+          if (!input.falApiKey) throw new Error("fal.ai API key is required. Sign up free at fal.ai");
+          const urls = await generateImagesWithFal(resolvedPrompts, input.falApiKey, input.falModel ?? "flux-schnell");
+          const jobs = urls.map((url, i) => ({
+            id: `fal-${Date.now()}-${i}`,
+            status: "succeeded" as const,
+            output: url,
+            createdAt: new Date().toISOString(),
+            completedAt: new Date().toISOString(),
+          }));
+          void recordCost(ctx.user.id, "image", "fal", UNIT_COSTS.image_fal, input.prompts.length);
           return { success: true, data: jobs };
         }
 
@@ -482,6 +538,58 @@ export const generationRouter = router({
           success: false,
           error: error instanceof Error ? error.message : "Failed to generate videos",
         };
+      }
+    }),
+
+  // ============================================================
+  // VIDEO GENERATION via fal.ai (Wan2.1 / Kling) — free credits
+  // ============================================================
+  generateVideosFal: protectedProcedure
+    .input(
+      z.object({
+        videos: z.array(
+          z.object({
+            imageUrl: z.string().url(),
+            motionPrompt: z.string(),
+            sceneId: z.number(),
+          })
+        ),
+        falApiKey: z.string(),
+        model: z.enum(["wan", "kling"]).default("wan"),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        await assertBudgetAvailable(ctx.user.id);
+        const jobs = await Promise.all(
+          input.videos.map((v) =>
+            submitFalVideoJob(v.imageUrl, v.motionPrompt, v.sceneId, input.falApiKey, input.model as FalVideoModel)
+          )
+        );
+        const costKey = input.model === "kling" ? "video_fal_kling" : "video_fal_wan";
+        void recordCost(ctx.user.id, "video", `fal-${input.model}`, UNIT_COSTS[costKey], input.videos.length);
+        return { success: true, data: jobs };
+      } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : "Failed to start fal.ai video jobs" };
+      }
+    }),
+
+  // ── Poll fal.ai video jobs ─────────────────────────────────
+  pollFalJobs: protectedProcedure
+    .input(
+      z.object({
+        jobs: z.array(z.object({ requestId: z.string(), model: z.enum(["wan", "kling"]), sceneId: z.number() })),
+        falApiKey: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      try {
+        const results = await Promise.all(
+          input.jobs.map((j) => pollFalVideoJob(j.requestId, j.model as FalVideoModel, j.sceneId, input.falApiKey))
+        );
+        return { success: true, data: results };
+      } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : "Failed to poll fal.ai jobs" };
       }
     }),
 
