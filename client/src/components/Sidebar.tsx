@@ -38,9 +38,16 @@ export default function Sidebar({ onClose }: SidebarProps) {
     currentServerProjectId,
   } = useProject();
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  // Tracks whichever project is highlighted in the dropdown (may differ from loaded project)
+  const [dropdownSelectedId, setDropdownSelectedId] = useState<number | null>(null);
   const { data: savedProjects = [], isLoading: projectsLoading, isError: projectsError } = trpc.projects.list.useQuery(undefined, {
     retry: 1,
   });
+
+  // The ID shown in the dropdown — prefer the local dropdown selection, fall back to loaded project
+  const dropdownValue = dropdownSelectedId ?? currentServerProjectId ?? "new";
+  // Show delete when any real project is targeted (selected in dropdown or currently loaded)
+  const deleteTargetId = dropdownSelectedId ?? currentServerProjectId;
 
   const handleStepClick = (stepId: number) => {
     setActiveStep(stepId);
@@ -48,12 +55,14 @@ export default function Sidebar({ onClose }: SidebarProps) {
   };
 
   const handleDeleteProject = async () => {
-    if (!currentServerProjectId) return;
-    const confirmed = window.confirm("Delete this project? This cannot be undone.");
+    if (!deleteTargetId) return;
+    const name = savedProjects.find(p => p.id === deleteTargetId)?.name || "this project";
+    const confirmed = window.confirm(`Delete "${name}"? This cannot be undone.`);
     if (!confirmed) return;
-    setDeletingId(currentServerProjectId);
+    setDeletingId(deleteTargetId);
     try {
-      await deleteProject(currentServerProjectId);
+      await deleteProject(deleteTargetId);
+      setDropdownSelectedId(null);
       toast.success("Project deleted");
     } catch {
       toast.error("Could not delete project");
@@ -64,15 +73,27 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
   const handleProjectSelect = async (value: string) => {
     if (value === "new") {
+      setDropdownSelectedId(null);
       resetProject();
       onClose?.();
       toast.success("Started a new project");
       return;
     }
     const id = Number(value);
-    if (!id || id === currentServerProjectId) return;
+    if (!id) return;
+    // Just highlight in dropdown — don't load until user explicitly switches
+    if (id !== currentServerProjectId) {
+      setDropdownSelectedId(id);
+      return;
+    }
+    setDropdownSelectedId(null);
+  };
+
+  const handleLoadSelected = async () => {
+    if (!dropdownSelectedId || dropdownSelectedId === currentServerProjectId) return;
     try {
-      await loadProject(id);
+      await loadProject(dropdownSelectedId);
+      setDropdownSelectedId(null);
       onClose?.();
       toast.success("Project loaded");
     } catch (error) {
@@ -215,14 +236,16 @@ export default function Sidebar({ onClose }: SidebarProps) {
               }}
             />
             <select
-              value={currentServerProjectId ?? "new"}
+              value={dropdownValue}
               onChange={(e) => void handleProjectSelect(e.target.value)}
-              disabled={projectsLoading || projectsError}
+              disabled={projectsLoading || !!projectsError}
               style={{
                 width: "100%",
                 padding: "0.65rem 0.6rem 0.65rem 2rem",
                 borderRadius: "0.5rem",
-                border: "1px solid rgba(255,255,255,0.1)",
+                border: dropdownSelectedId
+                  ? "1px solid rgba(16,163,127,0.5)"
+                  : "1px solid rgba(255,255,255,0.1)",
                 background: "rgba(255,255,255,0.05)",
                 color: "#ececf1",
                 fontSize: "0.75rem",
@@ -236,15 +259,39 @@ export default function Sidebar({ onClose }: SidebarProps) {
               </option>
               {savedProjects.map((saved) => (
                 <option key={saved.id} value={saved.id}>
-                  {saved.name || "Untitled"}
+                  {saved.name || "Untitled"}{saved.id === currentServerProjectId ? " ✓" : ""}
                 </option>
               ))}
             </select>
           </div>
-          {currentServerProjectId && (
+          {/* Load button — only when dropdown shows a different project than what's loaded */}
+          {dropdownSelectedId && dropdownSelectedId !== currentServerProjectId && (
+            <button
+              onClick={() => void handleLoadSelected()}
+              title="Load this project"
+              style={{
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "32px",
+                height: "32px",
+                borderRadius: "0.5rem",
+                border: "1px solid rgba(16,163,127,0.4)",
+                background: "rgba(16,163,127,0.12)",
+                color: "#10a37f",
+                cursor: "pointer",
+                transition: "all 150ms",
+              }}
+            >
+              <FolderOpen size={13} />
+            </button>
+          )}
+          {/* Delete button — visible whenever any saved project is targeted */}
+          {deleteTargetId && (
             <button
               onClick={() => void handleDeleteProject()}
-              disabled={deletingId === currentServerProjectId}
+              disabled={deletingId === deleteTargetId}
               title="Delete this project"
               style={{
                 flexShrink: 0,
@@ -256,8 +303,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 borderRadius: "0.5rem",
                 border: "1px solid rgba(255, 60, 60, 0.35)",
                 background: "rgba(255, 40, 40, 0.08)",
-                color: deletingId === currentServerProjectId ? "rgba(255,100,100,0.4)" : "#ff4444",
-                cursor: deletingId === currentServerProjectId ? "wait" : "pointer",
+                color: deletingId === deleteTargetId ? "rgba(255,100,100,0.4)" : "#ff4444",
+                cursor: deletingId === deleteTargetId ? "wait" : "pointer",
                 transition: "all 150ms",
               }}
             >
