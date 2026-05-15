@@ -291,7 +291,7 @@ export default function Step2Lyrics() {
   const [masterPromptReady, setMasterPromptReady] = useState(false);
 
   // Collapsible section state — start all open, collapse once filled
-  const [openSections, setOpenSections] = useState({ basic: true, settings: true, brief: true, direction: true, master: true });
+  const [openSections, setOpenSections] = useState({ basic: true, settings: true, brief: true, direction: true, master: true, lyrics: true });
   const toggleSection = (key: keyof typeof openSections) =>
     setOpenSections((s) => ({ ...s, [key]: !s[key] }));
 
@@ -1092,8 +1092,12 @@ export default function Step2Lyrics() {
               </button>
             </div>
 
-            <div style={{ ...panel, marginBottom: "0.75rem" }}>
-              <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", margin: "0 0 0.25rem" }}>6. Generated Lyrics</p>
+            <CollapsibleSection
+              sectionKey="lyrics"
+              number="6"
+              title="Generated Lyrics"
+              summary={sanitizeLyrics(project.lyrics).split("\n").find((l) => l.trim())?.slice(0, 70) ?? "Lyrics ready"}
+            >
               <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", margin: "0 0 0.75rem" }}>
                 Edit freely — changes save automatically.
               </p>
@@ -1126,7 +1130,7 @@ export default function Step2Lyrics() {
                   Clear lyrics
                 </button>
               </div>
-            </div>
+            </CollapsibleSection>
 
             {/* Iterate — separate card so it reads as a distinct action */}
             <div style={{ ...panel, marginBottom: "1rem" }}>
