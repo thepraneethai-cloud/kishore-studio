@@ -37,10 +37,10 @@ export default function Step4MusicPrompt() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
+        <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)" }}>
           Step 4
         </p>
-        <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
+        <h2 className="text-2xl font-bold mb-2" style={{ color: "oklch(0.92 0.018 75)" }}>
           Generate Music in SUNO
         </h2>
         <p className="text-sm" style={{ color: "oklch(0.60 0.015 68)" }}>
@@ -57,7 +57,7 @@ export default function Step4MusicPrompt() {
         }}
       >
         <div>
-          <p className="font-semibold text-sm" style={{ color: "oklch(0.80 0.12 78)", fontFamily: "'Cinzel', serif" }}>
+          <p className="font-semibold text-sm" style={{ color: "oklch(0.80 0.12 78)" }}>
             Open SUNO AI
           </p>
           <p className="text-xs mt-0.5" style={{ color: "oklch(0.55 0.012 65)" }}>
@@ -72,7 +72,6 @@ export default function Step4MusicPrompt() {
           style={{
             background: "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
             color: "oklch(0.12 0.015 55)",
-            fontFamily: "'Cinzel', serif",
           }}
         >
           suno.com
@@ -83,7 +82,7 @@ export default function Step4MusicPrompt() {
       <div className="grid grid-cols-2 gap-4">
         {/* Troubleshooting */}
         <div className="shrine-panel p-4 space-y-3">
-          <p className="text-sm font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+          <p className="text-sm font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
             Common Issues & Fixes
           </p>
           <div className="space-y-3">
@@ -106,7 +105,7 @@ export default function Step4MusicPrompt() {
         {/* Iteration Guide */}
         <div className="space-y-4">
           <div className="shrine-panel p-4 space-y-3">
-            <p className="text-sm font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-sm font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
               Iteration Workflow
             </p>
             <ol className="space-y-2">
@@ -126,7 +125,7 @@ export default function Step4MusicPrompt() {
 
           {/* Quality checklist */}
           <div className="shrine-panel p-4 space-y-3">
-            <p className="text-sm font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-sm font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
               Final Audio Checklist
             </p>
             {[
@@ -166,7 +165,6 @@ export default function Step4MusicPrompt() {
         style={{
           background: "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
           color: "oklch(0.12 0.015 55)",
-          fontFamily: "'Cinzel', serif",
         }}
       >
         Continue to Scene Breakdown

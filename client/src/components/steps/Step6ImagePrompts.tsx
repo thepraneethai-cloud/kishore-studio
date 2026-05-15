@@ -417,7 +417,7 @@ export default function Step6ImagePrompts() {
             onClick={() => setShowMasterPrompt(!showMasterPrompt)}
             className="flex items-center justify-between w-full text-left"
           >
-            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)" }}>
               📋 Master Creative Vision (Reference)
             </p>
             {showMasterPrompt ? (
@@ -823,7 +823,7 @@ export default function Step6ImagePrompts() {
                 <div className="flex items-center gap-2">
                   <span
                     className="text-xs font-bold px-2 py-0.5 rounded"
-                    style={{ background: "rgba(255,255,255,0.06)", color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}
+                    style={{ background: "rgba(255,255,255,0.06)", color: "rgba(236,236,241,0.82)" }}
                   >
                     {idx + 1}
                   </span>
@@ -1032,7 +1032,6 @@ export default function Step6ImagePrompts() {
             : "#2a2a2a",
           color: approvedCount > 0 ? "#181818" : "rgba(236,236,241,0.3)",
           cursor: approvedCount > 0 ? "pointer" : "not-allowed",
-          fontFamily: "'Cinzel', serif",
           opacity: approvedCount > 0 ? 1 : 0.6,
         }}
       >

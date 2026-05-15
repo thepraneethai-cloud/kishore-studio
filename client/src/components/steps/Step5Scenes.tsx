@@ -371,7 +371,7 @@ export default function Step5Scenes() {
           >
             <div className="flex items-center gap-2">
               <Clapperboard size={14} style={{ color: "rgba(236,236,241,0.82)" }} />
-              <span className="text-sm font-semibold" style={{ color: "#ececf1", fontFamily: "'Cinzel', serif" }}>
+              <span className="text-sm font-semibold" style={{ color: "#ececf1" }}>
                 Cinematic Style Sheet
               </span>
             </div>
@@ -401,7 +401,7 @@ export default function Step5Scenes() {
       {/* Emotional Arc Visualization */}
       {hasDirectorData && (
         <div className="shrine-panel p-4 space-y-2">
-          <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.7)", fontFamily: "'Cinzel', serif" }}>
+          <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.7)" }}>
             Emotional Arc
           </p>
           <div className="flex gap-0.5 rounded overflow-hidden" style={{ height: "8px" }}>
@@ -495,7 +495,6 @@ export default function Step5Scenes() {
             style={{
               background: "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
               color: "#181818",
-              fontFamily: "'Cinzel', serif",
             }}
           >
             <Wand2 size={14} className={isGenerating ? "animate-spin" : ""} />
@@ -619,7 +618,7 @@ export default function Step5Scenes() {
                 {/* ── Header: scene number + badges + delete ── */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.625rem", flexWrap: "wrap", gap: "0.4rem" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-                    <span style={{ background: "rgba(255,255,255,0.06)", color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif", fontWeight: 700, fontSize: "0.75rem", padding: "0.2rem 0.5rem", borderRadius: "0.25rem" }}>
+                    <span style={{ background: "rgba(255,255,255,0.06)", color: "rgba(236,236,241,0.82)", fontWeight: 700, fontSize: "0.75rem", padding: "0.2rem 0.5rem", borderRadius: "0.25rem" }}>
                       {idx + 1}
                     </span>
                     {weightConfig && <span className="text-xs px-2 py-0.5 rounded" style={{ background: weightConfig.bg, color: weightConfig.color, border: `1px solid ${weightConfig.color}40` }}>{weightConfig.label}</span>}
@@ -678,7 +677,6 @@ export default function Step5Scenes() {
         style={{
           background: "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
           color: "#181818",
-          fontFamily: "'Cinzel', serif",
         }}
       >
         Continue to Image Prompts

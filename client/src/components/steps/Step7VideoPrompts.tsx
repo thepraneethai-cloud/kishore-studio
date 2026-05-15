@@ -408,7 +408,7 @@ export default function Step7VideoPrompts() {
             onClick={() => setShowMasterPrompt(!showMasterPrompt)}
             className="flex items-center justify-between w-full text-left"
           >
-            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)" }}>
               📋 Master Creative Vision (Reference)
             </p>
             {showMasterPrompt ? (
@@ -592,7 +592,7 @@ export default function Step7VideoPrompts() {
               <div className="flex items-center gap-2">
                 <span
                   className="text-xs font-bold px-2 py-0.5 rounded"
-                  style={{ background: "rgba(255,255,255,0.05)", color: "rgba(236,236,241,0.45)", fontFamily: "'Cinzel', serif" }}
+                  style={{ background: "rgba(255,255,255,0.05)", color: "rgba(236,236,241,0.45)" }}
                 >
                   {idx + 1}
                 </span>
@@ -675,7 +675,6 @@ export default function Step7VideoPrompts() {
         style={{
           background: "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
           color: "#181818",
-          fontFamily: "'Cinzel', serif",
         }}
       >
         Continue to CapCut Assembly

@@ -105,10 +105,10 @@ export default function Step3SunoStyle() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)", fontFamily: "'Cinzel', serif" }}>
+        <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "oklch(0.65 0.14 65)" }}>
           Step 3
         </p>
-        <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Cinzel', serif", color: "oklch(0.92 0.018 75)" }}>
+        <h2 className="text-2xl font-bold mb-2" style={{ color: "oklch(0.92 0.018 75)" }}>
           SUNO Music Style
         </h2>
         <p className="text-sm" style={{ color: "oklch(0.60 0.015 68)" }}>
@@ -123,7 +123,7 @@ export default function Step3SunoStyle() {
             onClick={() => setShowMasterPrompt(!showMasterPrompt)}
             className="flex items-center justify-between w-full text-left"
           >
-            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
               📋 Master Creative Vision (Reference)
             </p>
             {showMasterPrompt ? (
@@ -149,7 +149,7 @@ export default function Step3SunoStyle() {
 
       {/* Quick Presets */}
       <div className="shrine-panel p-4">
-        <p className="text-xs font-semibold mb-3" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+        <p className="text-xs font-semibold mb-3" style={{ color: "oklch(0.72 0.12 75)" }}>
           Quick Presets
         </p>
         <div className="grid grid-cols-4 gap-2">
@@ -181,7 +181,7 @@ export default function Step3SunoStyle() {
         <div className="space-y-4">
           {/* Tempo */}
           <div className="shrine-panel p-4 space-y-3">
-            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
               Tempo
             </p>
             <div className="space-y-2">
@@ -213,7 +213,7 @@ export default function Step3SunoStyle() {
 
           {/* Mood */}
           <div className="shrine-panel p-4 space-y-3">
-            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
               Mood
             </p>
             <div className="flex flex-wrap gap-2">
@@ -236,7 +236,7 @@ export default function Step3SunoStyle() {
 
           {/* Vocals */}
           <div className="shrine-panel p-4 space-y-3">
-            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
               Vocal Style
             </p>
             <select
@@ -257,7 +257,7 @@ export default function Step3SunoStyle() {
         {/* Right: Instruments */}
         <div className="shrine-panel p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
               Instruments
             </p>
             <span className="text-xs" style={{ color: "oklch(0.50 0.012 65)" }}>
@@ -307,7 +307,7 @@ export default function Step3SunoStyle() {
       {/* Generated SUNO Prompt */}
       <div className="shrine-panel p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold" style={{ color: "oklch(0.72 0.12 75)", fontFamily: "'Cinzel', serif" }}>
+          <p className="text-sm font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
             Generated SUNO Prompt
           </p>
           <div className="flex gap-2">
@@ -366,7 +366,6 @@ export default function Step3SunoStyle() {
         style={{
           background: "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.65 0.14 65))",
           color: "oklch(0.12 0.015 55)",
-          fontFamily: "'Cinzel', serif",
         }}
       >
         Continue to Music Prompt

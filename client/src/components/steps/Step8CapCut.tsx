@@ -230,7 +230,6 @@ export default function Step8CapCut() {
           style={{
             background: "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
             color: "#181818",
-            fontFamily: "'Cinzel', serif",
           }}
         >
           CapCut <ExternalLink size={11} />
@@ -241,7 +240,7 @@ export default function Step8CapCut() {
         <div className="shrine-panel p-4 space-y-3 lg:col-span-2">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
+              <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)" }}>
                 Producer Readiness
               </p>
               <p className="text-xs mt-1" style={{ color: "rgba(236,236,241,0.4)" }}>
@@ -281,7 +280,7 @@ export default function Step8CapCut() {
         </div>
 
         <div className="shrine-panel p-4 space-y-3">
-          <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
+          <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)" }}>
             Scene Source
           </p>
           <button
@@ -351,7 +350,7 @@ export default function Step8CapCut() {
         <div className="lg:col-span-2 shrine-panel p-4 space-y-3">
           <div className="flex items-center gap-2">
             <Sparkles size={16} style={{ color: "rgba(236,236,241,0.82)" }} />
-            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)" }}>
               Auto Timeline
             </p>
           </div>
@@ -369,7 +368,7 @@ export default function Step8CapCut() {
                   style={{ background: "#1c1c1c", border: "1px solid rgba(255,255,255,0.08)" }}
                 >
                   <div>
-                    <p className="text-xs font-bold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
+                    <p className="text-xs font-bold" style={{ color: "rgba(236,236,241,0.82)" }}>
                       Scene {item.sceneNumber}
                     </p>
                     <p className="text-[11px] mt-1" style={{ color: "rgba(236,236,241,0.35)" }}>
@@ -397,7 +396,7 @@ export default function Step8CapCut() {
 
         <div className="space-y-3">
           <div className="shrine-panel p-3 space-y-3">
-            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)" }}>
               Recommended Effects
             </p>
             {CAPCUT_EFFECTS.map((effect) => (
@@ -409,7 +408,7 @@ export default function Step8CapCut() {
           </div>
 
           <div className="shrine-panel p-3 space-y-2">
-            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)", fontFamily: "'Cinzel', serif" }}>
+            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)" }}>
               Color Grade
             </p>
             <div className="space-y-1.5 text-xs" style={{ color: "rgba(236,236,241,0.52)" }}>
@@ -429,7 +428,6 @@ export default function Step8CapCut() {
         style={{
           background: "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
           color: "#181818",
-          fontFamily: "'Cinzel', serif",
         }}
       >
         Continue to YouTube Export
