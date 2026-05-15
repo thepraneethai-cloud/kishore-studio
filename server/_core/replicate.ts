@@ -1,6 +1,6 @@
 // ============================================================
 // Replicate API Integration for Image & Video Generation
-// Images: Flux Pro/Dev/Schnell (black-forest-labs)
+// Images: Flux Pro/Dev/Schnell (black-forest-labs), Seedream 4.5 (bytedance)
 // Videos: MiniMax Video-01-Live (img + prompt → video)
 // Uses the model-owner/name endpoint — no version hashes needed.
 // ============================================================
@@ -9,7 +9,7 @@ const REPLICATE_API_URL = "https://api.replicate.com/v1";
 
 export interface ReplicateImageInput {
   prompt: string;
-  model?: "flux-pro" | "flux-dev" | "flux-schnell";
+  model?: "flux-pro" | "flux-dev" | "flux-schnell" | "seedream-4.5";
   width?: number;
   height?: number;
   steps?: number;
@@ -33,9 +33,10 @@ export interface GenerationJob {
 }
 
 const IMAGE_MODELS: Record<string, { owner: string; name: string }> = {
-  "flux-pro":     { owner: "black-forest-labs", name: "flux-pro" },
-  "flux-dev":     { owner: "black-forest-labs", name: "flux-dev" },
-  "flux-schnell": { owner: "black-forest-labs", name: "flux-schnell" },
+  "flux-pro":      { owner: "black-forest-labs", name: "flux-pro" },
+  "flux-dev":      { owner: "black-forest-labs", name: "flux-dev" },
+  "flux-schnell":  { owner: "black-forest-labs", name: "flux-schnell" },
+  "seedream-4.5":  { owner: "bytedance",         name: "seedream-4.5" },
 };
 
 // img2video: accepts first_frame_image + prompt
@@ -92,6 +93,17 @@ export async function generateImageWithReplicate(
   const modelKey = input.model || "flux-pro";
   const model = IMAGE_MODELS[modelKey];
   if (!model) throw new Error(`Unknown image model: ${modelKey}`);
+
+  // Seedream 4.5 uses aspect_ratio instead of explicit width/height
+  if (modelKey === "seedream-4.5") {
+    return postPrediction(model.owner, model.name, {
+      prompt: input.prompt,
+      aspect_ratio: "16:9",   // YouTube landscape default
+      num_inference_steps: input.steps || 30,
+      guidance_scale: input.guidance || 5.0,
+      ...(input.seed != null && { seed: input.seed }),
+    }, apiKey);
+  }
 
   return postPrediction(model.owner, model.name, {
     prompt: input.prompt,
@@ -154,7 +166,7 @@ export async function generateImageBatch(
   prompts: string[],
   apiKey: string,
   options?: {
-    model?: "flux-pro" | "flux-dev" | "flux-schnell";
+    model?: "flux-pro" | "flux-dev" | "flux-schnell" | "seedream-4.5";
     width?: number;
     height?: number;
     seed?: number;

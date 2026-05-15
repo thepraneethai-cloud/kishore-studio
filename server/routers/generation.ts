@@ -401,7 +401,7 @@ export const generationRouter = router({
         prompts: z.array(z.string()).min(1).max(50),
         // Replicate (Flux) options
         replicateApiKey: z.string().optional(),
-        model: z.enum(["flux-pro", "flux-dev", "flux-schnell"]).optional(),
+        model: z.enum(["flux-pro", "flux-dev", "flux-schnell", "seedream-4.5"]).optional(),
         width: z.number().optional(),
         height: z.number().optional(),
         stylePrefix: z.string().optional(),
@@ -506,7 +506,7 @@ export const generationRouter = router({
         if (!replicateKey) throw new Error("Replicate API key is required. Set REPLICATE_API_KEY in Railway Variables or enter it in Settings.");
 
         const jobs = await generateImageBatch(resolvedPrompts, replicateKey, {
-          model: (input.model as "flux-pro" | "flux-dev" | "flux-schnell" | undefined) || "flux-dev",
+          model: (input.model as "flux-pro" | "flux-dev" | "flux-schnell" | "seedream-4.5" | undefined) || "flux-dev",
           width: input.width,
           height: input.height,
           seed: input.seed,

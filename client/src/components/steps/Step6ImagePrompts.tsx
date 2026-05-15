@@ -13,7 +13,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 
 type ImageProvider = "flux" | "dalle" | "pollinations" | "together" | "fal";
-type FluxModel = "flux-dev" | "flux-schnell";
+type FluxModel = "flux-dev" | "flux-schnell" | "seedream-4.5";
 type FalImageModel = "flux-schnell" | "flux-dev";
 type PollinationsModel = "flux" | "flux-realism" | "turbo";
 type DalleModel = "dall-e-3" | "gpt-image-1";
@@ -227,7 +227,8 @@ export default function Step6ImagePrompts() {
       } else {
         setGenStatus("polling");
         setIsPolling(true);
-        toast.success(`Generating ${prompts.length} images via ${fluxModel === "flux-schnell" ? "Flux Schnell" : "Flux Dev"}...`);
+        const modelLabel = fluxModel === "seedream-4.5" ? "Seedream 4.5" : fluxModel === "flux-schnell" ? "Flux Schnell" : "Flux Dev";
+        toast.success(`Generating ${prompts.length} images via ${modelLabel}...`);
       }
     } catch (error) {
       setGenStatus("error");
@@ -659,8 +660,9 @@ export default function Step6ImagePrompts() {
             <div>
               <label style={labelStyle}>Model</label>
               <select value={fluxModel} onChange={(e) => setFluxModel(e.target.value as FluxModel)} style={selectStyle}>
-                <option value="flux-dev">Flux Dev — best quality</option>
-                <option value="flux-schnell">Flux Schnell — faster, cheaper</option>
+                <option value="seedream-4.5">Seedream 4.5 — ByteDance, best spatial quality (~$0.04)</option>
+                <option value="flux-dev">Flux Dev — best quality (~$0.01)</option>
+                <option value="flux-schnell">Flux Schnell — faster, cheaper (~$0.003)</option>
               </select>
             </div>
           )}
@@ -720,7 +722,9 @@ export default function Step6ImagePrompts() {
         {provider === "flux" && (
           <div className="p-3 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.48)" }}>
-              {fluxModel === "flux-dev"
+              {fluxModel === "seedream-4.5"
+                ? "Seedream 4.5 by ByteDance — 19M+ runs, strong spatial understanding and world knowledge. Great for detailed devotional scenes (~$0.04/image via Replicate)."
+                : fluxModel === "flux-dev"
                 ? "Flux Dev — best quality for final images (~$0.01/image via Replicate)."
                 : "Flux Schnell — faster and cheaper. Good for drafts (~$0.003/image via Replicate)."}
             </p>
