@@ -343,7 +343,7 @@ export function getTrendingKeywords(deity: string): string[] {
     keywords.push(...CORE_TELUGU_KEYWORDS.seasonal);
   }
 
-  return [...new Set(keywords)]; // Remove duplicates
+  return Array.from(new Set(keywords)); // Remove duplicates
 }
 
 /**

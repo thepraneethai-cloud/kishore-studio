@@ -1,3 +1,6 @@
+const readEnv = (...names: string[]) =>
+  names.map((name) => process.env[name]?.trim()).find(Boolean) ?? "";
+
 export const ENV = {
   appId: process.env.VITE_APP_ID ?? "kishore-studio",
   cookieSecret: process.env.JWT_SECRET ?? "",
@@ -18,12 +21,12 @@ export const ENV = {
   // ── API Keys ──────────────────────────────────────────────────────────
   // Set these in Railway → Variables. They take priority over DB settings.
   // Never hard-coded here — always read from the environment at runtime.
-  openaiApiKey:    process.env.OPENAI_API_KEY    ?? "",
-  replicateApiKey: process.env.REPLICATE_API_KEY ?? "",
-  falApiKey:       process.env.FAL_API_KEY       ?? "",
-  togetherApiKey:  process.env.TOGETHER_API_KEY  ?? "",
-  claudeApiKey:    process.env.ANTHROPIC_API_KEY ?? "",
-  geminiApiKey:    process.env.GEMINI_API_KEY    ?? "",
-  groqApiKey:      process.env.GROQ_API_KEY      ?? "",
-  mistralApiKey:   process.env.MISTRAL_API_KEY   ?? "",
+  get openaiApiKey()    { return readEnv("OPENAI_API_KEY"); },
+  get replicateApiKey() { return readEnv("REPLICATE_API_KEY"); },
+  get falApiKey()       { return readEnv("FAL_API_KEY"); },
+  get togetherApiKey()  { return readEnv("TOGETHER_API_KEY"); },
+  get claudeApiKey()    { return readEnv("ANTHROPIC_API_KEY", "CLAUDE_API_KEY"); },
+  get geminiApiKey()    { return readEnv("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENERATIVE_AI_API_KEY"); },
+  get groqApiKey()      { return readEnv("GROQ_API_KEY"); },
+  get mistralApiKey()   { return readEnv("MISTRAL_API_KEY"); },
 };

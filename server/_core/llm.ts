@@ -210,9 +210,22 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
+const readRuntimeEnv = (...names: string[]) =>
+  names.map((name) => process.env[name]?.trim()).find(Boolean) ?? "";
+
+const runtimeKeys = {
+  openai: () => readRuntimeEnv("OPENAI_API_KEY") || ENV.openaiApiKey,
+  claude: () => readRuntimeEnv("ANTHROPIC_API_KEY", "CLAUDE_API_KEY") || ENV.claudeApiKey,
+  groq: () => readRuntimeEnv("GROQ_API_KEY") || ENV.groqApiKey,
+  mistral: () => readRuntimeEnv("MISTRAL_API_KEY") || ENV.mistralApiKey,
+  gemini: () =>
+    readRuntimeEnv("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENERATIVE_AI_API_KEY") ||
+    ENV.geminiApiKey,
+};
+
 const resolveApiUrl = (apiKeyOverride?: string) => {
   // Use Google's endpoint when a Gemini key is available (user-supplied or Railway env var)
-  if (apiKeyOverride || ENV.geminiApiKey) {
+  if (apiKeyOverride || runtimeKeys.gemini()) {
     return "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
   }
   return ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
@@ -221,7 +234,7 @@ const resolveApiUrl = (apiKeyOverride?: string) => {
 };
 
 const assertApiKey = (apiKeyOverride?: string) => {
-  if (!apiKeyOverride && !ENV.geminiApiKey && !ENV.forgeApiKey) {
+  if (!apiKeyOverride && !runtimeKeys.gemini() && !ENV.forgeApiKey) {
     throw new Error("No LLM API key configured");
   }
 };
@@ -301,7 +314,7 @@ export async function invokeLLM(
 
   // ── OpenAI path ───────────────────────────────────────────────
   if (isOpenAI) {
-    const openaiKey = options?.openaiApiKey;
+    const openaiKey = options?.openaiApiKey || runtimeKeys.openai();
     if (!openaiKey) {
       throw new Error(`OpenAI API key required for model "${model}". Add it in Settings → API Keys.`);
     }
@@ -337,7 +350,7 @@ export async function invokeLLM(
 
   // ── Anthropic / Claude path ───────────────────────────────────
   if (isClaude) {
-    const claudeKey = options?.claudeApiKey;
+    const claudeKey = options?.claudeApiKey || runtimeKeys.claude();
     if (!claudeKey) {
       throw new Error(`Anthropic API key required for model "${model}". Add it in Settings → API Keys.`);
     }
@@ -399,7 +412,7 @@ export async function invokeLLM(
 
   // ── Groq path (Llama, Qwen — OpenAI-compatible) ───────────────
   if (isGroq) {
-    const groqKey = options?.groqApiKey;
+    const groqKey = options?.groqApiKey || runtimeKeys.groq();
     if (!groqKey) {
       throw new Error(`Groq API key required for model "${model}". Add it in Settings → API Keys.`);
     }
@@ -428,7 +441,7 @@ export async function invokeLLM(
 
   // ── Mistral path (OpenAI-compatible) ─────────────────────────
   if (isMistral) {
-    const mistralKey = options?.mistralApiKey;
+    const mistralKey = options?.mistralApiKey || runtimeKeys.mistral();
     if (!mistralKey) {
       throw new Error(`Mistral API key required for model "${model}". Add it in Settings → API Keys.`);
     }
@@ -457,7 +470,8 @@ export async function invokeLLM(
 
   // ── Gemini path ───────────────────────────────────────────────
   // Priority: caller-supplied key → Railway GEMINI_API_KEY → Forge key
-  const resolvedApiKey = options?.apiKey || ENV.geminiApiKey || ENV.forgeApiKey;
+  const geminiApiKey = options?.apiKey || runtimeKeys.gemini();
+  const resolvedApiKey = geminiApiKey || ENV.forgeApiKey;
   assertApiKey(resolvedApiKey);
 
   const payload: Record<string, unknown> = {
@@ -493,7 +507,7 @@ export async function invokeLLM(
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetch(resolveApiUrl(options?.apiKey), {
+  const response = await fetch(resolveApiUrl(geminiApiKey), {
     method: "POST",
     headers: {
       "content-type": "application/json",

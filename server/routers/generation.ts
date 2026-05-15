@@ -861,8 +861,8 @@ export const generationRouter = router({
         const trendingKeywords = getTrendingKeywords(input.deity);
 
         // Combine all keywords and hashtags
-        const allKeywords = [...new Set([...seoMetadata.keywords, ...trendingKeywords])];
-        const allHashtags = [...new Set(seoMetadata.hashtags)];
+        const allKeywords = Array.from(new Set([...seoMetadata.keywords, ...trendingKeywords]));
+        const allHashtags = Array.from(new Set(seoMetadata.hashtags));
 
         // Generate additional YouTube-specific content
         const llmModel = input.llmModel || "gemini-2.5-flash";
@@ -904,18 +904,32 @@ export const generationRouter = router({
         const finalMetadata = {
           title: llmMetadata.title || seoMetadata.title,
           description: llmMetadata.description || seoMetadata.description,
-          keywords: [...new Set([...allKeywords, ...(llmMetadata.keywords || [])])],
-          hashtags: [...new Set([...allHashtags, ...(llmMetadata.hashtags || [])])],
+          keywords: Array.from(new Set([...allKeywords, ...(llmMetadata.keywords || [])])),
+          hashtags: Array.from(new Set([...allHashtags, ...(llmMetadata.hashtags || [])])),
           seoScore: seoMetadata.seoScore,
         };
 
         // Save to project
+        const db = await getDb();
+        if (!db) throw new Error("Database is not configured");
+        const existingRows = await db
+          .select({ metadata: projects.metadata })
+          .from(projects)
+          .where(eq(projects.id, input.projectId))
+          .limit(1);
+        const existingMetadata =
+          existingRows[0]?.metadata && typeof existingRows[0].metadata === "object"
+            ? existingRows[0].metadata as Record<string, unknown>
+            : {};
         await db
           .update(projects)
           .set({
-            youtubeTitle: finalMetadata.title,
-            youtubeDescription: finalMetadata.description,
-            youtubeTags: finalMetadata.hashtags,
+            metadata: {
+              ...existingMetadata,
+              youtubeTitle: finalMetadata.title,
+              youtubeDescription: finalMetadata.description,
+              youtubeTags: finalMetadata.hashtags,
+            },
             updatedAt: new Date(),
           })
           .where(eq(projects.id, input.projectId));
