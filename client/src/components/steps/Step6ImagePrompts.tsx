@@ -69,6 +69,7 @@ export default function Step6ImagePrompts() {
   const [genStatus, setGenStatus] = useState<"idle" | "submitting" | "polling" | "done" | "error">("idle");
   const [isPolling, setIsPolling] = useState(false);
   const [showMasterPrompt, setShowMasterPrompt] = useState(false);
+  const [regeneratingSceneId, setRegeneratingSceneId] = useState<number | null>(null);
 
   // AI improve state
   const [improvingId, setImprovingId] = useState<number | null>(null);
@@ -144,6 +145,19 @@ export default function Step6ImagePrompts() {
     return `${masterPromptGuidance}${sceneDesc}. ${styleSuffix}, warm amber and gold lighting from oil lamps, incense smoke, South Indian temple architecture, intricate stone carvings, sacred and divine atmosphere, ultra-detailed, high quality`;
   }, [selectedStyle, project.masterPrompt]);
 
+  const buildImageGenerationInput = (prompts: string[]) => {
+    const stylePrefix = project.characterPrefix || undefined;
+    return provider === "dalle"
+      ? { prompts, provider: "dalle" as const, openaiApiKey, dalleModel, dalleQuality, dalleStyle, stylePrefix }
+      : provider === "pollinations"
+      ? { prompts, provider: "pollinations" as const, pollinationsModel, stylePrefix }
+      : provider === "together"
+      ? { prompts, provider: "together" as const, togetherApiKey, stylePrefix }
+      : provider === "fal"
+      ? { prompts, provider: "fal" as const, falApiKey, falModel: falImageModel, stylePrefix }
+      : { prompts, provider: "flux" as const, replicateApiKey, model: fluxModel, width: 1024, height: 576, stylePrefix, seed: project.imageSeed ?? undefined };
+  };
+
   // Polling loop — re-runs whenever imageJobs changes while isPolling is true
   useEffect(() => {
     if (!isPolling || imageJobs.length === 0) return;
@@ -216,19 +230,7 @@ export default function Step6ImagePrompts() {
         s.imagePrompt || buildImagePrompt(s.sceneDescription)
       );
 
-      const stylePrefix = project.characterPrefix || undefined;
-      const mutationInput =
-        provider === "dalle"
-          ? { prompts, provider: "dalle" as const, openaiApiKey, dalleModel, dalleQuality, dalleStyle, stylePrefix }
-          : provider === "pollinations"
-          ? { prompts, provider: "pollinations" as const, pollinationsModel, stylePrefix }
-          : provider === "together"
-          ? { prompts, provider: "together" as const, togetherApiKey, stylePrefix }
-          : provider === "fal"
-          ? { prompts, provider: "fal" as const, falApiKey, falModel: falImageModel, stylePrefix }
-          : { prompts, provider: "flux" as const, replicateApiKey, model: fluxModel, width: 1024, height: 576, stylePrefix, seed: project.imageSeed ?? undefined };
-
-      const result = await generateImagesMutation.mutateAsync(mutationInput);
+      const result = await generateImagesMutation.mutateAsync(buildImageGenerationInput(prompts));
 
       if (!result.success || !result.data) {
         throw new Error(result.error || "Generation failed to start");
@@ -269,6 +271,58 @@ export default function Step6ImagePrompts() {
     } catch (error) {
       setGenStatus("error");
       toast.error(error instanceof Error ? error.message : "Failed to start generation");
+    }
+  };
+
+  const handleRegenerateOneImage = async (sceneId: number, sceneIndex: number, prompt: string) => {
+    if (provider !== "pollinations" && !activeApiKey) {
+      const msgs: Record<ImageProvider, string> = {
+        dalle: "Add your OpenAI API key in Settings",
+        flux: "Add your Replicate API key in Settings",
+        together: "Add your Together AI key in Settings",
+        fal: "Add your fal.ai key in Settings",
+        pollinations: "",
+      };
+      toast.error(msgs[provider]);
+      return;
+    }
+
+    setRegeneratingSceneId(sceneId);
+    updateScene(sceneId, { imageUrl: undefined, imageApproved: undefined });
+
+    try {
+      const result = await generateImagesMutation.mutateAsync(buildImageGenerationInput([prompt]));
+      if (!result.success || !result.data?.[0]) {
+        throw new Error(result.error || "Image regeneration failed");
+      }
+
+      const returnedJob = result.data[0];
+      const imageUrl = normalizeImageSrc(Array.isArray(returnedJob.output) ? returnedJob.output[0] : (returnedJob.output as string | undefined));
+      const newJob: ImageJob = {
+        jobId: returnedJob.id,
+        sceneIdx: sceneIndex,
+        status: returnedJob.status as ImageJob["status"],
+        imageUrl,
+        error: returnedJob.error,
+      };
+
+      setImageJobs((prev) => [
+        ...prev.filter((job) => job.sceneIdx !== sceneIndex),
+        newJob,
+      ]);
+
+      if (newJob.status === "succeeded" && imageUrl) {
+        updateScene(sceneId, { imageUrl });
+        toast.success(`Scene ${sceneIndex + 1} image regenerated`);
+      } else {
+        setGenStatus("polling");
+        setIsPolling(true);
+        toast.success(`Regenerating scene ${sceneIndex + 1} image...`);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to regenerate image");
+    } finally {
+      setRegeneratingSceneId(null);
     }
   };
 
@@ -1047,7 +1101,7 @@ export default function Step6ImagePrompts() {
                 );
               })()}
 
-              {/* Prompt textarea + AI improve button */}
+              {/* Prompt textarea + per-scene actions */}
               <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                 <textarea
                   value={scene.imagePrompt || buildImagePrompt(scene.sceneDescription)}
@@ -1056,21 +1110,38 @@ export default function Step6ImagePrompts() {
                   rows={3}
                   style={{ display: "block", width: "100%", boxSizing: "border-box", padding: "0.375rem 0.625rem", resize: "vertical" }}
                 />
-                <button
-                  onClick={() => handleImprovePrompt(scene.id, scene.imagePrompt || buildImagePrompt(scene.sceneDescription))}
-                  disabled={improvingId === scene.id}
-                  className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded transition-all self-start"
-                  style={{
-                    background: improvingId === scene.id ? "rgba(16,163,127,0.08)" : "rgba(16,163,127,0.12)",
-                    border: "1px solid rgba(16,163,127,0.3)",
-                    color: improvingId === scene.id ? "rgba(16,163,127,0.5)" : "#10a37f",
-                    cursor: improvingId === scene.id ? "wait" : "pointer",
-                  }}
-                >
-                  {improvingId === scene.id
-                    ? <><Loader2 size={11} className="animate-spin" /> Improving…</>
-                    : <><Wand2 size={11} /> Improve with AI</>}
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => handleRegenerateOneImage(scene.id, idx, scene.imagePrompt || buildImagePrompt(scene.sceneDescription))}
+                    disabled={regeneratingSceneId === scene.id || genStatus === "submitting"}
+                    className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded transition-all"
+                    style={{
+                      background: regeneratingSceneId === scene.id ? "rgba(236,236,241,0.08)" : "rgba(236,236,241,0.12)",
+                      border: "1px solid rgba(236,236,241,0.24)",
+                      color: regeneratingSceneId === scene.id ? "rgba(236,236,241,0.45)" : "rgba(236,236,241,0.82)",
+                      cursor: regeneratingSceneId === scene.id || genStatus === "submitting" ? "wait" : "pointer",
+                    }}
+                  >
+                    {regeneratingSceneId === scene.id
+                      ? <><Loader2 size={11} className="animate-spin" /> Regenerating…</>
+                      : <><RefreshCw size={11} /> Regenerate image</>}
+                  </button>
+                  <button
+                    onClick={() => handleImprovePrompt(scene.id, scene.imagePrompt || buildImagePrompt(scene.sceneDescription))}
+                    disabled={improvingId === scene.id}
+                    className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded transition-all"
+                    style={{
+                      background: improvingId === scene.id ? "rgba(16,163,127,0.08)" : "rgba(16,163,127,0.12)",
+                      border: "1px solid rgba(16,163,127,0.3)",
+                      color: improvingId === scene.id ? "rgba(16,163,127,0.5)" : "#10a37f",
+                      cursor: improvingId === scene.id ? "wait" : "pointer",
+                    }}
+                  >
+                    {improvingId === scene.id
+                      ? <><Loader2 size={11} className="animate-spin" /> Improving…</>
+                      : <><Wand2 size={11} /> Improve with AI</>}
+                  </button>
+                </div>
               </div>
             </div>
           );
