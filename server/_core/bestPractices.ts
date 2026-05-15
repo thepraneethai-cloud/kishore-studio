@@ -82,7 +82,7 @@ export function getCachedQuery<T>(key: string, fetcher: () => Promise<T>, ttl?: 
 }
 
 export function invalidateCache(pattern: string): void {
-  for (const key of queryCache.keys()) {
+  for (const key of Array.from(queryCache.keys())) {
     if (key.includes(pattern)) {
       queryCache.delete(key);
     }
