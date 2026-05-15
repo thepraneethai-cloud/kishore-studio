@@ -306,7 +306,25 @@ export async function invokeLLM(
     response_format,
   } = params;
 
-  const model = options?.model ?? (options?.apiKey ? "gemini-2.0-flash" : "gemini-2.5-flash");
+  const requestedModel = options?.model ?? (options?.apiKey ? "gemini-2.0-flash" : "gemini-2.5-flash");
+  const requestedOpenAI   = /^(gpt-|o1-|o3-)/.test(requestedModel);
+  const requestedClaude   = requestedModel.startsWith("claude-");
+  const requestedGroq     = /^(llama-|qwen|gemma|mixtral)/.test(requestedModel);
+  const requestedMistral  = /^(mistral-|codestral-|open-mixtral-)/.test(requestedModel);
+  const requestedProviderKey =
+    requestedOpenAI ? options?.openaiApiKey || runtimeKeys.openai()
+      : requestedClaude ? options?.claudeApiKey || runtimeKeys.claude()
+      : requestedGroq ? options?.groqApiKey || runtimeKeys.groq()
+      : requestedMistral ? options?.mistralApiKey || runtimeKeys.mistral()
+      : options?.apiKey || runtimeKeys.gemini() || ENV.forgeApiKey;
+  const model =
+    requestedProviderKey ? requestedModel
+      : runtimeKeys.gemini() || ENV.forgeApiKey ? "gemini-2.5-flash"
+      : runtimeKeys.openai() ? "gpt-4o-mini"
+      : runtimeKeys.claude() ? "claude-3-5-haiku-20241022"
+      : runtimeKeys.groq() ? "llama-3.1-8b-instant"
+      : runtimeKeys.mistral() ? "mistral-small-latest"
+      : requestedModel;
   const isOpenAI   = /^(gpt-|o1-|o3-)/.test(model);
   const isClaude   = model.startsWith("claude-");
   const isGroq     = /^(llama-|qwen|gemma|mixtral)/.test(model);

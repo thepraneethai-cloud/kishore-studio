@@ -47,6 +47,23 @@ function buildLlmOptions(userSettings: { geminiApiKey?: string | null; openaiApi
   };
 }
 
+function createFallbackLyricsDirective(input: {
+  deity: string;
+  userIdea: string;
+  category: string;
+  mood?: string;
+  language?: string;
+}) {
+  const language = input.language === "english" ? "English" : "Telugu";
+  const mood = input.mood || "spiritual and uplifting";
+  return [
+    `Create a ${language} ${input.category} song about ${input.deity}, staying tightly focused on this idea: "${input.userIdea}".`,
+    `Shape the song with a ${mood} emotional journey, beginning with a memorable Pallavi hook and then building through clear Charanams.`,
+    "Use vivid, specific imagery connected to the subject, avoid unrelated family or romance themes unless they were explicitly requested, and keep the language singable.",
+    "Repeat the strongest devotional or emotional phrase as the refrain, keep lines concise, and make every section easy to paste into a music generator.",
+  ].join(" ");
+}
+
 // Per-unit cost estimates in USD
 const UNIT_COSTS = {
   lyrics:           0.0001,
@@ -252,9 +269,24 @@ export const generationRouter = router({
         void recordCost(ctx.user.id, "lyrics", "gemini", UNIT_COSTS.lyrics);
         return { success: true, data: { prompt } };
       } catch (error) {
+        const message = error instanceof Error ? error.message : "";
+        if (message.toLowerCase().includes("api key") || message.toLowerCase().includes("key configured")) {
+          return {
+            success: true,
+            data: {
+              prompt: createFallbackLyricsDirective({
+                deity: input.deity,
+                userIdea: input.userIdea,
+                category: input.category ?? "devotional",
+                mood: input.mood,
+                language: input.language ?? "telugu",
+              }),
+            },
+          };
+        }
         return {
           success: false,
-          error: error instanceof Error ? error.message : "Failed to generate prompt",
+          error: message || "Failed to generate prompt",
         };
       }
     }),
