@@ -68,7 +68,7 @@ const queryCache = new LRUCache<string, any>({
   max: 500,
   maxSize: 5000000, // 5MB
   ttl: 1000 * 60 * 5, // 5 minutes
-  sizeCalculation: (item) => JSON.stringify(item).length,
+  sizeCalculation: (item: any) => JSON.stringify(item).length,
 });
 
 export function getCachedQuery<T>(key: string, fetcher: () => Promise<T>, ttl?: number): Promise<T> {
@@ -221,6 +221,7 @@ export const responseCache = new LRUCache<string, any>({
   max: 1000,
   maxSize: 10000000, // 10MB
   ttl: 1000 * 60 * 10, // 10 minutes
+  sizeCalculation: (item: any) => JSON.stringify(item).length,
 });
 
 export async function cacheResponse<T>(key: string, fn: () => Promise<T>, ttl?: number): Promise<T> {
