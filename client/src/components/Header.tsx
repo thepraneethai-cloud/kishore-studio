@@ -29,8 +29,7 @@ export default function Header({ sidebarOpen, onToggleSidebar, activeStep }: Hea
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        background: "rgba(10, 10, 20, 0.95)",
-        backdropFilter: "blur(8px)",
+        background: "#212121",
         borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
         gap: "0.5rem",
       }}
