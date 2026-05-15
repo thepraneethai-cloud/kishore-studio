@@ -343,7 +343,7 @@ export default function Step5Scenes() {
           <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(236,236,241,0.45)", letterSpacing: "0.08em" }}>
             Step 3
           </p>
-          <h2 className="text-2xl font-bold mb-1" style={{ color: "#ececf1", letterSpacing: "-0.01em" }}>
+          <h2 className="text-2xl font-bold mb-1" style={{ color: "oklch(0.80 0.12 78)", letterSpacing: "-0.01em" }}>
             Scene Breakdown
           </h2>
           <p className="text-sm mt-1" style={{ color: "rgba(236,236,241,0.6)" }}>
@@ -370,8 +370,8 @@ export default function Step5Scenes() {
             className="flex items-center justify-between w-full text-left"
           >
             <div className="flex items-center gap-2">
-              <Clapperboard size={14} style={{ color: "rgba(236,236,241,0.82)" }} />
-              <span className="text-sm font-semibold" style={{ color: "#ececf1" }}>
+              <Clapperboard size={14} style={{ color: "oklch(0.72 0.12 75)" }} />
+              <span className="text-sm font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
                 Cinematic Style Sheet
               </span>
             </div>
@@ -660,7 +660,7 @@ export default function Step5Scenes() {
                 {ta("sceneDescription", scene.sceneDescription, 3, "What the camera sees…", "rgba(236,236,241,0.82)", "rgba(255,255,255,0.1)", "#1a1a1a")}
 
                 {/* ── Image prompt ── */}
-                <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", textTransform: "uppercase", letterSpacing: "0.07em", marginTop: "0.625rem", marginBottom: "0.25rem" }}>Image prompt</p>
+                <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", textTransform: "uppercase", letterSpacing: "0.07em", marginTop: "0.625rem", marginBottom: "0.25rem" }}>Image prompt</p>
                 {ta("imagePrompt", scene.imagePrompt, 4, "AI image generator prompt…", "#ececf1", "rgba(255,255,255,0.14)", "#2f2f2f")}
 
               </div>

@@ -214,7 +214,7 @@ export default function Step8CapCut() {
           <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(236,236,241,0.45)", letterSpacing: "0.08em" }}>
             Step 6
           </p>
-          <h2 className="text-2xl font-bold mb-2" style={{ color: "#ececf1", letterSpacing: "-0.01em" }}>
+          <h2 className="text-2xl font-bold mb-2" style={{ color: "oklch(0.80 0.12 78)", letterSpacing: "-0.01em" }}>
             Auto Assembly Kit
           </h2>
           <p className="text-sm" style={{ color: "rgba(236,236,241,0.6)" }}>
@@ -240,7 +240,7 @@ export default function Step8CapCut() {
         <div className="shrine-panel p-4 space-y-3 lg:col-span-2">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)" }}>
+              <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
                 Producer Readiness
               </p>
               <p className="text-xs mt-1" style={{ color: "rgba(236,236,241,0.4)" }}>
@@ -280,7 +280,7 @@ export default function Step8CapCut() {
         </div>
 
         <div className="shrine-panel p-4 space-y-3">
-          <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)" }}>
+          <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
             Scene Source
           </p>
           <button
@@ -349,8 +349,8 @@ export default function Step8CapCut() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 shrine-panel p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} style={{ color: "rgba(236,236,241,0.82)" }} />
-            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)" }}>
+            <Sparkles size={16} style={{ color: "oklch(0.72 0.12 75)" }} />
+            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
               Auto Timeline
             </p>
           </div>
@@ -396,7 +396,7 @@ export default function Step8CapCut() {
 
         <div className="space-y-3">
           <div className="shrine-panel p-3 space-y-3">
-            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)" }}>
+            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
               Recommended Effects
             </p>
             {CAPCUT_EFFECTS.map((effect) => (
@@ -408,7 +408,7 @@ export default function Step8CapCut() {
           </div>
 
           <div className="shrine-panel p-3 space-y-2">
-            <p className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.82)" }}>
+            <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
               Color Grade
             </p>
             <div className="space-y-1.5 text-xs" style={{ color: "rgba(236,236,241,0.52)" }}>

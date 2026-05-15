@@ -110,7 +110,7 @@ export default function Step1Deity() {
           fontWeight: "700",
           marginBottom: "1rem",
           color: "var(--text-primary)",
-          background: "linear-gradient(135deg, oklch(0.72 0.12 75), #ff006e)",
+          background: "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.80 0.12 78))",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           backgroundClip: "text",
@@ -134,14 +134,14 @@ export default function Step1Deity() {
         <label style={{
           fontSize: "0.875rem",
           fontWeight: "700",
-          color: "var(--accent-blue)",
+          color: "oklch(0.72 0.12 75)",
           display: "flex",
           alignItems: "center",
           gap: "0.75rem",
           textTransform: "uppercase",
           letterSpacing: "0.5px",
         }}>
-          <Sparkles size={18} style={{ color: "var(--accent-blue)" }} />
+          <Sparkles size={18} style={{ color: "oklch(0.72 0.12 75)" }} />
           Deity, Theme, or Mythology
         </label>
 
@@ -187,7 +187,7 @@ export default function Step1Deity() {
                 right: "1rem",
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "var(--accent-blue)",
+                color: "oklch(0.72 0.12 75)",
                 animation: "spin 1s linear infinite",
               }}
             />
@@ -286,7 +286,7 @@ export default function Step1Deity() {
           <label style={{
             fontSize: "0.875rem",
             fontWeight: "700",
-            color: "var(--accent-pink)",
+            color: "oklch(0.72 0.12 75)",
             textTransform: "uppercase",
             letterSpacing: "0.5px",
           }}>
@@ -301,22 +301,22 @@ export default function Step1Deity() {
               width: "100%",
               padding: "1rem",
               fontSize: "1rem",
-              border: "1px solid rgba(255, 0, 110, 0.3)",
+              border: "1px solid oklch(0.72 0.12 75 / 0.3)",
               borderRadius: "var(--radius-md)",
-              background: "rgba(255, 0, 110, 0.05)",
+              background: "oklch(0.72 0.12 75 / 0.05)",
               color: "var(--text-primary)",
               transition: "all var(--transition-base)",
               fontFamily: "'Inter', sans-serif",
               backdropFilter: "blur(10px)",
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = "var(--accent-pink)";
-              e.currentTarget.style.background = "rgba(255, 0, 110, 0.1)";
-              e.currentTarget.style.boxShadow = "0 0 20px rgba(255, 0, 110, 0.3)";
+              e.currentTarget.style.borderColor = "oklch(0.72 0.12 75)";
+              e.currentTarget.style.background = "oklch(0.72 0.12 75 / 0.1)";
+              e.currentTarget.style.boxShadow = "0 0 20px oklch(0.72 0.12 75 / 0.3)";
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255, 0, 110, 0.3)";
-              e.currentTarget.style.background = "rgba(255, 0, 110, 0.05)";
+              e.currentTarget.style.borderColor = "oklch(0.72 0.12 75 / 0.3)";
+              e.currentTarget.style.background = "oklch(0.72 0.12 75 / 0.05)";
               e.currentTarget.style.boxShadow = "none";
             }}
           />

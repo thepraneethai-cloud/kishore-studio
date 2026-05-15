@@ -592,7 +592,7 @@ export default function Step2Lyrics() {
           <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(236,236,241,0.45)", letterSpacing: "0.08em" }}>
             Step 1
           </p>
-          <h2 className="text-2xl font-bold mb-1" style={{ color: "#ececf1", letterSpacing: "-0.01em" }}>
+          <h2 className="text-2xl font-bold mb-1" style={{ color: "oklch(0.80 0.12 78)", letterSpacing: "-0.01em" }}>
             Concept &amp; Lyrics
           </h2>
           <p className="text-sm" style={{ color: "rgba(236,236,241,0.6)" }}>
@@ -642,7 +642,7 @@ export default function Step2Lyrics() {
         </div>
 
         <div style={{ ...panel, marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", marginBottom: "1rem" }}>
+          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", marginBottom: "1rem" }}>
             1. Basic details
           </p>
           <div className="concept-grid">
@@ -720,7 +720,7 @@ export default function Step2Lyrics() {
 
         {/* ── GENERATION SETTINGS ──────────────────────── */}
         <div style={{ ...panel, marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", marginBottom: "1rem" }}>
+          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", marginBottom: "1rem" }}>
             2. Generation settings
           </p>
 
@@ -776,7 +776,7 @@ export default function Step2Lyrics() {
 
         {/* ── SONG BRIEF ───────────────────────────────── */}
         <div style={{ ...panel, marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", marginBottom: "0.35rem" }}>
+          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", marginBottom: "0.35rem" }}>
             3. Creative brief
           </p>
           <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.42)", marginBottom: "1rem" }}>
@@ -852,7 +852,7 @@ export default function Step2Lyrics() {
 
         {/* ── CUSTOM DIRECTION ─────────────────────────── */}
         <div style={{ ...panel, marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", marginBottom: "0.25rem" }}>
+          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", marginBottom: "0.25rem" }}>
             4. Extra direction <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "rgba(255,255,255,0.35)" }}>(optional)</span>
           </p>
           <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.85rem" }}>
@@ -953,7 +953,7 @@ export default function Step2Lyrics() {
         <div style={{ ...panel, marginBottom: "1rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
             <div>
-              <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", margin: 0 }}>5. Creative Direction (Master Prompt)</p>
+              <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", margin: 0 }}>5. Creative Direction (Master Prompt)</p>
               <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", margin: "0.25rem 0 0" }}>
                 Generate or edit the master direction before lyrics.
               </p>
@@ -1036,7 +1036,7 @@ export default function Step2Lyrics() {
             </div>
 
             <div style={{ ...panel, marginBottom: "0.75rem" }}>
-              <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "rgba(236,236,241,0.82)", margin: "0 0 0.25rem" }}>6. Generated Lyrics</p>
+              <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", margin: "0 0 0.25rem" }}>6. Generated Lyrics</p>
               <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", margin: "0 0 0.75rem" }}>
                 Edit freely — changes save automatically.
               </p>
