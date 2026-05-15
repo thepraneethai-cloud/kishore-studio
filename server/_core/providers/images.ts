@@ -85,13 +85,27 @@ export async function generateImagesWithDALLE(
 // ── Pollinations.ai ───────────────────────────────────────────
 // Completely free — no API key needed. Powered by Flux internally.
 // Returns direct image URLs (no polling needed).
+function compactPollinationsPrompt(prompt: string): string {
+  const normalized = prompt.replace(/\s+/g, " ").trim();
+  if (normalized.length <= 900) return normalized;
+
+  const [stylePrefix, ...rest] = normalized.split(" | ");
+  const visualPrompt = rest.join(" | ") || normalized;
+  const withoutMasterGuidance = visualPrompt.replace(/Guided by:.*?(?=(Close-up|Wide shot|Medium shot|Scene|Lord|Goddess|Temple|Devotee|Aerial|Cinematic|Photorealistic|Tanjore|Digital art|Oil painting))/i, "");
+  const corePrompt = withoutMasterGuidance.length < visualPrompt.length ? withoutMasterGuidance : visualPrompt;
+  const style = stylePrefix && stylePrefix !== normalized ? `${stylePrefix.slice(0, 260)} | ` : "";
+
+  return `${style}${corePrompt}`.slice(0, 1100).trim();
+}
+
 export function generateImagesWithPollinations(
   prompts: string[],
   model: "flux" | "flux-realism" | "flux-anime" | "turbo" = "flux"
 ): string[] {
   return prompts.map((prompt) => {
     const seed = Math.floor(Math.random() * 999999);
-    return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&model=${model}&seed=${seed}&nologo=true`;
+    const compactPrompt = compactPollinationsPrompt(prompt);
+    return `https://image.pollinations.ai/prompt/${encodeURIComponent(compactPrompt)}?width=1024&height=1024&model=${model}&seed=${seed}&nologo=true`;
   });
 }
 
