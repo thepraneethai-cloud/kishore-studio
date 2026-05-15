@@ -432,7 +432,7 @@ export default function Step5Scenes() {
       )}
 
       {/* Controls panel */}
-      <div className="rounded-xl p-4" style={{ background: "#1e1e1e", border: "1px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <div className="rounded-xl p-4" style={{ background: "#2f2f2f", border: "1px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
         {/* Row 1: LLM Model */}
         <div className="flex items-center gap-3">
           <span className="text-xs font-semibold flex-shrink-0" style={{ color: "rgba(236,236,241,0.45)", textTransform: "uppercase", letterSpacing: "0.06em", minWidth: "72px" }}>
@@ -630,9 +630,9 @@ export default function Step5Scenes() {
                     <select
                       value={scene.duration}
                       onChange={(e) => handleUpdateScene(scene.id, "duration", Number(e.target.value))}
-                      style={{ padding: "0.15rem 0.4rem", background: "#1e1e1e", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.25rem", color: "rgba(236,236,241,0.82)", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", outline: "none" }}
+                      style={{ padding: "0.15rem 0.4rem", background: "#2a2a2a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.25rem", color: "rgba(236,236,241,0.82)", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", outline: "none" }}
                     >
-                      {[3, 4, 5, 6, 7, 8, 10].map((d) => <option key={d} value={d} style={{ background: "#222222" }}>{d}s</option>)}
+                      {[3, 4, 5, 6, 7, 8, 10].map((d) => <option key={d} value={d} style={{ background: "#2a2a2a" }}>{d}s</option>)}
                     </select>
                   </div>
                   <button

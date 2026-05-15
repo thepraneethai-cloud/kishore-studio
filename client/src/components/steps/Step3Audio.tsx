@@ -169,7 +169,7 @@ export default function Step3Audio() {
               minHeight: "160px",
               transition: "all 200ms",
             }}
-            onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "oklch(0.72 0.12 75 / 0.8)"; e.currentTarget.style.background = "oklch(0.15 0.018 58)"; }}
+            onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "oklch(0.72 0.12 75 / 0.8)"; e.currentTarget.style.background = "#3a3a3a"; }}
             onDragLeave={(e) => { e.currentTarget.style.borderColor = "oklch(0.35 0.05 65 / 0.6)"; e.currentTarget.style.background = "#2a2a2a"; }}
             onDrop={(e) => {
               e.preventDefault();

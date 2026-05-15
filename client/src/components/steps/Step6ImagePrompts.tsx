@@ -969,7 +969,7 @@ export default function Step6ImagePrompts() {
                         onClick={() => updateScene(scene.id, { imageApproved: true })}
                         className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold transition-all"
                         style={{
-                          background: approved === true ? "oklch(0.20 0.10 145)" : "#222222",
+                          background: approved === true ? "oklch(0.20 0.10 145)" : "#2a2a2a",
                           color: approved === true ? "oklch(0.72 0.18 145)" : "rgba(236,236,241,0.45)",
                           border: `1px solid ${approved === true ? "oklch(0.50 0.15 145 / 0.6)" : "rgba(255,255,255,0.1)"}`,
                         }}
@@ -980,7 +980,7 @@ export default function Step6ImagePrompts() {
                         onClick={() => updateScene(scene.id, { imageApproved: false, imageUrl: undefined })}
                         className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold transition-all"
                         style={{
-                          background: approved === false ? "oklch(0.18 0.08 25)" : "#222222",
+                          background: approved === false ? "oklch(0.18 0.08 25)" : "#2a2a2a",
                           color: approved === false ? "oklch(0.70 0.18 25)" : "rgba(236,236,241,0.45)",
                           border: `1px solid ${approved === false ? "oklch(0.45 0.12 25 / 0.6)" : "rgba(255,255,255,0.1)"}`,
                         }}

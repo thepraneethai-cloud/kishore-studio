@@ -544,7 +544,7 @@ export default function Step2Lyrics() {
   };
 
   const helperStyle = { fontSize: "0.72rem", color: "rgba(255,255,255,0.38)", marginTop: "0.35rem", lineHeight: "1.5" } as const;
-  const examplesBox = { marginTop: "0.75rem", padding: "0.75rem", background: "rgba(4,8,24,0.55)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "0.5rem" } as const;
+  const examplesBox = { marginTop: "0.75rem", padding: "0.75rem", background: "#2a2a2a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "0.5rem" } as const;
 
   const chip = (active: boolean, color = "rgba(236,236,241") => ({
     padding: "0.3rem 0.8rem",
@@ -673,7 +673,7 @@ export default function Step2Lyrics() {
               {showSuggestions && suggestions.length > 0 && (
                 <div style={{
                   position: "absolute", top: "calc(100% + 0.25rem)", left: 0, right: 0, zIndex: 20,
-                  background: "#0d1230", border: "1px solid rgba(255,255,255,0.14)",
+                  background: "#2f2f2f", border: "1px solid rgba(255,255,255,0.14)",
                   borderRadius: "0.5rem", marginTop: "2px", overflow: "hidden",
                 }}>
                   {suggestions.map((s) => (
@@ -1215,7 +1215,7 @@ export default function Step2Lyrics() {
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         textarea::placeholder { color: rgba(255,255,255,0.25); }
-        select option { background: #0a0e27; }
+        select option { background: #2a2a2a; }
         .concept-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
