@@ -251,6 +251,54 @@ function normalizeSubjectKey(name: string): string {
   return map[name.toLowerCase()] ?? name;
 }
 
+type SectionKey = "basic" | "settings" | "brief" | "direction" | "master" | "lyrics";
+
+function CollapsibleSection({
+  sectionKey,
+  number,
+  title,
+  summary,
+  isOpen,
+  onToggle,
+  children,
+}: {
+  sectionKey: SectionKey;
+  number: string;
+  title: string;
+  summary?: React.ReactNode;
+  isOpen: boolean;
+  onToggle: (key: SectionKey) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div style={{ background: "#2f2f2f", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.75rem", marginBottom: "1rem", overflow: "hidden", boxShadow: "0 18px 50px rgba(0,0,0,0.18)" }}>
+      <button
+        onClick={() => onToggle(sectionKey)}
+        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.9rem 1.25rem", background: "none", border: "none", cursor: "pointer", gap: "0.75rem", textAlign: "left" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1, minWidth: 0 }}>
+          <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", flexShrink: 0 }}>
+            {number}. {title}
+          </span>
+          {!isOpen && summary && (
+            <span style={{ fontSize: "0.75rem", color: "rgba(236,236,241,0.55)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {summary}
+            </span>
+          )}
+        </div>
+        <span style={{ color: "oklch(0.72 0.12 75)", flexShrink: 0, fontSize: "0.85rem" }}>
+          {isOpen ? "▲" : "▼"}
+        </span>
+      </button>
+      {isOpen && (
+        <div style={{ padding: "0 1.25rem 1.25rem" }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────
 export default function Step2Lyrics() {
   const { project, setDeity, setTitle, setLyrics, setSunoStyle, setMasterPrompt, setCreativeBrief, setExtraDirection, setSongMeta, setActiveStep, markStepComplete, undoLyrics, canUndoLyrics, resetProject } = useProject();
@@ -292,7 +340,7 @@ export default function Step2Lyrics() {
 
   // Collapsible section state — start all open, collapse once filled
   const [openSections, setOpenSections] = useState({ basic: true, settings: true, brief: true, direction: true, master: true, lyrics: true });
-  const toggleSection = (key: keyof typeof openSections) =>
+  const toggleSection = (key: SectionKey) =>
     setOpenSections((s) => ({ ...s, [key]: !s[key] }));
 
   // Persist category/mood/languageStyle to project context whenever they change
@@ -542,46 +590,6 @@ export default function Step2Lyrics() {
 
   const generateLabel = project.lyrics ? "Regenerate lyrics" : "Generate lyrics";
 
-  // ── Collapsible section wrapper ───────────────────────────
-  const CollapsibleSection = ({
-    sectionKey, number, title, summary, children,
-  }: {
-    sectionKey: keyof typeof openSections;
-    number: string;
-    title: string;
-    summary?: React.ReactNode;
-    children: React.ReactNode;
-  }) => {
-    const isOpen = openSections[sectionKey];
-    return (
-      <div style={{ background: "#2f2f2f", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.75rem", marginBottom: "1rem", overflow: "hidden", boxShadow: "0 18px 50px rgba(0,0,0,0.18)" }}>
-        <button
-          onClick={() => toggleSection(sectionKey)}
-          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.9rem 1.25rem", background: "none", border: "none", cursor: "pointer", gap: "0.75rem", textAlign: "left" }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", flexShrink: 0 }}>
-              {number}. {title}
-            </span>
-            {!isOpen && summary && (
-              <span style={{ fontSize: "0.75rem", color: "rgba(236,236,241,0.55)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {summary}
-              </span>
-            )}
-          </div>
-          <span style={{ color: "oklch(0.72 0.12 75)", flexShrink: 0, fontSize: "0.85rem" }}>
-            {isOpen ? "▲" : "▼"}
-          </span>
-        </button>
-        {isOpen && (
-          <div style={{ padding: "0 1.25rem 1.25rem" }}>
-            {children}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   // ── Styles ────────────────────────────────────────────────
   const panel = {
     background: "#2f2f2f",
@@ -729,6 +737,8 @@ export default function Step2Lyrics() {
           sectionKey="basic"
           number="1"
           title="Basic details"
+          isOpen={openSections.basic}
+          onToggle={toggleSection}
           summary={[subjectInput, SONG_CATEGORIES.find(c => c.value === category)?.label, titleInput].filter(Boolean).join(" · ") || "Category, subject, title"}
         >
           <div className="concept-grid">
@@ -809,6 +819,8 @@ export default function Step2Lyrics() {
           sectionKey="settings"
           number="2"
           title="Generation settings"
+          isOpen={openSections.settings}
+          onToggle={toggleSection}
           summary={[OUTPUT_TYPES.find(o => o.value === outputType)?.label, `${duration} min`, MOOD_OPTIONS.find(m => m.value === mood)?.label, LANGUAGE_STYLES.find(l => l.value === languageStyle)?.label].filter(Boolean).join(" · ")}
         >
 
@@ -867,6 +879,8 @@ export default function Step2Lyrics() {
           sectionKey="brief"
           number="3"
           title="Creative brief"
+          isOpen={openSections.brief}
+          onToggle={toggleSection}
           summary={visionInput ? visionInput.slice(0, 60) + (visionInput.length > 60 ? "…" : "") : "Your song's visual direction"}
         >
           <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.42)", marginBottom: "1rem" }}>
@@ -945,6 +959,8 @@ export default function Step2Lyrics() {
           sectionKey="direction"
           number="4"
           title="Extra direction"
+          isOpen={openSections.direction}
+          onToggle={toggleSection}
           summary={customPrompt ? customPrompt.slice(0, 60) + (customPrompt.length > 60 ? "…" : "") : "Optional style rules"}
         >
           <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.85rem" }}>
@@ -1046,6 +1062,8 @@ export default function Step2Lyrics() {
           sectionKey="master"
           number="5"
           title="Creative Direction (Master Prompt)"
+          isOpen={openSections.master}
+          onToggle={toggleSection}
           summary={masterPromptEditable ? masterPromptEditable.slice(0, 70) + "…" : "Guides all generation"}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
@@ -1135,6 +1153,8 @@ export default function Step2Lyrics() {
               sectionKey="lyrics"
               number="6"
               title="Generated Lyrics"
+              isOpen={openSections.lyrics}
+              onToggle={toggleSection}
               summary={sanitizeLyrics(project.lyrics).split("\n").find((l) => l.trim())?.slice(0, 70) ?? "Lyrics ready"}
             >
               <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", margin: "0 0 0.75rem" }}>
