@@ -211,8 +211,8 @@ const normalizeToolChoice = (
 };
 
 const resolveApiUrl = (apiKeyOverride?: string) => {
-  // When user brings their own Gemini key, hit the Google OpenAI-compatible endpoint directly
-  if (apiKeyOverride) {
+  // Use Google's endpoint when a Gemini key is available (user-supplied or Railway env var)
+  if (apiKeyOverride || ENV.geminiApiKey) {
     return "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
   }
   return ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
@@ -221,7 +221,7 @@ const resolveApiUrl = (apiKeyOverride?: string) => {
 };
 
 const assertApiKey = (apiKeyOverride?: string) => {
-  if (!apiKeyOverride && !ENV.forgeApiKey) {
+  if (!apiKeyOverride && !ENV.geminiApiKey && !ENV.forgeApiKey) {
     throw new Error("No LLM API key configured");
   }
 };
@@ -456,7 +456,8 @@ export async function invokeLLM(
   }
 
   // ── Gemini path ───────────────────────────────────────────────
-  const resolvedApiKey = options?.apiKey || ENV.forgeApiKey;
+  // Priority: caller-supplied key → Railway GEMINI_API_KEY → Forge key
+  const resolvedApiKey = options?.apiKey || ENV.geminiApiKey || ENV.forgeApiKey;
   assertApiKey(resolvedApiKey);
 
   const payload: Record<string, unknown> = {
