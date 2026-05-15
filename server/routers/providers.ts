@@ -11,6 +11,11 @@ import { generateLyricsWithChatGPT } from "../_core/providers/chatgpt";
 import { generateLyricsWithClaude } from "../_core/providers/claude";
 import { generateImagesWithFlux, generateImagesWithDALLE } from "../_core/providers/images";
 import { LyricsProvider, ImageProvider, VideoProvider, validateProviderConfig } from "../_core/providers";
+import { ENV } from "../_core/env";
+
+function resolveKey(envKey: string, userSupplied?: string | null): string {
+  return (envKey && envKey.length > 0) ? envKey : (userSupplied ?? "");
+}
 
 export const providersRouter = router({
   // ============================================================
@@ -116,7 +121,8 @@ export const providersRouter = router({
 
         switch (input.provider) {
           case "chatgpt": {
-            if (!userSettings?.openaiApiKey) {
+            const openaiKey = resolveKey(ENV.openaiApiKey, userSettings?.openaiApiKey);
+            if (!openaiKey) {
               throw new Error("ChatGPT API key not configured");
             }
             const result = await generateLyricsWithChatGPT(
@@ -128,13 +134,14 @@ export const providersRouter = router({
                 languageStyle: input.languageStyle,
                 customDirection: input.customDirection,
               },
-              { apiKey: userSettings.openaiApiKey, model: "gpt-4o-mini" }
+              { apiKey: openaiKey, model: "gpt-4o-mini" }
             );
             return { success: true, data: result };
           }
 
           case "claude": {
-            if (!userSettings?.claudeApiKey) {
+            const claudeKey = resolveKey(ENV.claudeApiKey, userSettings?.claudeApiKey);
+            if (!claudeKey) {
               throw new Error("Claude API key not configured");
             }
             const result = await generateLyricsWithClaude(
@@ -146,7 +153,7 @@ export const providersRouter = router({
                 languageStyle: input.languageStyle,
                 customDirection: input.customDirection,
               },
-              { apiKey: userSettings.claudeApiKey, model: "claude-3-5-sonnet-20241022" }
+              { apiKey: claudeKey, model: "claude-3-5-sonnet-20241022" }
             );
             return { success: true, data: result };
           }

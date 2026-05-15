@@ -29,6 +29,24 @@ function resolveKey(envKey: string, userSupplied?: string | null): string {
   return (envKey && envKey.length > 0) ? envKey : (userSupplied ?? "");
 }
 
+// Build invokeLLM options — always merges Railway env vars with user DB keys.
+// Railway wins. User DB key is fallback. Never rely on DB alone.
+function buildLlmOptions(userSettings: { geminiApiKey?: string | null; openaiApiKey?: string | null; claudeApiKey?: string | null; groqApiKey?: string | null; mistralApiKey?: string | null; llmModel?: string | null } | null | undefined, modelOverride?: string | null) {
+  const geminiKey  = resolveKey(ENV.geminiApiKey,  userSettings?.geminiApiKey);
+  const openaiKey  = resolveKey(ENV.openaiApiKey,  userSettings?.openaiApiKey);
+  const claudeKey  = resolveKey(ENV.claudeApiKey,  userSettings?.claudeApiKey);
+  const groqKey    = resolveKey(ENV.groqApiKey,    userSettings?.groqApiKey);
+  const mistralKey = resolveKey(ENV.mistralApiKey, userSettings?.mistralApiKey);
+  return {
+    model:         modelOverride || userSettings?.llmModel || undefined,
+    ...(geminiKey  ? { apiKey:        geminiKey  } : {}),
+    ...(openaiKey  ? { openaiApiKey:  openaiKey  } : {}),
+    ...(claudeKey  ? { claudeApiKey:  claudeKey  } : {}),
+    ...(groqKey    ? { groqApiKey:    groqKey    } : {}),
+    ...(mistralKey ? { mistralApiKey: mistralKey } : {}),
+  };
+}
+
 // Per-unit cost estimates in USD
 const UNIT_COSTS = {
   lyrics:           0.0001,
@@ -153,12 +171,12 @@ export const generationRouter = router({
           theme: input.theme,
           duration: input.duration || 4,
           language: input.language || "telugu",
-          llmApiKey: userSettings?.geminiApiKey || undefined,
+          llmApiKey: resolveKey(ENV.geminiApiKey, userSettings?.geminiApiKey) || undefined,
           llmModel: input.llmModel || userSettings?.llmModel || undefined,
-          openaiApiKey: userSettings?.openaiApiKey || undefined,
-          claudeApiKey: userSettings?.claudeApiKey || undefined,
-          groqApiKey: userSettings?.groqApiKey || undefined,
-          mistralApiKey: userSettings?.mistralApiKey || undefined,
+          openaiApiKey: resolveKey(ENV.openaiApiKey, userSettings?.openaiApiKey) || undefined,
+          claudeApiKey: resolveKey(ENV.claudeApiKey, userSettings?.claudeApiKey) || undefined,
+          groqApiKey: resolveKey(ENV.groqApiKey, userSettings?.groqApiKey) || undefined,
+          mistralApiKey: resolveKey(ENV.mistralApiKey, userSettings?.mistralApiKey) || undefined,
         });
         // Record cost after success (non-blocking)
         void recordCost(ctx.user.id, "lyrics", "gemini", UNIT_COSTS.lyrics);
@@ -225,14 +243,7 @@ export const generationRouter = router({
             ],
             maxTokens: 400,
           },
-          {
-            ...(userSettings?.geminiApiKey ? { apiKey: userSettings.geminiApiKey } : {}),
-            model: input.llmModel || userSettings?.llmModel || undefined,
-            ...(userSettings?.openaiApiKey ? { openaiApiKey: userSettings.openaiApiKey } : {}),
-            ...(userSettings?.claudeApiKey ? { claudeApiKey: userSettings.claudeApiKey } : {}),
-            ...(userSettings?.groqApiKey ? { groqApiKey: userSettings.groqApiKey } : {}),
-            ...(userSettings?.mistralApiKey ? { mistralApiKey: userSettings.mistralApiKey } : {}),
-          }
+          buildLlmOptions(userSettings, input.llmModel || userSettings?.llmModel || undefined)
         );
 
         const prompt = (result.choices[0]?.message?.content ?? "").toString().trim();
@@ -304,14 +315,7 @@ export const generationRouter = router({
             ],
             maxTokens: 8192,
           },
-          {
-            ...(userSettings?.geminiApiKey  ? { apiKey:        userSettings.geminiApiKey  } : {}),
-            model: input.llmModel || userSettings?.llmModel || undefined,
-            ...(userSettings?.openaiApiKey  ? { openaiApiKey:  userSettings.openaiApiKey  } : {}),
-            ...(userSettings?.claudeApiKey  ? { claudeApiKey:  userSettings.claudeApiKey  } : {}),
-            ...(userSettings?.groqApiKey    ? { groqApiKey:    userSettings.groqApiKey    } : {}),
-            ...(userSettings?.mistralApiKey ? { mistralApiKey: userSettings.mistralApiKey } : {}),
-          }
+          buildLlmOptions(userSettings, input.llmModel || userSettings?.llmModel || undefined)
         );
 
         const raw = (result.choices[0]?.message?.content ?? "").toString().trim();
@@ -372,15 +376,16 @@ export const generationRouter = router({
       try {
         await assertBudgetAvailable(ctx.user.id);
         const userSettings = await getUserSettings(ctx.user.id);
+        const llmOpts = buildLlmOptions(userSettings, input.llmModel || userSettings?.llmModel || undefined);
         const result = await analyzeSceneArc(
           input.deity,
           input.scenes,
-          userSettings?.geminiApiKey || undefined,
-          input.llmModel || userSettings?.llmModel || undefined,
-          userSettings?.openaiApiKey || undefined,
-          userSettings?.claudeApiKey || undefined,
-          userSettings?.groqApiKey || undefined,
-          userSettings?.mistralApiKey || undefined,
+          llmOpts.apiKey,
+          llmOpts.model,
+          llmOpts.openaiApiKey,
+          llmOpts.claudeApiKey,
+          llmOpts.groqApiKey,
+          llmOpts.mistralApiKey,
         );
         void recordCost(ctx.user.id, "lyrics", "gemini", UNIT_COSTS.lyrics * 3); // director analysis is ~3x a lyrics call
         return { success: true, data: result };
@@ -752,14 +757,7 @@ export const generationRouter = router({
               },
             ],
           },
-          {
-            ...(userSettings?.geminiApiKey ? { apiKey: userSettings.geminiApiKey } : {}),
-            model: llmModel,
-            ...(userSettings?.openaiApiKey ? { openaiApiKey: userSettings.openaiApiKey } : {}),
-            ...(userSettings?.claudeApiKey ? { claudeApiKey: userSettings.claudeApiKey } : {}),
-            ...(userSettings?.groqApiKey ? { groqApiKey: userSettings.groqApiKey } : {}),
-            ...(userSettings?.mistralApiKey ? { mistralApiKey: userSettings.mistralApiKey } : {}),
-          }
+          buildLlmOptions(userSettings, llmModel)
         );
 
         const masterPrompt =
@@ -814,14 +812,7 @@ export const generationRouter = router({
               },
             ],
           },
-          {
-            ...(userSettings?.geminiApiKey ? { apiKey: userSettings.geminiApiKey } : {}),
-            model: llmModel,
-            ...(userSettings?.openaiApiKey ? { openaiApiKey: userSettings.openaiApiKey } : {}),
-            ...(userSettings?.claudeApiKey ? { claudeApiKey: userSettings.claudeApiKey } : {}),
-            ...(userSettings?.groqApiKey ? { groqApiKey: userSettings.groqApiKey } : {}),
-            ...(userSettings?.mistralApiKey ? { mistralApiKey: userSettings.mistralApiKey } : {}),
-          }
+          buildLlmOptions(userSettings, llmModel)
         );
 
         const refinedMasterPrompt =
@@ -875,6 +866,7 @@ export const generationRouter = router({
 
         // Generate additional YouTube-specific content
         const llmModel = input.llmModel || "gemini-2.5-flash";
+        const userSettings = await getUserSettings(ctx.user.id);
         const response = await invokeLLM({
           messages: [
             {
@@ -900,7 +892,7 @@ export const generationRouter = router({
                 `Format as JSON: { title, description, keywords: [], hashtags: [] }`,
             },
           ],
-        });
+        }, buildLlmOptions(userSettings, llmModel));
 
         const llmMetadata = JSON.parse(
           typeof response.choices?.[0]?.message?.content === "string"
@@ -1001,13 +993,7 @@ Rules:
             temperature: 0.7,
             maxTokens: 300,
           },
-          {
-            model: llmModel,
-            apiKey: resolveKey(ENV.geminiApiKey, userSettings?.geminiApiKey),
-            claudeApiKey: resolveKey(ENV.claudeApiKey, userSettings?.claudeApiKey),
-            ...(userSettings?.groqApiKey ? { groqApiKey: userSettings.groqApiKey } : {}),
-            ...(userSettings?.mistralApiKey ? { mistralApiKey: userSettings.mistralApiKey } : {}),
-          }
+          buildLlmOptions(userSettings, llmModel)
         );
 
         const improved =

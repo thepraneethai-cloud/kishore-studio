@@ -8,6 +8,11 @@ import { getDb, getUserSettings } from "../db";
 import { projects, scenes } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { invokeLLM } from "../_core/llm";
+import { ENV } from "../_core/env";
+
+function resolveKey(envKey: string, userSupplied?: string | null): string {
+  return (envKey && envKey.length > 0) ? envKey : (userSupplied ?? "");
+}
 
 export const storiesRouter = router({
   // ============================================================
@@ -94,8 +99,12 @@ export const storiesRouter = router({
             maxTokens: 3000,
           },
           {
-            ...(userSettings?.geminiApiKey ? { apiKey: userSettings.geminiApiKey } : {}),
+            ...(resolveKey(ENV.geminiApiKey, userSettings?.geminiApiKey) ? { apiKey: resolveKey(ENV.geminiApiKey, userSettings?.geminiApiKey) } : {}),
             model: input.llmModel || userSettings?.llmModel || undefined,
+            ...(resolveKey(ENV.openaiApiKey, userSettings?.openaiApiKey) ? { openaiApiKey: resolveKey(ENV.openaiApiKey, userSettings?.openaiApiKey) } : {}),
+            ...(resolveKey(ENV.claudeApiKey, userSettings?.claudeApiKey) ? { claudeApiKey: resolveKey(ENV.claudeApiKey, userSettings?.claudeApiKey) } : {}),
+            ...(resolveKey(ENV.groqApiKey, userSettings?.groqApiKey) ? { groqApiKey: resolveKey(ENV.groqApiKey, userSettings?.groqApiKey) } : {}),
+            ...(resolveKey(ENV.mistralApiKey, userSettings?.mistralApiKey) ? { mistralApiKey: resolveKey(ENV.mistralApiKey, userSettings?.mistralApiKey) } : {}),
           }
         );
 
