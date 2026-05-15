@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Eye, EyeOff, Save, ArrowLeft, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Save, ArrowLeft, Loader2, ShieldCheck, ExternalLink } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -43,6 +43,11 @@ export default function Settings() {
 
   // Fetch existing settings
   const { data: settings, isLoading: settingsLoading } = trpc.settings.getSettings.useQuery(undefined, {
+    enabled: isAuthenticated && !authLoading,
+  });
+
+  // Which keys are already set in Railway env vars (safe — server only returns true/false)
+  const { data: envKeyStatus } = trpc.settings.getEnvKeyStatus.useQuery(undefined, {
     enabled: isAuthenticated && !authLoading,
   });
 
@@ -245,6 +250,57 @@ export default function Settings() {
         {/* API Keys Tab */}
         {activeTab === "api-keys" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+
+            {/* Railway env var banner */}
+            <div style={{
+              padding: "1rem",
+              background: "rgba(16,163,127,0.08)",
+              border: "1px solid rgba(16,163,127,0.3)",
+              borderRadius: "0.75rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.6rem",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <ShieldCheck size={16} style={{ color: "#10a37f", flexShrink: 0 }} />
+                <span style={{ fontWeight: 700, fontSize: "0.875rem", color: "#10a37f" }}>
+                  Best way: set keys in Railway Variables
+                </span>
+              </div>
+              <p style={{ fontSize: "0.78rem", color: "rgba(236,236,241,0.65)", lineHeight: 1.5, margin: 0 }}>
+                Keys stored here (in the database) can be lost if you clear your browser or reset the DB.
+                Setting them as <strong style={{ color: "#ececf1" }}>Railway environment variables</strong> means
+                they are stored permanently on the server — no browser, no refresh, no loss.
+              </p>
+              <div style={{ fontSize: "0.75rem", color: "rgba(236,236,241,0.5)", lineHeight: 1.6 }}>
+                <strong style={{ color: "#ececf1" }}>Steps:</strong>{" "}
+                Railway dashboard → your service → <strong style={{ color: "#ececf1" }}>Variables</strong> → Add:
+                <br />
+                <code style={{ color: "#10a37f", fontSize: "0.72rem" }}>
+                  OPENAI_API_KEY &nbsp;·&nbsp; REPLICATE_API_KEY &nbsp;·&nbsp; FAL_API_KEY &nbsp;·&nbsp;
+                  TOGETHER_API_KEY &nbsp;·&nbsp; ANTHROPIC_API_KEY &nbsp;·&nbsp; GEMINI_API_KEY &nbsp;·&nbsp;
+                  GROQ_API_KEY &nbsp;·&nbsp; MISTRAL_API_KEY
+                </code>
+              </div>
+              <a
+                href="https://railway.com/project/f05a77ef-d172-4d1b-87bd-a44a970c9584"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                  fontSize: "0.75rem",
+                  color: "#10a37f",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  alignSelf: "flex-start",
+                }}
+              >
+                Open Railway Variables <ExternalLink size={12} />
+              </a>
+            </div>
+
             {(["falApiKey", "togetherApiKey", "openaiApiKey", "claudeApiKey", "geminiApiKey", "replicateApiKey", "groqApiKey", "mistralApiKey"] as const).map((key) => {
               const meta: Record<string, { label: string; hint: string; placeholder: string; badge?: string }> = {
                 falApiKey: {
@@ -293,33 +349,43 @@ export default function Settings() {
                 },
               };
               const { label, hint, placeholder, badge } = meta[key];
+              const isEnvSet = envKeyStatus?.[key] === true;
               return (
               <div key={key}>
                 <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem", fontSize: "0.875rem", fontWeight: "600", color: "#ececf1" }}>
                   {label}
-                  {badge && (
+                  {isEnvSet && (
+                    <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "0.1rem 0.45rem", borderRadius: "999px", background: "rgba(16,163,127,0.2)", color: "#10a37f", border: "1px solid rgba(16,163,127,0.5)", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                      <ShieldCheck size={10} /> Railway ✓
+                    </span>
+                  )}
+                  {!isEnvSet && badge && (
                     <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "0.1rem 0.45rem", borderRadius: "999px", background: "rgba(16,163,127,0.15)", color: "#10a37f", border: "1px solid rgba(16,163,127,0.35)" }}>
                       {badge}
                     </span>
                   )}
                 </label>
                 <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.45)", marginBottom: "0.5rem" }}>
-                  {hint}
+                  {isEnvSet
+                    ? "✓ This key is set as a Railway environment variable — it will always work even if you clear your browser."
+                    : hint}
                 </p>
                 <div style={{ display: "flex", gap: "0.5rem" }}>
                   <input
                     type={showKeys[key] ? "text" : "password"}
-                    value={apiKeys[key]}
-                    onChange={(e) => setApiKeys({ ...apiKeys, [key]: e.target.value })}
-                    placeholder={placeholder}
+                    value={isEnvSet ? "" : apiKeys[key]}
+                    onChange={(e) => !isEnvSet && setApiKeys({ ...apiKeys, [key]: e.target.value })}
+                    placeholder={isEnvSet ? "••••••••  (set via Railway — override below if needed)" : placeholder}
+                    disabled={isEnvSet}
                     style={{
                       flex: 1,
                       padding: "0.75rem",
-                      background: "rgba(0, 212, 255, 0.05)",
-                      border: "1px solid rgba(0, 212, 255, 0.2)",
+                      background: isEnvSet ? "rgba(16,163,127,0.05)" : "rgba(0, 212, 255, 0.05)",
+                      border: isEnvSet ? "1px solid rgba(16,163,127,0.25)" : "1px solid rgba(0, 212, 255, 0.2)",
                       borderRadius: "0.5rem",
-                      color: "#fff",
+                      color: isEnvSet ? "rgba(236,236,241,0.4)" : "#fff",
                       fontSize: "0.875rem",
+                      cursor: isEnvSet ? "not-allowed" : "text",
                     }}
                   />
                   <button

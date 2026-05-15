@@ -21,6 +21,13 @@ import { generateImagesWithPollinations, generateImagesWithTogether, generateIma
 import { submitFalVideoJob, pollFalVideoJob, FalVideoModel } from "../_core/providers/fal";
 import { invokeLLM } from "../_core/llm";
 import { isR2Configured, uploadToR2 } from "../_core/r2Storage";
+import { ENV } from "../_core/env";
+
+// Resolve an API key: Railway env var takes priority, then user-supplied value.
+// This means keys set in Railway Variables are always used even if the DB is empty.
+function resolveKey(envKey: string, userSupplied?: string | null): string {
+  return (envKey && envKey.length > 0) ? envKey : (userSupplied ?? "");
+}
 
 // Per-unit cost estimates in USD
 const UNIT_COSTS = {
@@ -423,8 +430,8 @@ export const generationRouter = router({
 
         // ── OpenAI / DALL-E path ──────────────────────────────
         if (input.provider === "dalle") {
-          const apiKey = input.openaiApiKey;
-          if (!apiKey) throw new Error("OpenAI API key is required for DALL-E generation");
+          const apiKey = resolveKey(ENV.openaiApiKey, input.openaiApiKey);
+          if (!apiKey) throw new Error("OpenAI API key is required for DALL-E generation. Set OPENAI_API_KEY in Railway Variables or enter it in Settings.");
 
           const dalleModel = input.dalleModel ?? "dall-e-3";
           const openAIJobs = await generateImagesWithOpenAI(resolvedPrompts, apiKey, {
@@ -464,8 +471,9 @@ export const generationRouter = router({
 
         // ── Together AI path (free tier) ──────────────────────
         if (input.provider === "together") {
-          if (!input.togetherApiKey) throw new Error("Together AI API key is required. Sign up free at api.together.ai");
-          const urls = await generateImagesWithTogether(resolvedPrompts, input.togetherApiKey);
+          const togetherKey = resolveKey(ENV.togetherApiKey, input.togetherApiKey);
+          if (!togetherKey) throw new Error("Together AI API key is required. Sign up free at api.together.ai or set TOGETHER_API_KEY in Railway Variables.");
+          const urls = await generateImagesWithTogether(resolvedPrompts, togetherKey);
           const jobs = urls.map((url, i) => ({
             id: `together-${Date.now()}-${i}`,
             status: "succeeded" as const,
@@ -479,8 +487,9 @@ export const generationRouter = router({
 
         // ── fal.ai image path ─────────────────────────────────
         if (input.provider === "fal") {
-          if (!input.falApiKey) throw new Error("fal.ai API key is required. Sign up free at fal.ai");
-          const urls = await generateImagesWithFal(resolvedPrompts, input.falApiKey, input.falModel ?? "flux-schnell");
+          const falKey = resolveKey(ENV.falApiKey, input.falApiKey);
+          if (!falKey) throw new Error("fal.ai API key is required. Sign up free at fal.ai or set FAL_API_KEY in Railway Variables.");
+          const urls = await generateImagesWithFal(resolvedPrompts, falKey, input.falModel ?? "flux-schnell");
           const jobs = urls.map((url, i) => ({
             id: `fal-${Date.now()}-${i}`,
             status: "succeeded" as const,
@@ -493,9 +502,10 @@ export const generationRouter = router({
         }
 
         // ── Replicate / Flux path (default) ──────────────────
-        if (!input.replicateApiKey) throw new Error("Replicate API key is required for Flux generation");
+        const replicateKey = resolveKey(ENV.replicateApiKey, input.replicateApiKey);
+        if (!replicateKey) throw new Error("Replicate API key is required. Set REPLICATE_API_KEY in Railway Variables or enter it in Settings.");
 
-        const jobs = await generateImageBatch(resolvedPrompts, input.replicateApiKey, {
+        const jobs = await generateImageBatch(resolvedPrompts, replicateKey, {
           model: (input.model as "flux-pro" | "flux-dev" | "flux-schnell" | undefined) || "flux-dev",
           width: input.width,
           height: input.height,
@@ -524,13 +534,15 @@ export const generationRouter = router({
             duration: z.number().min(5).max(30).optional(),
           })
         ),
-        replicateApiKey: z.string(),
+        replicateApiKey: z.string().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       try {
         await assertBudgetAvailable(ctx.user.id);
-        const jobs = await generateVideoBatch(input.videos, input.replicateApiKey);
+        const replicateKey = resolveKey(ENV.replicateApiKey, input.replicateApiKey);
+        if (!replicateKey) throw new Error("Replicate API key is required. Set REPLICATE_API_KEY in Railway Variables or enter it in Settings.");
+        const jobs = await generateVideoBatch(input.videos, replicateKey);
         void recordCost(ctx.user.id, "video", "minimax", UNIT_COSTS.video, input.videos.length);
         return { success: true, data: jobs };
       } catch (error) {
@@ -554,16 +566,18 @@ export const generationRouter = router({
             sceneId: z.number(),
           })
         ),
-        falApiKey: z.string(),
+        falApiKey: z.string().optional(),
         model: z.enum(["wan", "kling"]).default("wan"),
       })
     )
     .mutation(async ({ input, ctx }) => {
       try {
         await assertBudgetAvailable(ctx.user.id);
+        const falKey = resolveKey(ENV.falApiKey, input.falApiKey);
+        if (!falKey) throw new Error("fal.ai API key is required. Set FAL_API_KEY in Railway Variables or enter it in Settings.");
         const jobs = await Promise.all(
           input.videos.map((v) =>
-            submitFalVideoJob(v.imageUrl, v.motionPrompt, v.sceneId, input.falApiKey, input.model as FalVideoModel)
+            submitFalVideoJob(v.imageUrl, v.motionPrompt, v.sceneId, falKey, input.model as FalVideoModel)
           )
         );
         const costKey = input.model === "kling" ? "video_fal_kling" : "video_fal_wan";
@@ -579,13 +593,14 @@ export const generationRouter = router({
     .input(
       z.object({
         jobs: z.array(z.object({ requestId: z.string(), model: z.enum(["wan", "kling"]), sceneId: z.number() })),
-        falApiKey: z.string(),
+        falApiKey: z.string().optional(),
       })
     )
     .query(async ({ input }) => {
       try {
+        const falKey = resolveKey(ENV.falApiKey, input.falApiKey);
         const results = await Promise.all(
-          input.jobs.map((j) => pollFalVideoJob(j.requestId, j.model as FalVideoModel, j.sceneId, input.falApiKey))
+          input.jobs.map((j) => pollFalVideoJob(j.requestId, j.model as FalVideoModel, j.sceneId, falKey))
         );
         return { success: true, data: results };
       } catch (error) {
@@ -632,12 +647,13 @@ export const generationRouter = router({
     .input(
       z.object({
         jobId: z.string(),
-        replicateApiKey: z.string(),
+        replicateApiKey: z.string().optional(),
       })
     )
     .query(async ({ input }) => {
       try {
-        const job = await pollGenerationJob(input.jobId, input.replicateApiKey);
+        const replicateKey = resolveKey(ENV.replicateApiKey, input.replicateApiKey);
+        const job = await pollGenerationJob(input.jobId, replicateKey);
         return { success: true, data: job };
       } catch (error) {
         return {
@@ -654,13 +670,14 @@ export const generationRouter = router({
     .input(
       z.object({
         jobIds: z.array(z.string()),
-        replicateApiKey: z.string(),
+        replicateApiKey: z.string().optional(),
       })
     )
     .query(async ({ input }) => {
       try {
+        const replicateKey = resolveKey(ENV.replicateApiKey, input.replicateApiKey);
         const jobs = await Promise.all(
-          input.jobIds.map((jobId) => pollGenerationJob(jobId, input.replicateApiKey))
+          input.jobIds.map((jobId) => pollGenerationJob(jobId, replicateKey))
         );
         return { success: true, data: jobs };
       } catch (error) {

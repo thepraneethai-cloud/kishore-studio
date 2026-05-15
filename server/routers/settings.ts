@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getUserSettings, upsertUserSettings } from "../db";
+import { ENV } from "../_core/env";
 
 export const settingsRouter = router({
   // Get user settings
@@ -8,6 +9,18 @@ export const settingsRouter = router({
     const settings = await getUserSettings(ctx.user.id);
     return settings || null;
   }),
+
+  // Returns which API keys are pre-configured via Railway env vars (true/false only — never exposes the value)
+  getEnvKeyStatus: protectedProcedure.query(() => ({
+    openaiApiKey:    ENV.openaiApiKey.length    > 0,
+    replicateApiKey: ENV.replicateApiKey.length > 0,
+    falApiKey:       ENV.falApiKey.length       > 0,
+    togetherApiKey:  ENV.togetherApiKey.length  > 0,
+    claudeApiKey:    ENV.claudeApiKey.length    > 0,
+    geminiApiKey:    ENV.geminiApiKey.length    > 0,
+    groqApiKey:      ENV.groqApiKey.length      > 0,
+    mistralApiKey:   ENV.mistralApiKey.length   > 0,
+  })),
 
   // Save API keys
   saveApiKeys: protectedProcedure
