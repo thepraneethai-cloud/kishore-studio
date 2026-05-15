@@ -3,7 +3,7 @@
 // ============================================================
 import { useEffect, useState } from "react";
 import { useProject } from "@/contexts/ProjectContext";
-import { ChevronRight, Copy, Check, Download, Video, ChevronDown, ChevronUp, Loader2, AlertCircle } from "lucide-react";
+import { ChevronRight, Copy, Check, Download, Video, ChevronDown, ChevronUp, Loader2, AlertCircle, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
@@ -68,6 +68,46 @@ export default function Step7VideoPrompts() {
   const { data: userSettings } = trpc.settings.getSettings.useQuery();
   const generateVideosMutation = trpc.generation.generateVideos.useMutation();
   const generateVideosFalMutation = trpc.generation.generateVideosFal.useMutation();
+  const improvePromptMutation = trpc.generation.improvePrompt.useMutation();
+
+  // AI improve state
+  const [improvingId, setImprovingId] = useState<number | null>(null);
+  const [llmModel, setLlmModel] = useState<string>("");
+
+  // Sync llmModel from user settings
+  useEffect(() => {
+    if (userSettings?.llmModel && !llmModel) setLlmModel(userSettings.llmModel);
+  }, [userSettings?.llmModel]);
+
+  const handleUpdateMotionPrompt = (sceneId: number, value: string) => {
+    setScenes(project.scenes.map((s) => (s.id === sceneId ? { ...s, motionPrompt: value } : s)));
+  };
+
+  const handleImproveMotionPrompt = async (sceneId: number, currentPrompt: string) => {
+    setImprovingId(sceneId);
+    try {
+      const scene = project.scenes.find((s) => s.id === sceneId);
+      const result = await improvePromptMutation.mutateAsync({
+        type: "motion",
+        currentPrompt,
+        sceneDescription: scene?.sceneDescription,
+        lyricLine: scene?.lyricLine,
+        deity: project.deity ?? undefined,
+        masterPrompt: project.masterPrompt || undefined,
+        llmModel: llmModel || undefined,
+      });
+      if (result.success && result.data?.improved) {
+        handleUpdateMotionPrompt(sceneId, result.data.improved);
+        toast.success("Motion prompt improved!");
+      } else {
+        toast.error(result.error || "Could not improve prompt");
+      }
+    } catch {
+      toast.error("Failed to improve prompt");
+    } finally {
+      setImprovingId(null);
+    }
+  };
 
   useEffect(() => {
     if (!isPolling || videoJobs.length === 0) return;
@@ -584,6 +624,24 @@ export default function Step7VideoPrompts() {
         </div>
       )}
 
+      {/* LLM model selector for AI improve */}
+      <div className="flex items-center gap-2 py-2 px-3 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+        <Wand2 size={13} style={{ color: "#10a37f", flexShrink: 0 }} />
+        <span className="text-xs font-medium" style={{ color: "rgba(236,236,241,0.55)" }}>AI model for ✨ Improve:</span>
+        <select
+          value={llmModel || "gemini-2.5-flash"}
+          onChange={(e) => setLlmModel(e.target.value)}
+          style={{ flex: 1, padding: "0.25rem 0.5rem", background: "#2a2a2a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.375rem", color: "#ececf1", fontSize: "0.72rem" }}
+        >
+          <option value="gemini-2.5-flash">Gemini 2.5 Flash (default)</option>
+          <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+          <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+          <option value="gpt-4o-mini">GPT-4o Mini</option>
+          <option value="llama-3.1-8b-instant">Llama 3.1 8B (Groq)</option>
+          <option value="mistral-small-latest">Mistral Small</option>
+        </select>
+      </div>
+
       {/* Prompt list */}
       <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
         {displayScenes.map((scene, idx) => (
@@ -616,9 +674,31 @@ export default function Step7VideoPrompts() {
                 {copiedId === scene.id ? "Copied" : "Copy"}
               </button>
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: "rgba(236,236,241,0.52)" }}>
-              {buildMotionPrompt(scene.sceneDescription)}
-            </p>
+            {/* Editable motion prompt + AI improve */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+              <textarea
+                value={scene.motionPrompt || buildMotionPrompt(scene.sceneDescription)}
+                onChange={(e) => handleUpdateMotionPrompt(scene.id, e.target.value)}
+                rows={3}
+                className="sanctum-input text-xs"
+                style={{ display: "block", width: "100%", boxSizing: "border-box", padding: "0.375rem 0.625rem", resize: "vertical", color: "rgba(236,236,241,0.75)", lineHeight: 1.5 }}
+              />
+              <button
+                onClick={() => handleImproveMotionPrompt(scene.id, scene.motionPrompt || buildMotionPrompt(scene.sceneDescription))}
+                disabled={improvingId === scene.id}
+                className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded transition-all self-start"
+                style={{
+                  background: improvingId === scene.id ? "rgba(16,163,127,0.08)" : "rgba(16,163,127,0.12)",
+                  border: "1px solid rgba(16,163,127,0.3)",
+                  color: improvingId === scene.id ? "rgba(16,163,127,0.5)" : "#10a37f",
+                  cursor: improvingId === scene.id ? "wait" : "pointer",
+                }}
+              >
+                {improvingId === scene.id
+                  ? <><Loader2 size={11} className="animate-spin" /> Improving…</>
+                  : <><Wand2 size={11} /> Improve with AI</>}
+              </button>
+            </div>
             {(() => {
               const job = videoJobs.find((item) => item.sceneId === scene.id);
               const videoUrl = normalizeVideoSrc(scene.videoUrl || job?.videoUrl);

@@ -854,7 +854,7 @@ export const generationRouter = router({
     .mutation(async ({ ctx, input }) => {
       try {
         const { generateSeoMetadata, getTrendingKeywords } = await import(
-          "../\_core/teluguSeo"
+          "../_core/teluguSeo"
         );
 
         // Generate SEO-optimized metadata
@@ -938,6 +938,91 @@ export const generationRouter = router({
         return {
           success: false,
           error: error instanceof Error ? error.message : "Failed to generate YouTube metadata",
+        };
+      }
+    }),
+
+  // ============================================================
+  // IMPROVE A SINGLE IMAGE OR MOTION PROMPT WITH AI
+  // ============================================================
+  improvePrompt: protectedProcedure
+    .input(
+      z.object({
+        type: z.enum(["image", "motion"]),
+        currentPrompt: z.string(),
+        sceneDescription: z.string().optional(),
+        lyricLine: z.string().optional(),
+        deity: z.string().optional(),
+        masterPrompt: z.string().optional(),
+        llmModel: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        await assertBudgetAvailable(ctx.user.id);
+        const userSettings = await getUserSettings(ctx.user.id);
+        const llmModel = input.llmModel || userSettings?.llmModel || "gemini-2.5-flash";
+
+        const isImage = input.type === "image";
+
+        const systemPrompt = isImage
+          ? `You are an expert at writing image generation prompts for AI art tools (Stable Diffusion, Flux, DALL-E, Seedream).
+Your task is to improve a single image prompt for a devotional music video scene.
+Rules:
+- Keep the spiritual/devotional subject faithful (deity, temple setting, sacred items)
+- Add specific visual details: lighting, composition, color palette, art style
+- Include quality boosters: cinematic lighting, highly detailed, 4K, professional photography
+- Keep it under 120 words
+- Return ONLY the improved prompt — no explanation, no quotes, no extra text`
+          : `You are an expert at writing motion prompts for AI video generation tools (Runway, Kling, Pika, fal.ai).
+Your task is to improve a single motion prompt for a devotional music video scene.
+Rules:
+- The deity/main subject must remain STILL — no body movement, no dancing, no wiggling
+- Only allowed movement: petals falling, lamp flame flicker, light glow pulse, slow camera zoom
+- Describe camera motion clearly: slow zoom in, gentle pan, static shot
+- Keep the sacred and serene atmosphere
+- Keep it under 80 words
+- Return ONLY the improved prompt — no explanation, no quotes, no extra text`;
+
+        const userMessage = [
+          input.deity ? `Deity/Subject: ${input.deity}` : "",
+          input.lyricLine ? `Lyric line: ${input.lyricLine}` : "",
+          input.sceneDescription ? `Scene description: ${input.sceneDescription}` : "",
+          input.masterPrompt ? `Master prompt context: ${input.masterPrompt}` : "",
+          `Current prompt to improve:\n${input.currentPrompt}`,
+        ].filter(Boolean).join("\n");
+
+        const response = await invokeLLM(
+          {
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userMessage },
+            ],
+            temperature: 0.7,
+            maxTokens: 300,
+          },
+          {
+            model: llmModel,
+            apiKey: resolveKey(ENV.geminiApiKey, userSettings?.geminiApiKey),
+            claudeApiKey: resolveKey(ENV.claudeApiKey, userSettings?.claudeApiKey),
+            ...(userSettings?.groqApiKey ? { groqApiKey: userSettings.groqApiKey } : {}),
+            ...(userSettings?.mistralApiKey ? { mistralApiKey: userSettings.mistralApiKey } : {}),
+          }
+        );
+
+        const improved =
+          typeof response.choices?.[0]?.message?.content === "string"
+            ? response.choices[0].message.content.trim()
+            : null;
+
+        if (!improved) throw new Error("LLM returned empty response");
+
+        void recordCost(ctx.user.id, "lyrics", llmModel, UNIT_COSTS.lyrics);
+        return { success: true, data: { improved } };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Failed to improve prompt",
         };
       }
     }),

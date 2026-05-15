@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useProject } from "@/contexts/ProjectContext";
 import { DEITIES, getDefaultCharacterPrefix } from "@/lib/studioData";
-import { ChevronRight, Copy, Check, Download, Sparkles, Image, Loader2, AlertCircle, Settings, Shuffle, Lock, Unlock, Zap, ThumbsUp, ThumbsDown, Link, Upload, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronRight, Copy, Check, Download, Sparkles, Image, Loader2, AlertCircle, Settings, Shuffle, Lock, Unlock, Zap, ThumbsUp, ThumbsDown, Link, Upload, ChevronDown, ChevronUp, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -70,6 +70,10 @@ export default function Step6ImagePrompts() {
   const [isPolling, setIsPolling] = useState(false);
   const [showMasterPrompt, setShowMasterPrompt] = useState(false);
 
+  // AI improve state
+  const [improvingId, setImprovingId] = useState<number | null>(null);
+  const [llmModel, setLlmModel] = useState<string>("");
+
   const utils = trpc.useUtils();
   const deity = DEITIES.find((d) => d.key === project.deity);
 
@@ -98,6 +102,38 @@ export default function Step6ImagePrompts() {
   const missingKeyRoute = "/settings";
 
   const generateImagesMutation = trpc.generation.generateImages.useMutation();
+  const improvePromptMutation = trpc.generation.improvePrompt.useMutation();
+
+  // Sync llmModel from user settings (fallback to gemini-2.5-flash)
+  useEffect(() => {
+    if (userSettings?.llmModel && !llmModel) setLlmModel(userSettings.llmModel);
+  }, [userSettings?.llmModel]);
+
+  const handleImprovePrompt = async (sceneId: number, currentPrompt: string) => {
+    setImprovingId(sceneId);
+    try {
+      const scene = project.scenes.find((s) => s.id === sceneId);
+      const result = await improvePromptMutation.mutateAsync({
+        type: "image",
+        currentPrompt,
+        sceneDescription: scene?.sceneDescription,
+        lyricLine: scene?.lyricLine,
+        deity: project.deity ?? undefined,
+        masterPrompt: project.masterPrompt || undefined,
+        llmModel: llmModel || undefined,
+      });
+      if (result.success && result.data?.improved) {
+        handleUpdatePrompt(sceneId, result.data.improved);
+        toast.success("Prompt improved!");
+      } else {
+        toast.error(result.error || "Could not improve prompt");
+      }
+    } catch {
+      toast.error("Failed to improve prompt");
+    } finally {
+      setImprovingId(null);
+    }
+  };
 
   const buildImagePrompt = useCallback((sceneDesc: string) => {
     const styleSuffix = STYLE_SUFFIXES[selectedStyle];
@@ -817,6 +853,24 @@ export default function Step6ImagePrompts() {
         )}
       </div>
 
+      {/* LLM model selector for AI improve */}
+      <div className="flex items-center gap-2 py-2 px-3 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+        <Wand2 size={13} style={{ color: "#10a37f", flexShrink: 0 }} />
+        <span className="text-xs font-medium" style={{ color: "rgba(236,236,241,0.55)" }}>AI model for ✨ Improve:</span>
+        <select
+          value={llmModel || "gemini-2.5-flash"}
+          onChange={(e) => setLlmModel(e.target.value)}
+          style={{ flex: 1, padding: "0.25rem 0.5rem", background: "#2a2a2a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.375rem", color: "#ececf1", fontSize: "0.72rem" }}
+        >
+          <option value="gemini-2.5-flash">Gemini 2.5 Flash (default)</option>
+          <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+          <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+          <option value="gpt-4o-mini">GPT-4o Mini</option>
+          <option value="llama-3.1-8b-instant">Llama 3.1 8B (Groq)</option>
+          <option value="mistral-small-latest">Mistral Small</option>
+        </select>
+      </div>
+
       {/* Prompt list */}
       <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
         {project.scenes.map((scene, idx) => {
@@ -993,13 +1047,31 @@ export default function Step6ImagePrompts() {
                 );
               })()}
 
-              <textarea
-                value={scene.imagePrompt || buildImagePrompt(scene.sceneDescription)}
-                onChange={(e) => handleUpdatePrompt(scene.id, e.target.value)}
-                className="sanctum-input text-xs"
-                rows={3}
-                style={{ display: "block", width: "100%", boxSizing: "border-box", padding: "0.375rem 0.625rem", resize: "vertical" }}
-              />
+              {/* Prompt textarea + AI improve button */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <textarea
+                  value={scene.imagePrompt || buildImagePrompt(scene.sceneDescription)}
+                  onChange={(e) => handleUpdatePrompt(scene.id, e.target.value)}
+                  className="sanctum-input text-xs"
+                  rows={3}
+                  style={{ display: "block", width: "100%", boxSizing: "border-box", padding: "0.375rem 0.625rem", resize: "vertical" }}
+                />
+                <button
+                  onClick={() => handleImprovePrompt(scene.id, scene.imagePrompt || buildImagePrompt(scene.sceneDescription))}
+                  disabled={improvingId === scene.id}
+                  className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded transition-all self-start"
+                  style={{
+                    background: improvingId === scene.id ? "rgba(16,163,127,0.08)" : "rgba(16,163,127,0.12)",
+                    border: "1px solid rgba(16,163,127,0.3)",
+                    color: improvingId === scene.id ? "rgba(16,163,127,0.5)" : "#10a37f",
+                    cursor: improvingId === scene.id ? "wait" : "pointer",
+                  }}
+                >
+                  {improvingId === scene.id
+                    ? <><Loader2 size={11} className="animate-spin" /> Improving…</>
+                    : <><Wand2 size={11} /> Improve with AI</>}
+                </button>
+              </div>
             </div>
           );
         })}
