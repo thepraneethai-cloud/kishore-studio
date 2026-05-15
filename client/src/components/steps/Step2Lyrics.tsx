@@ -290,6 +290,11 @@ export default function Step2Lyrics() {
   const [masterPromptEditable, setMasterPromptEditable] = useState("");
   const [masterPromptReady, setMasterPromptReady] = useState(false);
 
+  // Collapsible section state — start all open, collapse once filled
+  const [openSections, setOpenSections] = useState({ basic: true, settings: true, brief: true, direction: true, master: true });
+  const toggleSection = (key: keyof typeof openSections) =>
+    setOpenSections((s) => ({ ...s, [key]: !s[key] }));
+
   // Persist category/mood/languageStyle to project context whenever they change
   useEffect(() => { setSongMeta({ category, mood, languageStyle }); }, [category, mood, languageStyle]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -504,6 +509,46 @@ export default function Step2Lyrics() {
 
   const generateLabel = project.lyrics ? "Regenerate lyrics" : "Generate lyrics";
 
+  // ── Collapsible section wrapper ───────────────────────────
+  const CollapsibleSection = ({
+    sectionKey, number, title, summary, children,
+  }: {
+    sectionKey: keyof typeof openSections;
+    number: string;
+    title: string;
+    summary?: React.ReactNode;
+    children: React.ReactNode;
+  }) => {
+    const isOpen = openSections[sectionKey];
+    return (
+      <div style={{ background: "#2f2f2f", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.75rem", marginBottom: "1rem", overflow: "hidden", boxShadow: "0 18px 50px rgba(0,0,0,0.18)" }}>
+        <button
+          onClick={() => toggleSection(sectionKey)}
+          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.9rem 1.25rem", background: "none", border: "none", cursor: "pointer", gap: "0.75rem", textAlign: "left" }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", flexShrink: 0 }}>
+              {number}. {title}
+            </span>
+            {!isOpen && summary && (
+              <span style={{ fontSize: "0.75rem", color: "rgba(236,236,241,0.55)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {summary}
+              </span>
+            )}
+          </div>
+          <span style={{ color: "oklch(0.72 0.12 75)", flexShrink: 0, fontSize: "0.85rem" }}>
+            {isOpen ? "▲" : "▼"}
+          </span>
+        </button>
+        {isOpen && (
+          <div style={{ padding: "0 1.25rem 1.25rem" }}>
+            {children}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // ── Styles ────────────────────────────────────────────────
   const panel = {
     background: "#2f2f2f",
@@ -641,10 +686,12 @@ export default function Step2Lyrics() {
           </span>
         </div>
 
-        <div style={{ ...panel, marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", marginBottom: "1rem" }}>
-            1. Basic details
-          </p>
+        <CollapsibleSection
+          sectionKey="basic"
+          number="1"
+          title="Basic details"
+          summary={[subjectInput, SONG_CATEGORIES.find(c => c.value === category)?.label, titleInput].filter(Boolean).join(" · ") || "Category, subject, title"}
+        >
           <div className="concept-grid">
             <div>
               <label style={labelStyle}>Song category</label>
@@ -716,13 +763,15 @@ export default function Step2Lyrics() {
               Use "{subjectInput}"
             </button>
           )}
-        </div>
+        </CollapsibleSection>
 
         {/* ── GENERATION SETTINGS ──────────────────────── */}
-        <div style={{ ...panel, marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", marginBottom: "1rem" }}>
-            2. Generation settings
-          </p>
+        <CollapsibleSection
+          sectionKey="settings"
+          number="2"
+          title="Generation settings"
+          summary={[OUTPUT_TYPES.find(o => o.value === outputType)?.label, `${duration} min`, MOOD_OPTIONS.find(m => m.value === mood)?.label, LANGUAGE_STYLES.find(l => l.value === languageStyle)?.label].filter(Boolean).join(" · ")}
+        >
 
           <div className="concept-grid">
             <div>
@@ -772,13 +821,15 @@ export default function Step2Lyrics() {
               Show SUNO style from previous generation
             </button>
           )}
-        </div>
+        </CollapsibleSection>
 
         {/* ── SONG BRIEF ───────────────────────────────── */}
-        <div style={{ ...panel, marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", marginBottom: "0.35rem" }}>
-            3. Creative brief
-          </p>
+        <CollapsibleSection
+          sectionKey="brief"
+          number="3"
+          title="Creative brief"
+          summary={visionInput ? visionInput.slice(0, 60) + (visionInput.length > 60 ? "…" : "") : "Your song's visual direction"}
+        >
           <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.42)", marginBottom: "1rem" }}>
             Pick an example or write your own visual direction.
           </p>
@@ -848,13 +899,15 @@ export default function Step2Lyrics() {
                 </span>
               )}
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* ── CUSTOM DIRECTION ─────────────────────────── */}
-        <div style={{ ...panel, marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", marginBottom: "0.25rem" }}>
-            4. Extra direction <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "rgba(255,255,255,0.35)" }}>(optional)</span>
-          </p>
+        <CollapsibleSection
+          sectionKey="direction"
+          number="4"
+          title="Extra direction"
+          summary={customPrompt ? customPrompt.slice(0, 60) + (customPrompt.length > 60 ? "…" : "") : "Optional style rules"}
+        >
           <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.85rem" }}>
             Add must-have phrases, structure, or style rules.
           </p>
@@ -948,12 +1001,16 @@ export default function Step2Lyrics() {
               }
             </button>
           </div>
-        </div>
+        </CollapsibleSection>
 
-        <div style={{ ...panel, marginBottom: "1rem" }}>
+        <CollapsibleSection
+          sectionKey="master"
+          number="5"
+          title="Creative Direction (Master Prompt)"
+          summary={masterPromptEditable ? masterPromptEditable.slice(0, 70) + "…" : "Guides all generation"}
+        >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
             <div>
-              <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "oklch(0.72 0.12 75)", margin: 0 }}>5. Creative Direction (Master Prompt)</p>
               <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", margin: "0.25rem 0 0" }}>
                 Generate or edit the master direction before lyrics.
               </p>
@@ -995,7 +1052,7 @@ export default function Step2Lyrics() {
               Click Generate, or type your own creative direction directly in the box.
             </p>
           )}
-        </div>
+        </CollapsibleSection>
 
         <button
           onClick={handleGenerateLyricsWithMasterPrompt}
