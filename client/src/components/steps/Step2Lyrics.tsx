@@ -562,7 +562,7 @@ export default function Step2Lyrics() {
   const primaryBtn = (disabled: boolean) => ({
     display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
     padding: "0.875rem 1.5rem",
-    background: disabled ? "rgba(255,255,255,0.07)" : "linear-gradient(135deg, #00d4ff 0%, #39ff14 100%)",
+    background: disabled ? "rgba(255,255,255,0.07)" : "linear-gradient(135deg, oklch(0.72 0.12 75) 0%, #39ff14 100%)",
     color: disabled ? "rgba(255,255,255,0.3)" : "#000",
     border: "none", borderRadius: "0.65rem",
     fontWeight: "700" as const, fontSize: "0.95rem",
@@ -1193,7 +1193,7 @@ export default function Step2Lyrics() {
               disabled={!canContinue}
               style={{
                 width: "100%", padding: "1rem",
-                background: canContinue ? "linear-gradient(135deg, #00d4ff 0%, #39ff14 100%)" : "rgba(255,255,255,0.08)",
+                background: canContinue ? "linear-gradient(135deg, oklch(0.72 0.12 75) 0%, #39ff14 100%)" : "rgba(255,255,255,0.08)",
                 color: canContinue ? "#000" : "rgba(255,255,255,0.3)",
                 border: "none", borderRadius: "0.65rem",
                 fontWeight: 700, fontSize: "1rem",

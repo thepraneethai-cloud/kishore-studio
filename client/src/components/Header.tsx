@@ -64,7 +64,7 @@ export default function Header({ sidebarOpen, onToggleSidebar, activeStep }: Hea
             style={{
               height: "24px",
               width: "1px",
-              background: "rgba(0, 212, 255, 0.4)",
+              background: "oklch(0.72 0.12 75 / 0.4)",
               flexShrink: 0,
             }}
           />
@@ -187,7 +187,7 @@ export default function Header({ sidebarOpen, onToggleSidebar, activeStep }: Hea
                   fontWeight: "500",
                   borderBottom: "1px solid rgba(255,255,255,0.07)",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0, 212, 255, 0.1)"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "oklch(0.72 0.12 75 / 0.1)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
                 <Settings size={18} />

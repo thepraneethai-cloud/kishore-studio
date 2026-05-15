@@ -110,7 +110,7 @@ export default function Step1Deity() {
           fontWeight: "700",
           marginBottom: "1rem",
           color: "var(--text-primary)",
-          background: "linear-gradient(135deg, #00d4ff, #ff006e)",
+          background: "linear-gradient(135deg, oklch(0.72 0.12 75), #ff006e)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           backgroundClip: "text",
@@ -159,23 +159,23 @@ export default function Step1Deity() {
               width: "100%",
               padding: "1rem",
               fontSize: "1rem",
-              border: "1px solid rgba(0, 212, 255, 0.3)",
+              border: "1px solid oklch(0.72 0.12 75 / 0.3)",
               borderRadius: "var(--radius-md)",
-              background: "rgba(0, 212, 255, 0.05)",
+              background: "oklch(0.72 0.12 75 / 0.05)",
               color: "var(--text-primary)",
               transition: "all var(--transition-base)",
               fontFamily: "'Inter', sans-serif",
               backdropFilter: "blur(10px)",
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = "var(--accent-blue)";
-              e.currentTarget.style.background = "rgba(0, 212, 255, 0.1)";
-              e.currentTarget.style.boxShadow = "0 0 20px rgba(0, 212, 255, 0.3)";
+              e.currentTarget.style.borderColor = "oklch(0.72 0.12 75)";
+              e.currentTarget.style.background = "oklch(0.72 0.12 75 / 0.1)";
+              e.currentTarget.style.boxShadow = "0 0 20px oklch(0.72 0.12 75 / 0.3)";
               setShowSuggestions(true);
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = "rgba(0, 212, 255, 0.3)";
-              e.currentTarget.style.background = "rgba(0, 212, 255, 0.05)";
+              e.currentTarget.style.borderColor = "oklch(0.72 0.12 75 / 0.3)";
+              e.currentTarget.style.background = "oklch(0.72 0.12 75 / 0.05)";
               e.currentTarget.style.boxShadow = "none";
             }}
           />
@@ -200,7 +200,7 @@ export default function Step1Deity() {
             display: "flex",
             flexDirection: "column",
             gap: "1rem",
-            borderTop: "1px solid rgba(0, 212, 255, 0.2)",
+            borderTop: "1px solid oklch(0.72 0.12 75 / 0.2)",
             paddingTop: "1rem",
           }}>
             <p style={{
@@ -228,33 +228,33 @@ export default function Step1Deity() {
                     textAlign: "left",
                     transition: "all var(--transition-base)",
                     border: deityInput === suggestion
-                      ? "1.5px solid var(--accent-blue)"
+                      ? "1.5px solid oklch(0.72 0.12 75)"
                       : "1px solid rgba(255, 255, 255, 0.1)",
                     cursor: "pointer",
                     backgroundColor: deityInput === suggestion
-                      ? "rgba(0, 212, 255, 0.15)"
+                      ? "oklch(0.72 0.12 75 / 0.15)"
                       : "rgba(255, 255, 255, 0.05)",
                     color: deityInput === suggestion
-                      ? "var(--accent-blue)"
+                      ? "oklch(0.80 0.12 78)"
                       : "var(--text-secondary)",
                     backdropFilter: "blur(10px)",
                     fontWeight: deityInput === suggestion ? "700" : "500",
                     boxShadow: deityInput === suggestion
-                      ? "0 0 15px rgba(0, 212, 255, 0.3)"
+                      ? "0 0 15px oklch(0.72 0.12 75 / 0.3)"
                       : "none",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.backgroundColor = "rgba(0, 212, 255, 0.2)";
-                    e.currentTarget.style.boxShadow = "0 0 20px rgba(0, 212, 255, 0.4)";
+                    e.currentTarget.style.backgroundColor = "oklch(0.72 0.12 75 / 0.2)";
+                    e.currentTarget.style.boxShadow = "0 0 20px oklch(0.72 0.12 75 / 0.4)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
                     e.currentTarget.style.backgroundColor = deityInput === suggestion
-                      ? "rgba(0, 212, 255, 0.15)"
+                      ? "oklch(0.72 0.12 75 / 0.15)"
                       : "rgba(255, 255, 255, 0.05)";
                     e.currentTarget.style.boxShadow = deityInput === suggestion
-                      ? "0 0 15px rgba(0, 212, 255, 0.3)"
+                      ? "0 0 15px oklch(0.72 0.12 75 / 0.3)"
                       : "none";
                   }}
                 >
@@ -347,10 +347,10 @@ export default function Step1Deity() {
           cursor: deityInput ? "pointer" : "not-allowed",
           transition: "all var(--transition-base)",
           background: deityInput
-            ? "linear-gradient(135deg, var(--accent-blue), var(--accent-cyan))"
+            ? "linear-gradient(135deg, oklch(0.72 0.12 75), oklch(0.80 0.12 78))"
             : "rgba(255, 255, 255, 0.1)",
           color: deityInput ? "#000" : "var(--text-muted)",
-          boxShadow: deityInput ? "0 0 30px rgba(0, 212, 255, 0.4)" : "none",
+          boxShadow: deityInput ? "0 0 30px oklch(0.72 0.12 75 / 0.4)" : "none",
           opacity: deityInput ? 1 : 0.5,
           width: "100%",
           textTransform: "uppercase",
@@ -359,13 +359,13 @@ export default function Step1Deity() {
         onMouseEnter={(e) => {
           if (deityInput) {
             e.currentTarget.style.transform = "translateY(-3px)";
-            e.currentTarget.style.boxShadow = "0 0 50px rgba(0, 212, 255, 0.6)";
+            e.currentTarget.style.boxShadow = "0 0 50px oklch(0.72 0.12 75 / 0.6)";
           }
         }}
         onMouseLeave={(e) => {
           if (deityInput) {
             e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "0 0 30px rgba(0, 212, 255, 0.4)";
+            e.currentTarget.style.boxShadow = "0 0 30px oklch(0.72 0.12 75 / 0.4)";
           }
         }}
       >

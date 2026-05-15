@@ -377,7 +377,7 @@ export default function Step7VideoPrompts() {
 
   const panelStyle = {
     background: "#2f2f2f",
-    border: "1px solid rgba(0,212,255,0.16)",
+    border: "1px solid oklch(0.72 0.12 75 / 0.16)",
     borderRadius: "0.75rem",
     boxShadow: "0 18px 50px rgba(0,0,0,0.18)",
   } as const;
@@ -396,7 +396,7 @@ export default function Step7VideoPrompts() {
     width: "100%",
     padding: "0.75rem",
     background: "#2a2a2a",
-    border: "1px solid rgba(0,212,255,0.18)",
+    border: "1px solid oklch(0.72 0.12 75 / 0.18)",
     borderRadius: "0.5rem",
     color: "rgba(255,255,255,0.88)",
     fontSize: "0.875rem",
@@ -405,7 +405,7 @@ export default function Step7VideoPrompts() {
 
   const selectStyle = {
     ...fieldStyle,
-    color: "#00d4ff",
+    color: "oklch(0.72 0.12 75)",
     fontWeight: 600,
     cursor: "pointer",
   } as const;
@@ -475,7 +475,7 @@ export default function Step7VideoPrompts() {
       {/* Controls card */}
       <div className="space-y-4 p-4" style={panelStyle}>
         <div>
-          <p className="text-sm font-semibold" style={{ color: "#00d4ff" }}>
+          <p className="text-sm font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
             Video setup
           </p>
           <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.42)" }}>
@@ -569,9 +569,9 @@ export default function Step7VideoPrompts() {
             disabled={genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0}
             className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-semibold transition-colors"
             style={{
-              background: readyForVideoCount > 0 ? "linear-gradient(135deg, #00d4ff, #25f52f)" : "#2a2a2a",
+              background: readyForVideoCount > 0 ? "linear-gradient(135deg, oklch(0.72 0.12 75), #25f52f)" : "#2a2a2a",
               color: readyForVideoCount > 0 ? "#111111" : "rgba(236,236,241,0.3)",
-              border: "1px solid rgba(0,212,255,0.35)",
+              border: "1px solid oklch(0.72 0.12 75 / 0.35)",
               cursor: genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0 ? "not-allowed" : "pointer",
               opacity: genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0 ? 0.7 : 1,
             }}
@@ -737,7 +737,7 @@ export default function Step7VideoPrompts() {
                       style={{
                         maxHeight: "260px",
                         background: "#2a2a2a",
-                        border: "1px solid rgba(0,212,255,0.18)",
+                        border: "1px solid oklch(0.72 0.12 75 / 0.18)",
                       }}
                     />
                   )}

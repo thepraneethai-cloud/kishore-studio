@@ -377,7 +377,7 @@ export default function Step6ImagePrompts() {
 
   const panelStyle = {
     background: "#2f2f2f",
-    border: "1px solid rgba(0,212,255,0.16)",
+    border: "1px solid oklch(0.72 0.12 75 / 0.16)",
     borderRadius: "0.75rem",
     boxShadow: "0 18px 50px rgba(0,0,0,0.18)",
   } as const;
@@ -396,7 +396,7 @@ export default function Step6ImagePrompts() {
     width: "100%",
     padding: "0.75rem",
     background: "#2a2a2a",
-    border: "1px solid rgba(0,212,255,0.18)",
+    border: "1px solid oklch(0.72 0.12 75 / 0.18)",
     borderRadius: "0.5rem",
     color: "rgba(255,255,255,0.88)",
     fontSize: "0.875rem",
@@ -405,7 +405,7 @@ export default function Step6ImagePrompts() {
 
   const selectStyle = {
     ...fieldStyle,
-    color: "#00d4ff",
+    color: "oklch(0.72 0.12 75)",
     fontWeight: 600,
     cursor: "pointer",
   } as const;
@@ -481,7 +481,7 @@ export default function Step6ImagePrompts() {
       {/* Controls card — Style + Seed + Actions */}
       <div className="space-y-4 p-4" style={panelStyle}>
         <div>
-          <p className="text-sm font-semibold" style={{ color: "#00d4ff" }}>
+          <p className="text-sm font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
             Image setup
           </p>
           <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.42)" }}>
