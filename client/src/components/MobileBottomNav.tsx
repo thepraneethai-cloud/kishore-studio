@@ -37,11 +37,11 @@ export default function MobileBottomNav() {
         alignItems: "center",
         justifyContent: "space-between",
         gap: "0.5rem",
-        padding: "0.75rem 1rem",
+        padding: "0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px))",
         background: "rgba(10, 10, 20, 0.95)",
         backdropFilter: "blur(8px)",
         borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-        height: "60px",
+        minHeight: "60px",
       }}
     >
       {/* Previous button */}

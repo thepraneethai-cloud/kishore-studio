@@ -101,7 +101,7 @@ export default function Home() {
           style={{
             flex: 1,
             overflowY: "auto",
-            paddingBottom: isMobile ? "70px" : "0",
+            paddingBottom: isMobile ? "calc(120px + env(safe-area-inset-bottom, 0px))" : "0",
           }}
         >
           <div
