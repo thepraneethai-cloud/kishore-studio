@@ -61,13 +61,15 @@ export default function Step7VideoPrompts() {
   const [videoJobs, setVideoJobs] = useState<VideoJob[]>([]);
   const [genStatus, setGenStatus] = useState<"idle" | "submitting" | "polling" | "done" | "error">("idle");
   const [isPolling, setIsPolling] = useState(false);
-  const [videoProvider, setVideoProvider] = useState<"replicate" | "fal">("fal");
+  const [videoProvider, setVideoProvider] = useState<"wan" | "kling" | "replicate" | "zsky">("wan");
   const [falVideoModel, setFalVideoModel] = useState<"wan" | "kling">("wan");
 
   const utils = trpc.useUtils();
   const { data: userSettings } = trpc.settings.getSettings.useQuery();
+  const { data: envKeyStatus } = trpc.settings.getEnvKeyStatus.useQuery();
   const generateVideosMutation = trpc.generation.generateVideos.useMutation();
   const generateVideosFalMutation = trpc.generation.generateVideosFal.useMutation();
+  const generateVideosZskyMutation = trpc.generation.generateVideosZsky.useMutation();
   const improvePromptMutation = trpc.generation.improvePrompt.useMutation();
 
   // AI improve state
@@ -126,7 +128,7 @@ export default function Step7VideoPrompts() {
         const replicateApiKey = userSettings?.replicateApiKey || "";
         const falApiKey = (userSettings as any)?.falApiKey || "";
 
-        if (videoProvider === "fal") {
+        if (videoProvider === "wan" || videoProvider === "kling") {
           if (!falApiKey) return;
           const falJobs = pending.map((j) => ({ requestId: j.jobId, model: falVideoModel, sceneId: j.sceneId }));
           const result = await utils.generation.pollFalJobs.fetch({ jobs: falJobs, falApiKey });
@@ -229,13 +231,15 @@ export default function Step7VideoPrompts() {
   const handleGenerateVideos = async () => {
     const replicateApiKey = userSettings?.replicateApiKey || "";
     const falApiKey = (userSettings as any)?.falApiKey || "";
+    const hasFalKey = Boolean(envKeyStatus?.falApiKey || falApiKey);
+    const hasReplicateKey = Boolean(envKeyStatus?.replicateApiKey || replicateApiKey);
 
-    if (videoProvider === "fal" && !falApiKey) {
-      toast.error("Add your fal.ai API key in Settings (free signup at fal.ai)");
+    if ((videoProvider === "wan" || videoProvider === "kling") && !hasFalKey) {
+      toast.error("Add your fal.ai API key in Settings or Railway Variables");
       return;
     }
-    if (videoProvider === "replicate" && !replicateApiKey) {
-      toast.error("Add your Replicate API key in Settings first");
+    if (videoProvider === "replicate" && !hasReplicateKey) {
+      toast.error("Add your Replicate API key in Settings or Railway Variables");
       return;
     }
 
@@ -284,6 +288,10 @@ export default function Step7VideoPrompts() {
         .map((scene) => ({ scene, imageUrl: hostedBySceneId.get(scene.id) }))
         .filter((item): item is { scene: typeof candidateScenes[number]; imageUrl: string } => Boolean(item.imageUrl));
 
+      if (videoProvider === "zsky" && hostedScenes.length > 4) {
+        throw new Error("ZSky is experimental and limited to 4 clips per batch. Use WAN for full song batches.");
+      }
+
       const scenesWithHostedImages = project.scenes.map((scene) => {
         const hostedUrl = hostedBySceneId.get(scene.id);
         return hostedUrl ? { ...scene, imageUrl: hostedUrl } : scene;
@@ -293,10 +301,11 @@ export default function Step7VideoPrompts() {
 
       let jobs: VideoJob[];
 
-      if (videoProvider === "fal") {
+      if (videoProvider === "wan" || videoProvider === "kling") {
+        const model = videoProvider;
         const result = await generateVideosFalMutation.mutateAsync({
           falApiKey,
-          model: falVideoModel,
+          model,
           videos: hostedScenes.map(({ scene, imageUrl }) => ({
             imageUrl,
             motionPrompt: buildMotionPrompt(scene.sceneDescription),
@@ -310,6 +319,26 @@ export default function Step7VideoPrompts() {
           jobId: job.requestId,
           sceneId: job.sceneId,
           status: "starting" as VideoJob["status"],
+        }));
+        setFalVideoModel(model);
+      } else if (videoProvider === "zsky") {
+        const result = await generateVideosZskyMutation.mutateAsync({
+          videos: hostedScenes.map(({ scene, imageUrl }) => ({
+            imageUrl,
+            motionPrompt: buildMotionPrompt(scene.sceneDescription),
+            sceneId: scene.id,
+            duration: Math.max(5, Math.min(10, scene.duration || 5)),
+          })),
+        });
+        if (!result.success || !result.data) {
+          throw new Error(result.error || "ZSky video generation failed");
+        }
+        jobs = result.data.map((job) => ({
+          jobId: job.requestId,
+          sceneId: job.sceneId,
+          status: job.status === "completed" ? "succeeded" : "failed",
+          videoUrl: job.videoUrl,
+          error: job.error,
         }));
       } else {
         const result = await generateVideosMutation.mutateAsync({
@@ -338,10 +367,14 @@ export default function Step7VideoPrompts() {
       }));
 
       setVideoJobs(jobs);
-      setGenStatus("polling");
-      setIsPolling(true);
-      const providerLabel = videoProvider === "fal" ? `fal.ai (${falVideoModel === "wan" ? "Wan2.1" : "Kling"})` : "MiniMax via Replicate";
-      toast.success(`Generating ${jobs.length} video clips via ${providerLabel}...`);
+      const hasPendingJobs = jobs.some((job) => job.status === "starting" || job.status === "processing");
+      setGenStatus(hasPendingJobs ? "polling" : "done");
+      setIsPolling(hasPendingJobs);
+      const providerLabel = videoProvider === "wan" ? "WAN 2.1 via fal.ai"
+        : videoProvider === "kling" ? "Kling via fal.ai"
+        : videoProvider === "zsky" ? "ZSky"
+        : "MiniMax via Replicate";
+      toast.success(hasPendingJobs ? `Generating ${jobs.length} video clips via ${providerLabel}...` : `${jobs.length} video clips ready via ${providerLabel}`);
     } catch (error) {
       setGenStatus("error");
       toast.error(error instanceof Error ? error.message : "Failed to start video generation");
@@ -374,6 +407,9 @@ export default function Step7VideoPrompts() {
   const usingApprovedScenes = sceneSource === "approved" && approvedScenes.length > 0;
   const readyForVideoCount = displayScenes.filter((scene) => isHostedUrl(scene.imageUrl) || isInlineImage(scene.imageUrl)).length;
   const videoReadyCount = displayScenes.filter((scene) => scene.videoUrl).length;
+  const hasFalKey = Boolean(envKeyStatus?.falApiKey || (userSettings as any)?.falApiKey);
+  const hasReplicateKey = Boolean(envKeyStatus?.replicateApiKey || userSettings?.replicateApiKey);
+  const zskyBatchBlocked = videoProvider === "zsky" && readyForVideoCount > 4;
 
   const panelStyle = {
     background: "#2f2f2f",
@@ -534,31 +570,36 @@ export default function Step7VideoPrompts() {
             </label>
             <select
               value={videoProvider}
-              onChange={(e) => setVideoProvider(e.target.value as "replicate" | "fal")}
+              onChange={(e) => {
+                const value = e.target.value as "wan" | "kling" | "replicate" | "zsky";
+                setVideoProvider(value);
+                if (value === "wan" || value === "kling") setFalVideoModel(value);
+              }}
               style={{ width: "100%", padding: "0.55rem 0.75rem", background: "#222", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "0.5rem", color: "#ececf1", fontSize: "0.8rem", cursor: "pointer", outline: "none" }}
             >
-              <option value="fal">fal.ai — FREE credits (Wan2.1 / Kling)</option>
+              <optgroup label="Recommended">
+                <option value="wan">WAN 2.1 via fal.ai — best batch default</option>
+                <option value="kling">Kling via fal.ai — higher quality</option>
+              </optgroup>
+              <optgroup label="Experimental">
+                <option value="zsky">ZSky — experimental, max 4 clips</option>
+              </optgroup>
               <option value="replicate">MiniMax via Replicate (~$0.05/clip)</option>
             </select>
           </div>
-          {videoProvider === "fal" && (
-            <div style={{ minWidth: 0 }}>
-              <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.35rem" }}>
-                Model
-              </label>
-              <select
-                value={falVideoModel}
-                onChange={(e) => setFalVideoModel(e.target.value as "wan" | "kling")}
-                style={{ width: "100%", padding: "0.55rem 0.75rem", background: "#222", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "0.5rem", color: "#ececf1", fontSize: "0.8rem", cursor: "pointer", outline: "none" }}
-              >
-                <option value="wan">Wan2.1 — fast (~$0.025/clip)</option>
-                <option value="kling">Kling v1.5 — best quality (~$0.03/clip)</option>
-              </select>
-            </div>
-          )}
-          {videoProvider === "fal" && (
+          {(videoProvider === "wan" || videoProvider === "kling") && (
             <p style={{ fontSize: "0.72rem", color: "rgba(16,163,127,0.85)", fontWeight: 600, alignSelf: "flex-end", paddingBottom: "0.55rem" }}>
-              ✓ Free credits on signup at fal.ai
+              {hasFalKey ? "✓ fal.ai key ready" : "Add FAL_API_KEY in Railway or Settings"}
+            </p>
+          )}
+          {videoProvider === "zsky" && (
+            <p style={{ fontSize: "0.72rem", color: zskyBatchBlocked ? "oklch(0.74 0.16 45)" : "rgba(16,163,127,0.85)", fontWeight: 600, alignSelf: "flex-end", paddingBottom: "0.55rem" }}>
+              {zskyBatchBlocked ? "ZSky is limited to 4 clips here. Use WAN for full batches." : "Experimental direct endpoint. R2 storage required."}
+            </p>
+          )}
+          {videoProvider === "replicate" && (
+            <p style={{ fontSize: "0.72rem", color: hasReplicateKey ? "rgba(16,163,127,0.85)" : "oklch(0.74 0.16 45)", fontWeight: 600, alignSelf: "flex-end", paddingBottom: "0.55rem" }}>
+              {hasReplicateKey ? "✓ Replicate key ready" : "Add REPLICATE_API_KEY in Railway or Settings"}
             </p>
           )}
         </div>
@@ -566,18 +607,18 @@ export default function Step7VideoPrompts() {
         <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-end gap-2">
           <button
             onClick={handleGenerateVideos}
-            disabled={genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0}
+            disabled={genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0 || zskyBatchBlocked}
             className="flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-lg font-semibold transition-colors col-span-2 sm:col-span-1"
             style={{
-              background: readyForVideoCount > 0 ? "linear-gradient(135deg, oklch(0.72 0.12 75), #25f52f)" : "#2a2a2a",
-              color: readyForVideoCount > 0 ? "#111111" : "rgba(236,236,241,0.3)",
+              background: readyForVideoCount > 0 && !zskyBatchBlocked ? "linear-gradient(135deg, oklch(0.72 0.12 75), #25f52f)" : "#2a2a2a",
+              color: readyForVideoCount > 0 && !zskyBatchBlocked ? "#111111" : "rgba(236,236,241,0.3)",
               border: "1px solid oklch(0.72 0.12 75 / 0.35)",
-              cursor: genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0 ? "not-allowed" : "pointer",
-              opacity: genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0 ? 0.7 : 1,
+              cursor: genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0 || zskyBatchBlocked ? "not-allowed" : "pointer",
+              opacity: genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0 || zskyBatchBlocked ? 0.7 : 1,
             }}
           >
             {genStatus === "submitting" || genStatus === "polling" ? <Loader2 size={12} className="animate-spin" /> : <Video size={12} />}
-            {genStatus === "submitting" || genStatus === "polling" ? "Generating Clips" : `Generate ${readyForVideoCount} Clips`}
+            {genStatus === "submitting" || genStatus === "polling" ? "Generating Clips" : zskyBatchBlocked ? "Use WAN for Batch" : `Generate ${readyForVideoCount} Clips`}
           </button>
           <button
             onClick={handleCopyAll}

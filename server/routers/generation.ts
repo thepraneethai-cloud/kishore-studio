@@ -19,6 +19,7 @@ import { analyzeSceneArc } from "../_core/sceneDirector";
 import { generateImagesWithOpenAI } from "../_core/openaiImages";
 import { generateImagesWithPollinations, generateImagesWithTogether, generateImagesWithFal } from "../_core/providers/images";
 import { submitFalVideoJob, pollFalVideoJob, FalVideoModel } from "../_core/providers/fal";
+import { generateZSkyVideoClip } from "../_core/providers/zsky";
 import { invokeLLM } from "../_core/llm";
 import { isR2Configured, uploadToR2 } from "../_core/r2Storage";
 import { ENV } from "../_core/env";
@@ -76,6 +77,7 @@ const UNIT_COSTS = {
   video:            0.0500, // minimax via Replicate ~$0.05
   video_fal_wan:    0.0250, // fal.ai Wan2.1 ~$0.025
   video_fal_kling:  0.0300, // fal.ai Kling ~$0.03
+  video_zsky:        0.0000, // ZSky anonymous endpoint, experimental
 };
 
 async function recordCost(
@@ -642,6 +644,36 @@ export const generationRouter = router({
         return { success: true, data: results };
       } catch (error) {
         return { success: false, error: error instanceof Error ? error.message : "Failed to poll fal.ai jobs" };
+      }
+    }),
+
+  // ============================================================
+  // VIDEO GENERATION via ZSky — experimental direct MP4 endpoint
+  // ============================================================
+  generateVideosZsky: protectedProcedure
+    .input(
+      z.object({
+        videos: z.array(
+          z.object({
+            imageUrl: z.string().url(),
+            motionPrompt: z.string(),
+            sceneId: z.number(),
+            duration: z.number().min(5).max(10).optional(),
+          })
+        ).max(4),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        await assertBudgetAvailable(ctx.user.id);
+        const jobs = [];
+        for (const video of input.videos) {
+          jobs.push(await generateZSkyVideoClip(video));
+        }
+        void recordCost(ctx.user.id, "video", "zsky", UNIT_COSTS.video_zsky, input.videos.length);
+        return { success: true, data: jobs };
+      } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : "Failed to generate ZSky video clips" };
       }
     }),
 
