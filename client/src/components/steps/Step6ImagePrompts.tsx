@@ -70,6 +70,7 @@ export default function Step6ImagePrompts() {
   const [isPolling, setIsPolling] = useState(false);
   const [showMasterPrompt, setShowMasterPrompt] = useState(false);
   const [regeneratingSceneId, setRegeneratingSceneId] = useState<number | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
 
   // AI improve state
   const [improvingId, setImprovingId] = useState<number | null>(null);
@@ -324,6 +325,17 @@ export default function Step6ImagePrompts() {
     } finally {
       setRegeneratingSceneId(null);
     }
+  };
+
+  const handleImageLoadError = (sceneId: number, sceneIndex: number) => {
+    updateScene(sceneId, { imageUrl: undefined, imageApproved: undefined });
+    setImageJobs((prev) =>
+      prev.map((job) =>
+        job.sceneIdx === sceneIndex
+          ? { ...job, status: "failed", imageUrl: undefined, error: "Image failed to load" }
+          : job
+      )
+    );
   };
 
   const handleRegenerateAll = () => {
@@ -991,19 +1003,33 @@ export default function Step6ImagePrompts() {
                 const approved = scene.imageApproved;
                 return displayUrl ? (
                   <div className="space-y-2">
-                    <div
+                    <button
+                      type="button"
+                      onClick={() => setPreviewImage({ url: displayUrl, title: `Scene ${idx + 1}` })}
                       className="rounded overflow-hidden relative"
                       style={{
+                        display: "block",
+                        width: "100%",
+                        padding: 0,
+                        background: "#202020",
                         border: `2px solid ${approved === true ? "oklch(0.60 0.18 145)" : approved === false ? "oklch(0.55 0.18 25)" : "rgba(255,255,255,0.1)"}`,
+                        cursor: "zoom-in",
                         transition: "border-color 200ms",
+                        textAlign: "left",
                       }}
                     >
                       <img
                         src={displayUrl}
                         alt={`Scene ${idx + 1}`}
-                        className="w-full object-cover"
-                        style={{ maxHeight: "200px" }}
+                        onError={() => handleImageLoadError(scene.id, idx)}
+                        style={{ display: "block", width: "100%", maxHeight: "240px", objectFit: "contain", background: "#202020" }}
                       />
+                      <div
+                        className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-xs font-semibold"
+                        style={{ background: "rgba(0,0,0,0.65)", color: "rgba(236,236,241,0.9)" }}
+                      >
+                        Tap to view
+                      </div>
                       {approved === true && (
                         <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold"
                           style={{ background: "oklch(0.20 0.10 145 / 0.9)", color: "oklch(0.72 0.18 145)" }}>
@@ -1016,7 +1042,7 @@ export default function Step6ImagePrompts() {
                           ✗ Rejected
                         </div>
                       )}
-                    </div>
+                    </button>
                     {/* Approve / Reject buttons */}
                     <div className="flex gap-2">
                       <button
@@ -1186,6 +1212,51 @@ export default function Step6ImagePrompts() {
         {approvedCount > 0 && <span className="text-xs opacity-70">({approvedCount} approved)</span>}
         <ChevronRight size={16} />
       </button>
+
+      {previewImage && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPreviewImage(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 80,
+            background: "rgba(0,0,0,0.88)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1rem",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: "1100px",
+              maxHeight: "90vh",
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.75rem",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem" }}>
+              <p style={{ margin: 0, color: "#ececf1", fontWeight: 700 }}>{previewImage.title}</p>
+              <button
+                onClick={() => setPreviewImage(null)}
+                style={{ width: "40px", height: "40px", borderRadius: "0.5rem", background: "rgba(255,255,255,0.08)", color: "#ececf1", border: "1px solid rgba(255,255,255,0.16)", fontSize: "1.5rem", lineHeight: 1 }}
+              >
+                ×
+              </button>
+            </div>
+            <img
+              src={previewImage.url}
+              alt={previewImage.title}
+              style={{ maxWidth: "100%", maxHeight: "calc(90vh - 64px)", objectFit: "contain", borderRadius: "0.5rem", background: "#202020" }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
