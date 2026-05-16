@@ -494,8 +494,8 @@ export default function Step6ImagePrompts() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(236,236,241,0.45)", letterSpacing: "0.08em" }}>
             Step 4
           </p>
@@ -506,7 +506,7 @@ export default function Step6ImagePrompts() {
             Generate images in-app or copy prompts for Leonardo AI / Midjourney. Master Prompt guides visual consistency.
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0 mt-1">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-shrink-0 mt-1">
           <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "rgba(255,255,255,0.06)", color: "#ececf1", border: "1px solid rgba(255,255,255,0.12)" }}>
             {project.scenes.length} scenes
           </span>
@@ -557,7 +557,7 @@ export default function Step6ImagePrompts() {
 
         {/* Style Lock */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(236,236,241,0.45)" }}>
               Style Lock
             </span>
@@ -596,7 +596,7 @@ export default function Step6ImagePrompts() {
 
         {/* Art Style dropdown */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(236,236,241,0.45)" }}>
               Art Style
             </span>
@@ -841,8 +841,8 @@ export default function Step6ImagePrompts() {
           </div>
         )}
 
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="min-w-0">
             <p className="text-sm font-semibold" style={{ color: "#ececf1" }}>
               Generate in App
             </p>
@@ -857,7 +857,7 @@ export default function Step6ImagePrompts() {
           {provider !== "pollinations" && !activeApiKey ? (
             <button
               onClick={() => navigate(missingKeyRoute)}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors"
+              className="flex items-center justify-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors"
               style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.12)" }}
             >
               <Settings size={11} />
@@ -867,7 +867,7 @@ export default function Step6ImagePrompts() {
             <button
               onClick={handleGenerateImages}
               disabled={genStatus === "submitting" || genStatus === "polling"}
-              className="flex items-center gap-1.5 text-xs px-4 py-2 rounded transition-all font-semibold"
+              className="flex items-center justify-center gap-1.5 text-xs px-4 py-2 rounded transition-all font-semibold"
               style={{
                 background:
                   genStatus === "submitting" || genStatus === "polling"
@@ -920,13 +920,13 @@ export default function Step6ImagePrompts() {
       </div>
 
       {/* LLM model selector for AI improve */}
-      <div className="flex items-center gap-2 py-2 px-3 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 py-2 px-3 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
         <Wand2 size={13} style={{ color: "#10a37f", flexShrink: 0 }} />
         <span className="text-xs font-medium" style={{ color: "rgba(236,236,241,0.55)" }}>AI model for ✨ Improve:</span>
         <select
           value={llmModel || "gemini-2.5-flash"}
           onChange={(e) => setLlmModel(e.target.value)}
-          style={{ flex: 1, padding: "0.25rem 0.5rem", background: "#2a2a2a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.375rem", color: "#ececf1", fontSize: "0.72rem" }}
+          style={{ flex: 1, width: "100%", minWidth: 0, padding: "0.25rem 0.5rem", background: "#2a2a2a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.375rem", color: "#ececf1", fontSize: "0.72rem" }}
         >
           <option value="gemini-2.5-flash">Gemini 2.5 Flash (default)</option>
           <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
@@ -943,8 +943,8 @@ export default function Step6ImagePrompts() {
           const job = imageJobs.find((j) => j.sceneIdx === idx);
           return (
             <div key={scene.id} className="shrine-panel p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <span
                     className="text-xs font-bold px-2 py-0.5 rounded"
                     style={{ background: "rgba(255,255,255,0.06)", color: "rgba(236,236,241,0.82)" }}
@@ -952,13 +952,13 @@ export default function Step6ImagePrompts() {
                     {idx + 1}
                   </span>
                   <span
-                    className="text-sm telugu-text truncate max-w-[240px]"
+                    className="text-sm telugu-text truncate max-w-[240px] min-w-0"
                     style={{ color: "rgba(236,236,241,0.72)" }}
                   >
                     {scene.lyricLine || "Scene " + (idx + 1)}
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   {/* Job status badge */}
                   {job && (
                     <span
@@ -984,7 +984,7 @@ export default function Step6ImagePrompts() {
                   )}
                   <button
                     onClick={() => handleCopyOne(scene.id, scene.imagePrompt || buildImagePrompt(scene.sceneDescription))}
-                    className="flex items-center gap-1 text-xs px-2.5 py-1 rounded transition-colors"
+                    className="flex items-center justify-center gap-1 text-xs px-2.5 py-1 rounded transition-colors"
                     style={{
                       background: copiedId === scene.id ? "rgba(255,255,255,0.06)" : "#2a2a2a",
                       color: copiedId === scene.id ? "rgba(236,236,241,0.82)" : "rgba(236,236,241,0.45)",
@@ -1044,7 +1044,7 @@ export default function Step6ImagePrompts() {
                       )}
                     </button>
                     {/* Approve / Reject buttons */}
-                    <div className="flex gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => updateScene(scene.id, { imageApproved: true })}
                         className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold transition-all"
@@ -1072,7 +1072,7 @@ export default function Step6ImagePrompts() {
                 ) : (
                   /* No image yet — URL paste + file upload */
                   <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       <Link size={12} style={{ color: "rgba(236,236,241,0.35)", flexShrink: 0 }} />
                       <input
                         type="url"
@@ -1090,7 +1090,7 @@ export default function Step6ImagePrompts() {
                           }
                         }}
                         className="sanctum-input text-xs"
-                        style={{ padding: "0.3rem 0.625rem", flex: 1 }}
+                        style={{ padding: "0.3rem 0.625rem", flex: 1, minWidth: 0 }}
                       />
                     </div>
                     <label
@@ -1136,11 +1136,11 @@ export default function Step6ImagePrompts() {
                   rows={3}
                   style={{ display: "block", width: "100%", boxSizing: "border-box", padding: "0.375rem 0.625rem", resize: "vertical" }}
                 />
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2">
                   <button
                     onClick={() => handleRegenerateOneImage(scene.id, idx, scene.imagePrompt || buildImagePrompt(scene.sceneDescription))}
                     disabled={regeneratingSceneId === scene.id || genStatus === "submitting"}
-                    className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded transition-all"
+                    className="flex items-center justify-center gap-1.5 text-xs px-2.5 py-1 rounded transition-all"
                     style={{
                       background: regeneratingSceneId === scene.id ? "rgba(236,236,241,0.08)" : "rgba(236,236,241,0.12)",
                       border: "1px solid rgba(236,236,241,0.24)",
@@ -1155,7 +1155,7 @@ export default function Step6ImagePrompts() {
                   <button
                     onClick={() => handleImprovePrompt(scene.id, scene.imagePrompt || buildImagePrompt(scene.sceneDescription))}
                     disabled={improvingId === scene.id}
-                    className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded transition-all"
+                    className="flex items-center justify-center gap-1.5 text-xs px-2.5 py-1 rounded transition-all"
                     style={{
                       background: improvingId === scene.id ? "rgba(16,163,127,0.08)" : "rgba(16,163,127,0.12)",
                       border: "1px solid rgba(16,163,127,0.3)",
@@ -1177,7 +1177,7 @@ export default function Step6ImagePrompts() {
       {/* Approval summary + Continue */}
       {scenesWithImages > 0 && (
         <div className="rounded-lg p-4 space-y-3" style={{ background: "#2f2f2f", border: "1px solid rgba(255,255,255,0.1)" }}>
-          <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center justify-between gap-2 text-xs flex-wrap">
             <span style={{ color: "rgba(236,236,241,0.52)" }}>Image Approval</span>
             <span style={{ color: approvedCount > 0 ? "oklch(0.72 0.18 145)" : "rgba(236,236,241,0.45)" }}>
               {approvedCount} approved · {rejectedCount} rejected · {scenesWithImages - reviewedCount} pending review
@@ -1198,7 +1198,7 @@ export default function Step6ImagePrompts() {
       <button
         onClick={handleContinue}
         disabled={approvedCount === 0}
-        className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200"
+        className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200"
         style={{
           background: approvedCount > 0
             ? "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))"

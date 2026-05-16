@@ -209,8 +209,8 @@ export default function Step8CapCut() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(236,236,241,0.45)", letterSpacing: "0.08em" }}>
             Step 6
           </p>
@@ -226,7 +226,7 @@ export default function Step8CapCut() {
           href="https://www.capcut.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-xs px-3 py-2 rounded font-semibold transition-all hover:opacity-90"
+          className="flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded font-semibold transition-all hover:opacity-90 self-start sm:self-auto"
           style={{
             background: "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
             color: "#181818",
@@ -238,8 +238,8 @@ export default function Step8CapCut() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="shrine-panel p-4 space-y-3 lg:col-span-2">
-          <div className="flex items-center justify-between gap-3">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="min-w-0">
               <p className="text-xs font-semibold" style={{ color: "oklch(0.72 0.12 75)" }}>
                 Producer Readiness
               </p>
@@ -247,7 +247,7 @@ export default function Step8CapCut() {
                 {timeline.length} scenes · ~{Math.floor(totalDuration / 60)}:{String(Math.round(totalDuration % 60)).padStart(2, "0")} runtime
               </p>
             </div>
-            <span className="text-2xl font-bold" style={{ color: readiness.percent >= 80 ? "oklch(0.70 0.14 145)" : "rgba(236,236,241,0.82)" }}>
+            <span className="text-2xl font-bold self-start sm:self-auto" style={{ color: readiness.percent >= 80 ? "oklch(0.70 0.14 145)" : "rgba(236,236,241,0.82)" }}>
               {readiness.percent}%
             </span>
           </div>
@@ -424,7 +424,7 @@ export default function Step8CapCut() {
 
       <button
         onClick={handleContinue}
-        className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 hover:opacity-90"
+          className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 hover:opacity-90"
         style={{
           background: "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
           color: "#181818",

@@ -129,7 +129,7 @@ export default function Step3Audio() {
       </div>
 
       {/* Tab switcher */}
-      <div style={{ display: "flex", gap: "0.5rem" }}>
+      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
         {(["upload", "url"] as const).map((t) => (
           <button
             key={t}
@@ -225,7 +225,7 @@ export default function Step3Audio() {
         /* ── URL paste area ─────────────────────────── */
         <div style={panel}>
           <label style={labelStyle}>Suno / audio URL</label>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
             <input
               type="url"
               value={urlInput}
@@ -233,6 +233,7 @@ export default function Step3Audio() {
               placeholder="https://cdn1.suno.ai/…mp3  or any direct audio URL"
               style={{
                 flex: 1,
+                minWidth: "220px",
                 padding: "0.65rem 0.75rem",
                 background: "#2a2a2a",
                 border: "1px solid oklch(0.28 0.025 58)",
@@ -244,7 +245,7 @@ export default function Step3Audio() {
             />
             <button
               onClick={handleSaveUrl}
-              style={{ padding: "0.65rem 1rem", background: "oklch(0.72 0.12 75 / 0.18)", border: "1px solid oklch(0.72 0.12 75 / 0.45)", borderRadius: "0.5rem", color: "oklch(0.80 0.12 78)", fontWeight: 600, fontSize: "0.8rem", cursor: "pointer", whiteSpace: "nowrap" }}
+              style={{ flex: "1 0 auto", padding: "0.65rem 1rem", background: "oklch(0.72 0.12 75 / 0.18)", border: "1px solid oklch(0.72 0.12 75 / 0.45)", borderRadius: "0.5rem", color: "oklch(0.80 0.12 78)", fontWeight: 600, fontSize: "0.8rem", cursor: "pointer", whiteSpace: "nowrap" }}
             >
               Save URL
             </button>

@@ -686,14 +686,14 @@ export default function Step2Lyrics() {
           </p>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem", padding: "0.75rem 1rem", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.75rem", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem", padding: "0.75rem 1rem", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.75rem", flexWrap: "wrap", minWidth: 0 }}>
           <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "rgba(236,236,241,0.6)", whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.05em" }}>
             AI Model
           </span>
           <select
             value={llmModel}
             onChange={(e) => setLlmModel(e.target.value)}
-            style={{ ...selectStyle, flex: 1, minWidth: "240px", padding: "0.55rem 0.75rem" }}
+            style={{ ...selectStyle, flex: 1, minWidth: "220px", padding: "0.55rem 0.75rem" }}
           >
             <optgroup label="Gemini (platform key — no setup needed)">
               <option value="gemini-2.5-flash">Gemini 2.5 Flash — fast · default</option>
@@ -1167,7 +1167,7 @@ export default function Step2Lyrics() {
                 style={{ ...inputStyle, color: "#ececf1", fontFamily: "monospace", fontSize: "0.875rem", lineHeight: "1.7", minHeight: "260px" }}
               />
               {/* Action row — below the content so the flow is: read → act */}
-              <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.85rem", paddingTop: "0.75rem", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.85rem", paddingTop: "0.75rem", borderTop: "1px solid rgba(255,255,255,0.06)", flexWrap: "wrap" }}>
                 {canUndoLyrics && (
                   <button
                     onClick={() => { undoLyrics(); toast.success("Restored previous lyrics"); }}
@@ -1263,7 +1263,7 @@ export default function Step2Lyrics() {
             </pre>
 
             {/* Action buttons — below the style text */}
-            <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
+            <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem", flexWrap: "wrap" }}>
               <button
                 onClick={() => copyToClipboard(sunoStyleText(sunoStyle), "SUNO style")}
                 style={{ display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.5rem 1rem", background: "rgba(255,255,255,0.06)", color: "rgba(236,236,241,0.82)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: "0.5rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}

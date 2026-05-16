@@ -413,8 +413,8 @@ export default function Step7VideoPrompts() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(236,236,241,0.45)", letterSpacing: "0.08em" }}>
             Step 7
           </p>
@@ -425,7 +425,7 @@ export default function Step7VideoPrompts() {
             Generate motion prompts for Runway, Pika, Kling, or similar tools. Master Prompt guides thematic consistency.
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-shrink-0">
           <span
             className="text-xs font-semibold px-3 py-1.5 rounded-full"
             style={{ background: "rgba(255,255,255,0.05)", color: "rgba(236,236,241,0.72)", border: "1px solid rgba(255,255,255,0.12)" }}
@@ -527,29 +527,29 @@ export default function Step7VideoPrompts() {
         <div style={{ height: "1px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Video provider selector */}
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "flex-end" }}>
-          <div style={{ flex: "0 0 auto", minWidth: "200px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.75rem", alignItems: "end" }}>
+          <div style={{ minWidth: 0 }}>
             <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.35rem" }}>
               Video Provider
             </label>
             <select
               value={videoProvider}
               onChange={(e) => setVideoProvider(e.target.value as "replicate" | "fal")}
-              style={{ padding: "0.55rem 0.75rem", background: "#222", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "0.5rem", color: "#ececf1", fontSize: "0.8rem", cursor: "pointer", outline: "none" }}
+              style={{ width: "100%", padding: "0.55rem 0.75rem", background: "#222", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "0.5rem", color: "#ececf1", fontSize: "0.8rem", cursor: "pointer", outline: "none" }}
             >
               <option value="fal">fal.ai — FREE credits (Wan2.1 / Kling)</option>
               <option value="replicate">MiniMax via Replicate (~$0.05/clip)</option>
             </select>
           </div>
           {videoProvider === "fal" && (
-            <div style={{ flex: "0 0 auto", minWidth: "180px" }}>
+            <div style={{ minWidth: 0 }}>
               <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.35rem" }}>
                 Model
               </label>
               <select
                 value={falVideoModel}
                 onChange={(e) => setFalVideoModel(e.target.value as "wan" | "kling")}
-                style={{ padding: "0.55rem 0.75rem", background: "#222", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "0.5rem", color: "#ececf1", fontSize: "0.8rem", cursor: "pointer", outline: "none" }}
+                style={{ width: "100%", padding: "0.55rem 0.75rem", background: "#222", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "0.5rem", color: "#ececf1", fontSize: "0.8rem", cursor: "pointer", outline: "none" }}
               >
                 <option value="wan">Wan2.1 — fast (~$0.025/clip)</option>
                 <option value="kling">Kling v1.5 — best quality (~$0.03/clip)</option>
@@ -563,11 +563,11 @@ export default function Step7VideoPrompts() {
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 flex-wrap">
+        <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-end gap-2">
           <button
             onClick={handleGenerateVideos}
             disabled={genStatus === "submitting" || genStatus === "polling" || readyForVideoCount === 0}
-            className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-semibold transition-colors"
+            className="flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-lg font-semibold transition-colors col-span-2 sm:col-span-1"
             style={{
               background: readyForVideoCount > 0 ? "linear-gradient(135deg, oklch(0.72 0.12 75), #25f52f)" : "#2a2a2a",
               color: readyForVideoCount > 0 ? "#111111" : "rgba(236,236,241,0.3)",
@@ -581,7 +581,7 @@ export default function Step7VideoPrompts() {
           </button>
           <button
             onClick={handleCopyAll}
-            className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-colors"
+            className="flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-colors"
             style={{
               background: copiedAll ? "rgba(255,255,255,0.08)" : "#2a2a2a",
               color: copiedAll ? "rgba(236,236,241,0.82)" : "rgba(236,236,241,0.58)",
@@ -593,7 +593,7 @@ export default function Step7VideoPrompts() {
           </button>
           <button
             onClick={handleDownloadCSV}
-            className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-colors"
+            className="flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-colors"
             style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.12)" }}
           >
             <Download size={12} />
@@ -625,13 +625,13 @@ export default function Step7VideoPrompts() {
       )}
 
       {/* LLM model selector for AI improve */}
-      <div className="flex items-center gap-2 py-2 px-3 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 py-2 px-3 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
         <Wand2 size={13} style={{ color: "#10a37f", flexShrink: 0 }} />
         <span className="text-xs font-medium" style={{ color: "rgba(236,236,241,0.55)" }}>AI model for ✨ Improve:</span>
         <select
           value={llmModel || "gemini-2.5-flash"}
           onChange={(e) => setLlmModel(e.target.value)}
-          style={{ flex: 1, padding: "0.25rem 0.5rem", background: "#2a2a2a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.375rem", color: "#ececf1", fontSize: "0.72rem" }}
+          style={{ flex: 1, width: "100%", minWidth: 0, padding: "0.25rem 0.5rem", background: "#2a2a2a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.375rem", color: "#ececf1", fontSize: "0.72rem" }}
         >
           <option value="gemini-2.5-flash">Gemini 2.5 Flash (default)</option>
           <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
@@ -646,15 +646,15 @@ export default function Step7VideoPrompts() {
       <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
         {displayScenes.map((scene, idx) => (
           <div key={scene.id} className="shrine-panel p-3">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <span
                   className="text-xs font-bold px-2 py-0.5 rounded"
                   style={{ background: "rgba(255,255,255,0.05)", color: "rgba(236,236,241,0.45)" }}
                 >
                   {idx + 1}
                 </span>
-                <span className="text-xs telugu-text truncate max-w-[240px]" style={{ color: "rgba(236,236,241,0.58)" }}>
+                <span className="text-xs telugu-text truncate max-w-[240px] min-w-0" style={{ color: "rgba(236,236,241,0.58)" }}>
                   {scene.lyricLine || "Scene " + (idx + 1)}
                 </span>
                 <span className="text-xs" style={{ color: "rgba(236,236,241,0.35)" }}>
@@ -663,7 +663,7 @@ export default function Step7VideoPrompts() {
               </div>
               <button
                 onClick={() => handleCopyOne(scene.id, buildMotionPrompt(scene.sceneDescription))}
-                className="flex items-center gap-1 text-xs px-2.5 py-1 rounded transition-colors"
+                className="flex items-center justify-center gap-1 text-xs px-2.5 py-1 rounded transition-colors self-start sm:self-auto"
                 style={{
                   background: copiedId === scene.id ? "rgba(255,255,255,0.05)" : "#2a2a2a",
                   color: copiedId === scene.id ? "rgba(236,236,241,0.45)" : "rgba(236,236,241,0.45)",
@@ -751,7 +751,7 @@ export default function Step7VideoPrompts() {
       {/* Continue */}
       <button
         onClick={handleContinue}
-        className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 hover:opacity-90"
+        className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 hover:opacity-90"
         style={{
           background: "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
           color: "#181818",

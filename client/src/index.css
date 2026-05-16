@@ -214,6 +214,19 @@ input, textarea, select {
   appearance: none;
   position: relative;
   z-index: 1;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.shrine-panel,
+.glass-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.sanctum-input {
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* Mobile-specific input fixes */
@@ -222,6 +235,12 @@ input, textarea, select {
     font-size: 16px;
     -webkit-appearance: none;
     appearance: none;
+    max-width: 100%;
+  }
+
+  .shrine-panel,
+  .glass-card {
+    overflow: hidden;
   }
   
   input:focus, textarea:focus, select:focus {

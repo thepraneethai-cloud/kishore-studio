@@ -101,6 +101,8 @@ export default function Home() {
           style={{
             flex: 1,
             overflowY: "auto",
+            overflowX: "hidden",
+            minWidth: 0,
             paddingBottom: isMobile ? "calc(120px + env(safe-area-inset-bottom, 0px))" : "0",
           }}
         >
@@ -110,6 +112,7 @@ export default function Home() {
               maxWidth: "1200px",
               margin: "0 auto",
               width: "100%",
+              minWidth: 0,
             }}
           >
             <StepComponent />
