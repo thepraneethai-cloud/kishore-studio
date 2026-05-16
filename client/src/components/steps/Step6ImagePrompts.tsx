@@ -56,7 +56,7 @@ export default function Step6ImagePrompts() {
   const [seedLocked, setSeedLocked] = useState(project.imageSeed !== null);
 
   // Provider selection
-  const [provider, setProvider] = useState<ImageProvider>("pollinations");
+  const [provider, setProvider] = useState<ImageProvider>("fal");
   const [userSelectedProvider, setUserSelectedProvider] = useState(false);
   const [fluxModel, setFluxModel] = useState<FluxModel>("flux-dev");
   const [dalleModel, setDalleModel] = useState<DalleModel>("dall-e-3");
@@ -118,6 +118,7 @@ export default function Step6ImagePrompts() {
     together: "Together AI",
     fal: "fal.ai",
   };
+  const pollinationsBatchBlocked = provider === "pollinations" && project.scenes.length > 4;
 
   useEffect(() => {
     if (userSelectedProvider || !envKeyStatus) return;
@@ -251,7 +252,7 @@ export default function Step6ImagePrompts() {
       toast.error(msgs[provider]);
       return;
     }
-    if (provider === "pollinations" && project.scenes.length > 4) {
+    if (pollinationsBatchBlocked) {
       toast.error("Pollinations free is rate-limited for bulk generation. Use fal.ai, Together, OpenAI, or Replicate for full-scene batches.");
       return;
     }
@@ -772,12 +773,12 @@ export default function Step6ImagePrompts() {
               }}
               style={selectStyle}
             >
-              <optgroup label="🆓 Free — no cost">
-                <option value="pollinations">Pollinations.ai — small batches only, no key</option>
+              <optgroup label="Recommended for batches">
+                <option value="fal">fal.ai — recommended for reliable batches</option>
                 <option value="together">Together AI — free tier if key configured</option>
               </optgroup>
-              <optgroup label="💳 Free credits on signup">
-                <option value="fal">fal.ai — recommended for reliable batches</option>
+              <optgroup label="Test fallback">
+                <option value="pollinations">Pollinations.ai — 1-4 test images only</option>
               </optgroup>
               <optgroup label="Paid (pay per image)">
                 <option value="flux">Flux via Replicate (~$0.01/image)</option>
@@ -852,8 +853,13 @@ export default function Step6ImagePrompts() {
         {provider === "pollinations" && (
           <div className="p-3 rounded-lg" style={{ background: "rgba(16, 163, 127, 0.07)", border: "1px solid rgba(16,163,127,0.25)" }}>
             <p className="text-xs" style={{ color: "rgba(236,236,241,0.6)" }}>
-              <strong style={{ color: "#10a37f" }}>No key needed</strong>, but this endpoint is rate-limited and can fail on full song batches. Use it for 1-4 test images.
+              <strong style={{ color: "#10a37f" }}>No key needed</strong>, but this endpoint is rate-limited and can fail on full song batches. Use it for 1-4 test images only.
             </p>
+            {pollinationsBatchBlocked && (
+              <p className="text-xs mt-2" style={{ color: "oklch(0.74 0.16 45)" }}>
+                This project has {project.scenes.length} scenes. Select fal.ai, Together, OpenAI, or Replicate to generate the full batch.
+              </p>
+            )}
           </div>
         )}
         {provider === "together" && (
@@ -915,25 +921,27 @@ export default function Step6ImagePrompts() {
           ) : (
             <button
               onClick={handleGenerateImages}
-              disabled={genStatus === "submitting" || genStatus === "polling"}
+              disabled={genStatus === "submitting" || genStatus === "polling" || pollinationsBatchBlocked}
               className="flex items-center justify-center gap-1.5 text-xs px-4 py-2 rounded transition-all font-semibold"
               style={{
                 background:
-                  genStatus === "submitting" || genStatus === "polling"
+                  genStatus === "submitting" || genStatus === "polling" || pollinationsBatchBlocked
                     ? "rgba(255,255,255,0.1)"
                     : "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
                 color:
-                  genStatus === "submitting" || genStatus === "polling"
+                  genStatus === "submitting" || genStatus === "polling" || pollinationsBatchBlocked
                     ? "rgba(236,236,241,0.45)"
                     : "#181818",
                 border: "none",
-                cursor: genStatus === "submitting" || genStatus === "polling" ? "not-allowed" : "pointer",
+                cursor: genStatus === "submitting" || genStatus === "polling" || pollinationsBatchBlocked ? "not-allowed" : "pointer",
               }}
             >
               {genStatus === "submitting" ? (
                 <><Loader2 size={12} className="animate-spin" /> {provider === "dalle" ? "Generating…" : "Starting…"}</>
               ) : genStatus === "polling" ? (
                 <><Loader2 size={12} className="animate-spin" /> {doneCount}/{imageJobs.length} done</>
+              ) : pollinationsBatchBlocked ? (
+                <><AlertCircle size={12} /> Choose batch provider</>
               ) : (
                 <><Image size={12} /> Generate {project.scenes.length} Images</>
               )}
