@@ -19,11 +19,11 @@ type PollinationsModel = "flux" | "flux-realism" | "turbo";
 type DalleModel = "dall-e-3" | "gpt-image-1";
 
 const STYLE_SUFFIXES = [
-  "Tanjore painting style, gold leaf details",
-  "Cinematic photography, 8K ultra-detailed",
-  "Digital art, sacred geometry, divine glow",
-  "Oil painting, Renaissance devotional art style",
-  "Photorealistic, golden hour lighting",
+  "Tanjore devotional painting, gold leaf, jewel tones",
+  "Cinematic temple realism, warm lamp light, film still",
+  "Epic mythological digital art, divine glow, rich detail",
+  "Photorealistic idol and temple photography, golden hour",
+  "Painterly devotional illustration, soft sacred atmosphere",
 ];
 
 const NEGATIVE_PROMPT = "no text, no watermarks, no modern elements, no people in casual clothes, no cars, no phones, no ugly artifacts";
@@ -551,7 +551,7 @@ export default function Step6ImagePrompts() {
             Image setup
           </p>
           <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.42)" }}>
-            Choose style, provider, model, and consistency settings before generating.
+            Set the character look and art style once so every scene feels like the same video.
           </p>
         </div>
 
@@ -559,7 +559,7 @@ export default function Step6ImagePrompts() {
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(236,236,241,0.45)" }}>
-              Style Lock
+              Character look
             </span>
             {deity && (
               <button
@@ -575,7 +575,7 @@ export default function Step6ImagePrompts() {
           <textarea
             value={project.characterPrefix}
             onChange={(e) => setCharacterPrefix(e.target.value)}
-            placeholder="Tanjore painting style, gold leaf, South Indian temple art, consistent character design…"
+            placeholder="Describe the repeated character look: Lord Rama with blue skin, bow and arrow, royal attire, same face and costume in every scene..."
             rows={2}
             style={{
               width: "100%",
@@ -590,6 +590,9 @@ export default function Step6ImagePrompts() {
               outline: "none",
             }}
           />
+          <p className="text-xs" style={{ color: "rgba(236,236,241,0.35)" }}>
+            Best for consistency: include deity appearance, clothing, colors, and “same face/costume in every scene”.
+          </p>
         </div>
 
         <div style={{ height: "1px", background: "rgba(255,255,255,0.1)" }} />
@@ -598,7 +601,7 @@ export default function Step6ImagePrompts() {
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(236,236,241,0.45)" }}>
-              Art Style
+              Visual style
             </span>
             <button
               onClick={() => setShowNegative(!showNegative)}
@@ -626,7 +629,7 @@ export default function Step6ImagePrompts() {
 
         <div style={{ height: "1px", background: "rgba(255,255,255,0.1)" }} />
 
-        {/* Seed + Actions row */}
+        {/* Consistency + Actions row */}
         <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:flex-wrap">
           <span className="text-xs font-semibold col-span-2 sm:col-span-1" style={{ color: "rgba(236,236,241,0.45)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Seed</span>
           <input
@@ -654,10 +657,10 @@ export default function Step6ImagePrompts() {
             onClick={handleRandomSeed}
             className="flex items-center justify-center gap-1 text-xs px-2.5 py-1.5 rounded transition-colors"
             style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.1)" }}
-            title="Roll a random seed"
+            title="Create a fixed seed for more consistent images"
           >
             <Shuffle size={10} />
-            Random
+            New seed
           </button>
           <button
             onClick={handleToggleSeedLock}
@@ -670,7 +673,7 @@ export default function Step6ImagePrompts() {
             title={seedLocked ? "Unlock seed" : "Lock seed"}
           >
             {seedLocked ? <Lock size={10} /> : <Unlock size={10} />}
-            {seedLocked ? "Locked" : "Unlocked"}
+            {seedLocked ? "Seed locked" : "Seed off"}
           </button>
           <div className="hidden sm:block flex-1" />
           <button
@@ -679,7 +682,7 @@ export default function Step6ImagePrompts() {
             style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.1)" }}
           >
             <Sparkles size={11} />
-            Restyle All
+            Apply style to all
           </button>
           <button
             onClick={handleCopyAll}
@@ -691,7 +694,7 @@ export default function Step6ImagePrompts() {
             }}
           >
             {copiedAll ? <Check size={11} /> : <Copy size={11} />}
-            {copiedAll ? "Copied!" : "Copy All"}
+            {copiedAll ? "Copied!" : "Copy prompts"}
           </button>
           <button
             onClick={handleDownloadCSV}
@@ -699,12 +702,17 @@ export default function Step6ImagePrompts() {
             style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.1)" }}
           >
             <Download size={11} />
-            CSV
+            Download prompts
           </button>
         </div>
         {seedLocked && project.imageSeed !== null && (
           <p className="text-xs" style={{ color: "rgba(236,236,241,0.4)" }}>
-            Seed <span style={{ color: "oklch(0.72 0.12 145)", fontFamily: "monospace" }}>{project.imageSeed}</span> locked — all {project.scenes.length} images will share the same visual style.
+            Seed <span style={{ color: "oklch(0.72 0.12 145)", fontFamily: "monospace" }}>{project.imageSeed}</span> is locked for providers that support it, helping the generated scenes stay visually consistent.
+          </p>
+        )}
+        {!seedLocked && (
+          <p className="text-xs" style={{ color: "rgba(236,236,241,0.35)" }}>
+            Seed is optional. Turn it on when you want the same style repeated across all scenes.
           </p>
         )}
       </div>
