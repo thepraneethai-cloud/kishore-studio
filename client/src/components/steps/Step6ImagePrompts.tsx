@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useProject } from "@/contexts/ProjectContext";
 import { DEITIES, getDefaultCharacterPrefix } from "@/lib/studioData";
-import { ChevronRight, Copy, Check, Download, Sparkles, Image, Loader2, AlertCircle, Settings, Shuffle, Lock, Unlock, Zap, ThumbsUp, ThumbsDown, Link, Upload, ChevronDown, ChevronUp, Wand2 } from "lucide-react";
+import { ChevronRight, Copy, Check, Download, Sparkles, Image, Loader2, AlertCircle, Settings, Shuffle, Lock, Unlock, Zap, ThumbsUp, ThumbsDown, Link, Upload, ChevronDown, ChevronUp, Wand2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
