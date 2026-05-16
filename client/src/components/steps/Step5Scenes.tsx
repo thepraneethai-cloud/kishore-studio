@@ -338,8 +338,8 @@ export default function Step5Scenes() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div style={{ minWidth: 0, maxWidth: "100%" }}>
           <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(236,236,241,0.45)", letterSpacing: "0.08em" }}>
             Step 3
           </p>
@@ -351,7 +351,7 @@ export default function Step5Scenes() {
           </p>
         </div>
         {project.scenes.length > 0 && (
-          <div className="flex items-center gap-2 flex-shrink-0 mt-1">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-shrink-0 mt-1">
             <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "rgba(255,255,255,0.06)", color: "#ececf1", border: "1px solid rgba(255,255,255,0.12)" }}>
               {project.scenes.length} scenes
             </span>
@@ -416,14 +416,14 @@ export default function Step5Scenes() {
               );
             })}
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-3 sm:flex-wrap">
             {(Object.keys(WEIGHT_CONFIG) as EmotionalWeight[]).map((w) => {
               const count = project.scenes.filter((s) => s.emotionalWeight === w).length;
               if (!count) return null;
               return (
-                <div key={w} className="flex items-center gap-1 text-xs">
+                <div key={w} className="flex items-center gap-1 text-xs min-w-0">
                   <div style={{ width: "8px", height: "8px", borderRadius: "2px", background: arcColors[w] }} />
-                  <span style={{ color: "rgba(236,236,241,0.45)" }}>{WEIGHT_CONFIG[w].label} ({count})</span>
+                  <span style={{ color: "rgba(236,236,241,0.45)", overflowWrap: "anywhere" }}>{WEIGHT_CONFIG[w].label} ({count})</span>
                 </div>
               );
             })}
@@ -434,15 +434,16 @@ export default function Step5Scenes() {
       {/* Controls panel */}
       <div className="rounded-xl p-4" style={{ background: "#2f2f2f", border: "1px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
         {/* Row 1: LLM Model */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
           <span className="text-xs font-semibold flex-shrink-0" style={{ color: "rgba(236,236,241,0.45)", textTransform: "uppercase", letterSpacing: "0.06em", minWidth: "72px" }}>
             LLM Model
           </span>
           <select
             value={llmModel}
             onChange={(e) => setLlmModel(e.target.value)}
-            className="flex-1"
+            className="w-full sm:flex-1"
             style={{
+              minWidth: 0,
               padding: "0.4rem 0.75rem",
               background: "#2f2f2f",
               border: "1px solid rgba(255,255,255,0.12)",
@@ -486,12 +487,12 @@ export default function Step5Scenes() {
         <div style={{ height: "1px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Row 2: Primary + secondary actions */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:flex-wrap">
           {/* Primary actions */}
           <button
             onClick={handleAutoGenerate}
             disabled={isGenerating}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
             style={{
               background: "linear-gradient(135deg, rgba(236,236,241,0.82), rgba(236,236,241,0.45))",
               color: "#181818",
@@ -505,7 +506,7 @@ export default function Step5Scenes() {
             <button
               onClick={handleDirectorAnalysis}
               disabled={isAnalyzing}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
+              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
               style={{
                 background: isAnalyzing ? "#2a2a2a" : "linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.12))",
                 color: isAnalyzing ? "rgba(236,236,241,0.45)" : "#fff",
@@ -518,13 +519,13 @@ export default function Step5Scenes() {
           )}
 
           {/* Spacer */}
-          <div className="flex-1" />
+          <div className="hidden sm:block flex-1" />
 
           {/* Secondary actions */}
           {canUndoScenes && (
             <button
               onClick={() => { undoScenes(); toast.success("Restored previous scenes"); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all hover:opacity-80"
+              className="flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg text-xs transition-all hover:opacity-80"
               style={{ background: "#252525", color: "rgba(236,236,241,0.75)", border: "1px solid rgba(255,255,255,0.12)" }}
             >
               <Undo2 size={13} />
@@ -533,7 +534,7 @@ export default function Step5Scenes() {
           )}
           <button
             onClick={handleAddScene}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all hover:opacity-80"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg text-xs transition-all hover:opacity-80"
             style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.1)" }}
           >
             <Plus size={13} />
@@ -562,7 +563,7 @@ export default function Step5Scenes() {
 
       {/* Stats */}
       {project.scenes.length > 0 && (
-        <div className="flex gap-4 text-xs" style={{ color: "rgba(236,236,241,0.45)" }}>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: "rgba(236,236,241,0.45)" }}>
           <span style={{ color: "rgba(236,236,241,0.82)" }}>{project.scenes.length} scenes</span>
           <span>~{totalDuration}s total</span>
           <span>~{Math.round(totalDuration / 60)}:{String(totalDuration % 60).padStart(2, "0")} video length</span>
