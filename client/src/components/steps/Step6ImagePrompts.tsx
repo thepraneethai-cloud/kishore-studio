@@ -57,6 +57,7 @@ export default function Step6ImagePrompts() {
 
   // Provider selection
   const [provider, setProvider] = useState<ImageProvider>("pollinations");
+  const [userSelectedProvider, setUserSelectedProvider] = useState(false);
   const [fluxModel, setFluxModel] = useState<FluxModel>("flux-dev");
   const [dalleModel, setDalleModel] = useState<DalleModel>("dall-e-3");
   const [dalleQuality, setDalleQuality] = useState<"standard" | "hd">("standard");
@@ -87,6 +88,9 @@ export default function Step6ImagePrompts() {
   }, [deity, project.characterPrefix, setCharacterPrefix]);
 
   // Fetch user settings (both Replicate and OpenAI keys)
+  const { data: envKeyStatus } = trpc.settings.getEnvKeyStatus.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
   const { data: userSettings } = trpc.settings.getSettings.useQuery(undefined, {
     enabled: isAuthenticated,
   });
@@ -96,12 +100,37 @@ export default function Step6ImagePrompts() {
   const togetherApiKey = (userSettings as any)?.togetherApiKey || "";
 
   // Derived: which key is needed for selected provider (Pollinations needs none)
-  const activeApiKey = provider === "dalle" ? openaiApiKey
-    : provider === "together" ? togetherApiKey
-    : provider === "fal" ? falApiKey
+  const hasOpenAIKey = Boolean(envKeyStatus?.openaiApiKey || openaiApiKey);
+  const hasReplicateKey = Boolean(envKeyStatus?.replicateApiKey || replicateApiKey);
+  const hasFalKey = Boolean(envKeyStatus?.falApiKey || falApiKey);
+  const hasTogetherKey = Boolean(envKeyStatus?.togetherApiKey || togetherApiKey);
+
+  const activeApiKey = provider === "dalle" ? (hasOpenAIKey ? "configured" : "")
+    : provider === "together" ? (hasTogetherKey ? "configured" : "")
+    : provider === "fal" ? (hasFalKey ? "configured" : "")
     : provider === "pollinations" ? "free"
-    : replicateApiKey;
+    : (hasReplicateKey ? "configured" : "");
   const missingKeyRoute = "/settings";
+
+  const providerKeyLabel: Record<Exclude<ImageProvider, "pollinations">, string> = {
+    dalle: "OpenAI",
+    flux: "Replicate",
+    together: "Together AI",
+    fal: "fal.ai",
+  };
+
+  useEffect(() => {
+    if (userSelectedProvider || !envKeyStatus) return;
+    if (hasFalKey) {
+      setProvider("fal");
+    } else if (hasTogetherKey) {
+      setProvider("together");
+    } else if (hasOpenAIKey) {
+      setProvider("dalle");
+    } else if (hasReplicateKey) {
+      setProvider("flux");
+    }
+  }, [envKeyStatus, hasFalKey, hasTogetherKey, hasOpenAIKey, hasReplicateKey, userSelectedProvider]);
 
   const generateImagesMutation = trpc.generation.generateImages.useMutation();
   const improvePromptMutation = trpc.generation.improvePrompt.useMutation();
@@ -220,6 +249,10 @@ export default function Step6ImagePrompts() {
         pollinations: "",
       };
       toast.error(msgs[provider]);
+      return;
+    }
+    if (provider === "pollinations" && project.scenes.length > 4) {
+      toast.error("Pollinations free is rate-limited for bulk generation. Use fal.ai, Together, OpenAI, or Replicate for full-scene batches.");
       return;
     }
 
@@ -724,20 +757,27 @@ export default function Step6ImagePrompts() {
             Generate in app
           </p>
           <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.42)" }}>
-            Pick a provider. Free options need no API key or just a free account.
+            Provider is auto-selected from Railway keys when available. Pollinations is only a small-batch fallback.
           </p>
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
           <div>
             <label style={labelStyle}>Provider</label>
-            <select value={provider} onChange={(e) => setProvider(e.target.value as ImageProvider)} style={selectStyle}>
+            <select
+              value={provider}
+              onChange={(e) => {
+                setUserSelectedProvider(true);
+                setProvider(e.target.value as ImageProvider);
+              }}
+              style={selectStyle}
+            >
               <optgroup label="🆓 Free — no cost">
-                <option value="pollinations">Pollinations.ai — FREE, no key needed</option>
-                <option value="together">Together AI — FREE tier (FLUX.1-schnell)</option>
+                <option value="pollinations">Pollinations.ai — small batches only, no key</option>
+                <option value="together">Together AI — free tier if key configured</option>
               </optgroup>
               <optgroup label="💳 Free credits on signup">
-                <option value="fal">fal.ai — free credits (FLUX Schnell / Dev)</option>
+                <option value="fal">fal.ai — recommended for reliable batches</option>
               </optgroup>
               <optgroup label="Paid (pay per image)">
                 <option value="flux">Flux via Replicate (~$0.01/image)</option>
@@ -812,21 +852,21 @@ export default function Step6ImagePrompts() {
         {provider === "pollinations" && (
           <div className="p-3 rounded-lg" style={{ background: "rgba(16, 163, 127, 0.07)", border: "1px solid rgba(16,163,127,0.25)" }}>
             <p className="text-xs" style={{ color: "rgba(236,236,241,0.6)" }}>
-              ✓ <strong style={{ color: "#10a37f" }}>Completely free</strong> — powered by Flux internally. No API key needed. Images return in ~3–8 seconds each.
+              <strong style={{ color: "#10a37f" }}>No key needed</strong>, but this endpoint is rate-limited and can fail on full song batches. Use it for 1-4 test images.
             </p>
           </div>
         )}
         {provider === "together" && (
           <div className="p-3 rounded-lg" style={{ background: "rgba(16, 163, 127, 0.07)", border: "1px solid rgba(16,163,127,0.25)" }}>
             <p className="text-xs" style={{ color: "rgba(236,236,241,0.6)" }}>
-              ✓ <strong style={{ color: "#10a37f" }}>Free tier</strong> — FLUX.1-schnell-Free is available at no cost. Add your Together AI key in Settings (free signup at <strong>api.together.ai</strong>).
+              ✓ <strong style={{ color: "#10a37f" }}>{hasTogetherKey ? "Key configured" : "Free tier"}</strong> — FLUX.1-schnell-Free is available at no cost. {hasTogetherKey ? "Ready for batch generation." : "Add your Together AI key in Settings or Railway Variables."}
             </p>
           </div>
         )}
         {provider === "fal" && (
           <div className="p-3 rounded-lg" style={{ background: "rgba(16, 163, 127, 0.07)", border: "1px solid rgba(16,163,127,0.25)" }}>
             <p className="text-xs" style={{ color: "rgba(236,236,241,0.6)" }}>
-              ✓ <strong style={{ color: "#10a37f" }}>Free credits on signup</strong> — fast FLUX generation via fal.ai. Add your fal.ai key in Settings (free at <strong>fal.ai</strong>). Then ~$0.003/image after credits.
+              ✓ <strong style={{ color: "#10a37f" }}>{hasFalKey ? "Key configured" : "Free credits on signup"}</strong> — recommended for reliable full-scene batches. {hasFalKey ? "Ready for batch generation." : "Add your fal.ai key in Settings or Railway Variables."}
             </p>
           </div>
         )}
@@ -856,10 +896,10 @@ export default function Step6ImagePrompts() {
               Generate in App
             </p>
             <p className="text-xs mt-0.5" style={{ color: "rgba(236,236,241,0.4)" }}>
-              {provider === "pollinations" ? "Free · Pollinations.ai (Flux)"
-                : provider === "together" ? "Free tier · Together AI (FLUX.1-schnell)"
-                : provider === "fal" ? `fal.ai (${falImageModel}) · free credits`
-                : provider === "dalle" ? `${dalleModel === "dall-e-3" ? "DALL-E 3" : "GPT-image-1"} via OpenAI — ~${Math.ceil(project.scenes.length / 3) * 5}s`
+              {provider === "pollinations" ? "Small-batch fallback · Pollinations.ai"
+                : provider === "together" ? `Together AI (FLUX.1-schnell) · ${hasTogetherKey ? "key ready" : "key needed"}`
+                : provider === "fal" ? `fal.ai (${falImageModel}) · ${hasFalKey ? "key ready" : "key needed"}`
+                : provider === "dalle" ? `${dalleModel === "dall-e-3" ? "DALL-E 3" : "GPT-image-1"} via OpenAI · ${hasOpenAIKey ? "key ready" : "key needed"}`
                 : `Flux ${fluxModel === "flux-dev" ? "Dev" : "Schnell"} via Replicate · ~$0.01/image${project.imageSeed !== null ? ` · seed ${project.imageSeed}` : ""}`}
             </p>
           </div>
@@ -870,7 +910,7 @@ export default function Step6ImagePrompts() {
               style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.12)" }}
             >
               <Settings size={11} />
-              {provider === "dalle" ? "Add OpenAI Key" : "Add Replicate Key"}
+              Add {providerKeyLabel[provider as Exclude<ImageProvider, "pollinations">]} Key
             </button>
           ) : (
             <button
