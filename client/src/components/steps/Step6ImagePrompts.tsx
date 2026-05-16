@@ -627,8 +627,8 @@ export default function Step6ImagePrompts() {
         <div style={{ height: "1px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Seed + Actions row */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-semibold" style={{ color: "rgba(236,236,241,0.45)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Seed</span>
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:flex-wrap">
+          <span className="text-xs font-semibold col-span-2 sm:col-span-1" style={{ color: "rgba(236,236,241,0.45)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Seed</span>
           <input
             type="number"
             value={project.imageSeed ?? ""}
@@ -646,12 +646,13 @@ export default function Step6ImagePrompts() {
               color: fieldStyle.color,
               fontSize: "0.78rem",
               outline: "none",
-              width: "100px",
+              width: "100%",
+              maxWidth: "100px",
             }}
           />
           <button
             onClick={handleRandomSeed}
-            className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded transition-colors"
+            className="flex items-center justify-center gap-1 text-xs px-2.5 py-1.5 rounded transition-colors"
             style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.1)" }}
             title="Roll a random seed"
           >
@@ -660,7 +661,7 @@ export default function Step6ImagePrompts() {
           </button>
           <button
             onClick={handleToggleSeedLock}
-            className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded transition-colors"
+            className="flex items-center justify-center gap-1 text-xs px-2.5 py-1.5 rounded transition-colors"
             style={{
               background: seedLocked ? "oklch(0.18 0.06 150 / 0.3)" : "#2a2a2a",
               color: seedLocked ? "oklch(0.72 0.12 145)" : "rgba(236,236,241,0.4)",
@@ -671,10 +672,10 @@ export default function Step6ImagePrompts() {
             {seedLocked ? <Lock size={10} /> : <Unlock size={10} />}
             {seedLocked ? "Locked" : "Unlocked"}
           </button>
-          <div className="flex-1" />
+          <div className="hidden sm:block flex-1" />
           <button
             onClick={handleRegenerateAll}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
+            className="flex items-center justify-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
             style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.1)" }}
           >
             <Sparkles size={11} />
@@ -682,7 +683,7 @@ export default function Step6ImagePrompts() {
           </button>
           <button
             onClick={handleCopyAll}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
+            className="flex items-center justify-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
             style={{
               background: copiedAll ? "rgba(255,255,255,0.08)" : "#2a2a2a",
               color: copiedAll ? "rgba(236,236,241,0.82)" : "rgba(236,236,241,0.58)",
@@ -694,7 +695,7 @@ export default function Step6ImagePrompts() {
           </button>
           <button
             onClick={handleDownloadCSV}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
+            className="flex items-center justify-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors col-span-2 sm:col-span-1"
             style={{ background: "#2a2a2a", color: "rgba(236,236,241,0.58)", border: "1px solid rgba(255,255,255,0.1)" }}
           >
             <Download size={11} />
